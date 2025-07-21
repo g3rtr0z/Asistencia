@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { agregarAlumno } from '../../services/alumnosService';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
 
 function ImportExcel({ onImportComplete }) {
   const [loading, setLoading] = useState(false);
