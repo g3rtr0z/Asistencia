@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import Logo from '../assets/logo3.png';
 import { buscarAlumnoPorRut, actualizarPresencia } from '../services/alumnosService';
+import Logo from '../assets/logo3.png'
+
 
 const Inicio = () => {
   const [rut, setRut] = useState("");
@@ -17,13 +19,35 @@ const Inicio = () => {
 
   return clean;
 };
-
+    // Eliminar todo excepto números y K/k
+    let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
+    // Limitar a máximo 10 caracteres (9 números + 1 dígito verificador)
+    clean = clean.slice(0, 10);
+    if (clean.length === 0) return '';
+    // Separar dígito verificador
+    let dv = clean.slice(-1);
+    let num = clean.slice(0, -1);
+    // Formatear con puntos
+    let formatted = '';
+    let i = 0;
+    for (let j = num.length - 1; j >= 0; j--) {
+      formatted = num[j] + formatted;
+      i++;
+      if (i % 3 === 0 && j !== 0) {
+        formatted = '.' + formatted;
+      }
+    }
+    if (num.length > 0) {
+      formatted += '-' + dv;
+    } else {
+      formatted = dv;
+    }
+    return formatted;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const rutTrimmed = rut.trim();
-
-    if (!rutTrimmed) {
+    if (!rut.trim()) {
       setError("Por favor ingresa tu RUT");
       return;
     }
@@ -31,7 +55,6 @@ const Inicio = () => {
     setError("");
     setLoading(true);
     setResult(null);
-
     try {
       const alumno = await buscarAlumnoPorRut(rutTrimmed);
 
@@ -39,6 +62,9 @@ const Inicio = () => {
         setError("El RUT ingresado no fue encontrado en la base de datos.");
         setLoading(false);
         return;
+      const res = await onLogin(rut.trim());
+      if (res && res.nombre) {
+        setResult(res);
       }
 
       if (alumno.presente) {
