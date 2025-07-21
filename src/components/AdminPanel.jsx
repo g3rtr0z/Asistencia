@@ -1,31 +1,20 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-<<<<<<< HEAD
-import ImportExcel from './admin/ImportExcel';
-=======
 import ImportJSON from './admin/ImportJSON';
->>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
 import DeleteCollection from './admin/DeleteCollection';
 import AlumnosLista from './AlumnosLista';
 import AdminLogin from './AdminLogin';
 import EstadisticasPanel from './EstadisticasPanel';
-<<<<<<< HEAD
-import ExportarExcelButton from './admin/ExportarExcelButton';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
-function ConfigMenuPortal({ show, onImport, onDelete, alumnos, onClose }) {
-=======
-
-function ConfigMenuPortal({ show, onImport, onDelete, onClose }) {
->>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
+function ConfigMenuPortal({ show, onImport, onDelete, onExport, onClose }) {
   if (!show) return null;
   return ReactDOM.createPortal(
     <div className="fixed right-6 top-20 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
       <button onClick={onImport} className="block w-full px-4 py-3 text-left hover:bg-gray-50 text-gray-700 text-base">Importar JSON</button>
-<<<<<<< HEAD
-      <ExportarExcelButton alumnos={alumnos} />
-=======
->>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
       <button onClick={onDelete} className="block w-full px-4 py-3 text-left hover:bg-gray-50 text-red-600 text-base">Borrar Colección</button>
+      <button onClick={onExport} className="block w-full px-4 py-3 text-left hover:bg-gray-50 text-green-700 text-base">Exportar a Excel</button>
       <button onClick={onClose} className="block w-full px-4 py-2 text-center text-gray-400 hover:text-gray-700">Cerrar</button>
     </div>,
     document.body
@@ -68,6 +57,22 @@ function AdminPanel({
     return <AdminLogin onAuth={() => setAdminAuth(true)} onSalir={onSalir} />;
   }
 
+  const exportarAExcel = (alumnos) => {
+    // Mapeo para mostrar "Presente" o "Ausente"
+    const alumnosFormateados = alumnos.map(({ id, ...rest }) => ({
+      ...rest,
+      presente: rest.presente ? "Presente" : "Ausente"
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(alumnosFormateados);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Alumnos');
+
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(data, 'alumnos.xlsx');
+  };
+
   return (
     <div className="min-h-screen w-full bg-white flex flex-col relative" id="admin-panel-root">
       {/* Header */}
@@ -83,10 +88,7 @@ function AdminPanel({
               show={showConfig}
               onImport={() => { setModal('import'); setShowConfig(false); }}
               onDelete={() => { setModal('delete'); setShowConfig(false); }}
-<<<<<<< HEAD
-              alumnos={alumnos}
-=======
->>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
+              onExport={() => exportarAExcel(alumnos)}
               onClose={() => setShowConfig(false)}
             />
           </div>
@@ -95,11 +97,7 @@ function AdminPanel({
       </header>
       {/* Modal de configuración */}
       <ModalPanel show={modal === 'import'} onClose={() => setModal(null)}>
-<<<<<<< HEAD
-        <ImportExcel onImportComplete={() => setModal(null)} />
-=======
         <ImportJSON onImportComplete={() => setModal(null)} />
->>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
       </ModalPanel>
       <ModalPanel show={modal === 'delete'} onClose={() => setModal(null)}>
         <DeleteCollection onDeleteComplete={() => setModal(null)} totalAlumnos={totalAlumnos} />

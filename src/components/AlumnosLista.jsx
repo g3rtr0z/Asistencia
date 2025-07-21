@@ -17,13 +17,6 @@ const AlumnosLista = ({ alumnos = [], soloPresentes = false }) => {
   const [filtroInstitucion, setFiltroInstitucion] = useState("");
 
   // Generar opciones dinámicamente desde los datos
-<<<<<<< HEAD
-=======
-  const opcionesCarreras = useMemo(() => {
-    const carreras = [...new Set(alumnos.map(a => a.carrera))].sort();
-    return carreras;
-  }, [alumnos]);
->>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
 
   const opcionesInstituciones = useMemo(() => {
     const instituciones = [...new Set(alumnos.map(a => a.institucion))].sort();
