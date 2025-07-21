@@ -10,6 +10,7 @@ const Inicio = ({ onLogin }) => {
   const formatRut = (value) => {
     // Eliminar todo excepto números y K/k
     let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
+    
     // Limitar a máximo 10 caracteres (9 números + 1 dígito verificador)
     clean = clean.slice(0, 9);
     return clean;
