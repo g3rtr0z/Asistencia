@@ -51,6 +51,15 @@ export const getAlumnos = async () => {
   }
 };
 
+//validacion de rut
+
+export const verificarAsistenciaPorRut = async (rut) => {
+  const alumnos = await getAlumnos();
+  const encontrado = alumnos.find(alumno => alumno.rut === rut);
+  return encontrado?.presente === true; // devuelve true si ya marcó asistencia
+};
+
+
 // Escuchar cambios en tiempo real
 export const subscribeToAlumnos = (callback, errorCallback) => {
   try {
