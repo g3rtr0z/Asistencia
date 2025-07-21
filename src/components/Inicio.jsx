@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import Logo from '../assets/logo3.png';
+import { buscarAlumnoPorRut, actualizarPresencia } from '../services/alumnosService';
 
-const Inicio = ({ onLogin }) => {
+const Inicio = () => {
   const [rut, setRut] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
-  const [ingresados, setIngresados] = useState([]); // 👈 NUEVO ESTADO
 
   const formatRut = (value) => {
     let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
@@ -40,24 +40,49 @@ const Inicio = ({ onLogin }) => {
       return;
     }
 
-    if (ingresados.includes(rutTrimmed)) {
-      setError("Este RUT ya fue ingresado anteriormente.");
-      setResult(null);
-      return;
-    }
-
     setError("");
     setLoading(true);
     setResult(null);
 
     try {
-      const res = await onLogin(rutTrimmed);
-      if (res && res.nombre) {
-        setResult(res);
-        setIngresados(prev => [...prev, rutTrimmed]); // 👈 Se agrega a la lista
+      const alumno = await buscarAlumnoPorRut(rutTrimmed);
+
+      if (!alumno) {
+        setError("El RUT ingresado no fue encontrado en la base de datos.");
+        setLoading(false);
+        return;
       }
+
+      if (alumno.presente) {
+        setError("Este RUT ya fue ingresado anteriormente.");
+        setLoading(false);
+        return;
+      }
+
+      const fechaChile = new Date().toLocaleString("es-CL", {
+        timeZone: "America/Santiago",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
+
+      await actualizarPresencia(alumno.id, {
+        presente: true,
+        ultimaActualizacion: fechaChile
+      });
+
+      setResult({
+        nombre: alumno.nombre,
+        carrera: alumno.carrera,
+        institucion: alumno.institucion
+      });
+
     } catch (error) {
-      setError("Error al procesar el login");
+      console.error(error);
+      setError("Error al procesar el registro de asistencia.");
     } finally {
       setLoading(false);
     }
@@ -70,23 +95,18 @@ const Inicio = ({ onLogin }) => {
   };
 
   return (
-    <div className=" flex flex-col items-center justify-center sm:justify-start bg-white sm:py-12">
+    <div className="flex flex-col items-center justify-center sm:justify-start bg-white sm:py-12">
       <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
         <div className="text-center mb-8">
-          <img 
-            src={Logo} 
-            alt="Logo" 
-            className="mx-auto mb-2 w-20 h-20 object-contain z-50"
-          />
+          <img src={Logo} alt="Logo" className="mx-auto mb-2 w-20 h-20 object-contain z-50" />
           <h1 className="text-2xl sm:text-3xl font-bold text-green-800 mb-2">Marca de Asistencia</h1>
           <p className="text-gray-600 text-sm sm:text-base">Ingresa un RUT</p>
         </div>
+
         <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                RUT 
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">RUT</label>
               <div className="relative">
                 <input
                   type="text"
@@ -106,15 +126,15 @@ const Inicio = ({ onLogin }) => {
                 </div>
               </div>
             </div>
+
             <button
               type="submit"
               disabled={loading || !rut.trim()}
-              className={
-                `w-full py-2 sm:py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base ` +
-                (loading || !rut.trim() 
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                  : 'bg-green-600 hover:bg-green-700 text-white')
-              }
+              className={`w-full py-2 sm:py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base ${
+                loading || !rut.trim()
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }`}
             >
               {loading ? (
                 <>
@@ -132,6 +152,7 @@ const Inicio = ({ onLogin }) => {
             </button>
           </form>
         </div>
+
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center space-x-2">
             <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +161,7 @@ const Inicio = ({ onLogin }) => {
             <span className="text-red-700">{error}</span>
           </div>
         )}
-        {/* Results */}
+
         {result && (
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
             <div className="flex items-center space-x-2 mb-4">
@@ -169,6 +190,7 @@ const Inicio = ({ onLogin }) => {
             </div>
           </div>
         )}
+
         <div className="text-center mt-8 text-gray-500 text-xs sm:text-sm">
           <p>Consulta segura y confidencial</p>
         </div>
@@ -177,4 +199,4 @@ const Inicio = ({ onLogin }) => {
   );
 };
 
-export default Inicio; 
+export default Inicio;
