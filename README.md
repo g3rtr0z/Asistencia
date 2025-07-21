@@ -1,5 +1,9 @@
 Resumen Explicativo del Proyecto MiAsistenciaST
+<<<<<<< HEAD
 
+=======
+123
+>>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
 2. Flujo Principal de la Aplicación
 
 App.jsx: Componente raíz que gestiona el estado global: usuarios, modo admin, filtros y lógica de asistencia. Renderiza el formulario de asistencia (Inicio.jsx) o el panel de administración (AdminPanel.jsx) según el modo. Usa el componente AdminButton para acceder al panel de administración. Utiliza hooks personalizados para cargar y filtrar alumnos desde Firebase.

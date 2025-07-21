@@ -1,11 +1,16 @@
 import React, { useState } from "react";
+<<<<<<< HEAD
 import Logo from '../assets/logo3.png'
+=======
+import Logo from '../assets/logo3.png';
+>>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
 
 const Inicio = ({ onLogin }) => {
   const [rut, setRut] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+<<<<<<< HEAD
 
   const formatRut = (value) => {
     // Eliminar todo excepto números y K/k
@@ -17,6 +22,16 @@ const Inicio = ({ onLogin }) => {
     let dv = clean.slice(-1);
     let num = clean.slice(0, -1);
     // Formatear con puntos
+=======
+  const [ingresados, setIngresados] = useState([]); // 👈 NUEVO ESTADO
+
+  const formatRut = (value) => {
+    let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
+    clean = clean.slice(0, 10);
+    if (clean.length === 0) return '';
+    let dv = clean.slice(-1);
+    let num = clean.slice(0, -1);
+>>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
     let formatted = '';
     let i = 0;
     for (let j = num.length - 1; j >= 0; j--) {
@@ -36,6 +51,7 @@ const Inicio = ({ onLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+<<<<<<< HEAD
     if (!rut.trim()) {
       setError("Por favor ingresa tu RUT");
       return;
@@ -47,6 +63,30 @@ const Inicio = ({ onLogin }) => {
       const res = await onLogin(rut.trim());
       if (res && res.nombre) {
         setResult(res);
+=======
+    const rutTrimmed = rut.trim();
+
+    if (!rutTrimmed) {
+      setError("Por favor ingresa tu RUT");
+      return;
+    }
+
+    if (ingresados.includes(rutTrimmed)) {
+      setError("Este RUT ya fue ingresado anteriormente.");
+      setResult(null);
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const res = await onLogin(rutTrimmed);
+      if (res && res.nombre) {
+        setResult(res);
+        setIngresados(prev => [...prev, rutTrimmed]); // 👈 Se agrega a la lista
+>>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
       }
     } catch (error) {
       setError("Error al procesar el login");

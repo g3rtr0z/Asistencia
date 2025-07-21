@@ -10,8 +10,11 @@ import {
   onSnapshot 
 } from 'firebase/firestore';
 import { db } from '../connection/firebase.js';
+<<<<<<< HEAD
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+=======
+>>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
 
 const COLLECTION_NAME = 'alumnos';
 
@@ -171,6 +174,7 @@ export const borrarColeccionAlumnos = async () => {
     console.error('Error al borrar la colección:', error);
     throw error;
   }
+<<<<<<< HEAD
 }; 
 
 const exportarAExcel = (alumnos) => {
@@ -187,4 +191,6 @@ const exportarAExcel = (alumnos) => {
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
   saveAs(data, 'alumnos.xlsx');
+=======
+>>>>>>> 701dd767d30aedfb87c8cdefde72c02e201a3120
 }; 
