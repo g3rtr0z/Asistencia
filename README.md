@@ -1,3 +1,8 @@
+resumen 1234
+
+
+
+
 Resumen Explicativo del Proyecto MiAsistenciaST
 
 2. Flujo Principal de la Aplicación
