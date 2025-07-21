@@ -9,27 +9,15 @@ const Inicio = () => {
   const [result, setResult] = useState(null);
 
   const formatRut = (value) => {
-    let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
-    clean = clean.slice(0, 10);
-    if (clean.length === 0) return '';
-    let dv = clean.slice(-1);
-    let num = clean.slice(0, -1);
-    let formatted = '';
-    let i = 0;
-    for (let j = num.length - 1; j >= 0; j--) {
-      formatted = num[j] + formatted;
-      i++;
-      if (i % 3 === 0 && j !== 0) {
-        formatted = '.' + formatted;
-      }
-    }
-    if (num.length > 0) {
-      formatted += '-' + dv;
-    } else {
-      formatted = dv;
-    }
-    return formatted;
-  };
+  // Eliminar todo lo que no sea número o K/k
+  let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
+
+  // Limitar a máximo 9 dígitos + 1 verificador
+  clean = clean.slice(0, 10);
+
+  return clean;
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -113,7 +101,7 @@ const Inicio = () => {
                   value={rut}
                   onChange={e => setRut(formatRut(e.target.value))}
                   onKeyPress={handleKeyPress}
-                  placeholder="12.345.678-9"
+                  placeholder=""
                   maxLength={13}
                   className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm sm:text-base"
                 />
