@@ -99,8 +99,11 @@ function AdminLogin({ onAuth, onSalir }) {
             </button>
           </form>
         </div>
-        <div className="text-center mt-8 text-gray-500 text-xs sm:text-sm">
-          <p>Acceso seguro y confidencial</p>
+        <div className="text-center text-gray-500 text-xs sm:text-sm mt-2 mb-1">
+          <p>Versión 1.0</p>
+        </div>
+        <div className="text-center text-gray-500 text-xs sm:text-sm mb-4">
+          <p>Departamento de Informática Santo Tomas Temuco 2025</p>
         </div>
       </div>
     </div>

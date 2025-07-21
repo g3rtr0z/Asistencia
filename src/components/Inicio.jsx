@@ -54,7 +54,7 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
             alt="Logo"
             className="mx-auto mb-2 w-20 h-20 object-contain z-50"
           />
-          <h1 className="text-2xl sm:text-3xl font-bold text-green-800 mb-2">Mi Asistencia ST</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-green-800 mb-2">Mi Asistencia</h1>
           <p className="text-gray-600 text-sm sm:text-base">Ingresa un RUT</p>
         </div>
         <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6">

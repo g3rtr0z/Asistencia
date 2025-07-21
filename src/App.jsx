@@ -4,6 +4,7 @@ import AdminPanel from './components/AdminPanel';
 import useAlumnos from './hooks/useAlumnos';
 import { actualizarPresencia } from './services/alumnosService';
 import AdminButton from './components/AdminButton';
+import AlumnosLista from './components/AlumnosLista';
 
 // Loader
 function Loader() {
@@ -52,6 +53,7 @@ function App() {
   const [showImport, setShowImport] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [errorVisual, setErrorVisual] = useState("");
+  const [showAlumnosModal, setShowAlumnosModal] = useState(false);
 
   // Filtrado para la vista de admin (memorizado)
   const alumnosFiltrados = useMemo(() => {
@@ -118,8 +120,37 @@ function App() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Mostrar AdminButton solo si NO está en el panel de administración */}
-      {!admin && <AdminButton onClick={handleAdminClick} />}
+      {/* Mostrar AdminButton e icono de información solo si NO está en el panel de administración */}
+      {!admin && (
+        <div className="fixed top-4 right-4 z-50 flex flex-row items-center space-x-14">
+          <AdminButton onClick={handleAdminClick} />
+          {/* Icono de información */}
+          <button
+            className="bg-blue-600 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center"
+            title="Ver lista de alumnos"
+            style={{ transition: 'background 0.2s' }}
+            onClick={() => setShowAlumnosModal(true)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6.75v.75m0 3v.75m0 3v.75m0 3v.75m-3-12h6a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0116.5 21h-9A2.25 2.25 0 015.25 18.75V5.25A2.25 2.25 0 017.5 3h3z" />
+            </svg>
+          </button>
+        </div>
+      )}
+      {/* Modal de AlumnosLista */}
+      {showAlumnosModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-3xl w-full relative">
+            <button
+              onClick={() => setShowAlumnosModal(false)}
+              className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600"
+              title="Cerrar"
+            >×</button>
+            <h2 className="text-xl font-bold mb-4 text-green-800">Lista de Alumnos</h2>
+            <AlumnosLista alumnos={alumnos} />
+          </div>
+        </div>
+      )}
       <main className="flex-1 flex flex-col items-center justify-center w-full px-2 py-4">
         <div className="w-full flex flex-col items-center justify-center">
           {admin ? (
@@ -155,7 +186,7 @@ function App() {
                 <p>Versión 1.0</p>
               </div>
               <div className="text-center text-gray-500 text-xs sm:text-sm">
-                <p>Area de Informática Santo Tomas Temuco 2025</p>
+                <p>Departamento de Informática -  Santo Tomas Temuco 2025</p>
               </div>
 
             </div>

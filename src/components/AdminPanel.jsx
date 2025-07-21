@@ -58,10 +58,13 @@ function AdminPanel({
   }
 
   const exportarAExcel = (alumnos) => {
-    // Mapeo para mostrar "Presente" o "Ausente"
-    const alumnosFormateados = alumnos.map(({ id, ...rest }) => ({
-      ...rest,
-      presente: rest.presente ? "Presente" : "Ausente"
+    // Mapeo para mostrar "Presente" o "Ausente" y ordenar las columnas
+    const alumnosFormateados = alumnos.map(({ id, nombre, rut, carrera, institucion, presente }) => ({
+      "Nombre Completo": nombre,
+      "RUT": rut,
+      "Carrera": carrera,
+      "Institución": institucion,
+      "Estado": presente ? "Presente" : "Ausente"
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(alumnosFormateados);
@@ -70,7 +73,7 @@ function AdminPanel({
 
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(data, 'alumnos.xlsx');
+    saveAs(data, 'AlumnosPresentes.xlsx');
   };
 
   return (
