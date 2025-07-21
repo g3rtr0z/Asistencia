@@ -24,7 +24,7 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
     try {
       const alumno = await buscarAlumnoPorRut(rut.trim());
       if (alumno && alumno.presente) {
-        setErrorVisual("Ya se encuentra registrado");
+        setErrorVisual("Su RUT ya se encuentra registrado");
         setLoading(false);
         return;
       }

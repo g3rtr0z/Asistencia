@@ -123,7 +123,6 @@ function App() {
       {/* Mostrar AdminButton e icono de información solo si NO está en el panel de administración */}
       {!admin && (
         <div className="fixed top-4 right-4 z-50 flex flex-row items-center space-x-14">
-          <AdminButton onClick={handleAdminClick} />
           {/* Icono de información */}
           <button
             className="bg-blue-600 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center"
@@ -135,11 +134,12 @@ function App() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6.75v.75m0 3v.75m0 3v.75m0 3v.75m-3-12h6a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0116.5 21h-9A2.25 2.25 0 015.25 18.75V5.25A2.25 2.25 0 017.5 3h3z" />
             </svg>
           </button>
+          <AdminButton onClick={handleAdminClick} />
         </div>
       )}
       {/* Modal de AlumnosLista */}
       {showAlumnosModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-10 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl p-6 max-w-3xl w-full relative">
             <button
               onClick={() => setShowAlumnosModal(false)}
