@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { agregarAlumno } from '../../services/alumnosService';
+import * as XLSX from 'xlsx';
 
 function ImportExcel({ onImportComplete }) {
   const [loading, setLoading] = useState(false);
@@ -7,7 +8,7 @@ function ImportExcel({ onImportComplete }) {
 
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
-    if (!selectedFile || !['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'].includes(selectedFile.type)) {
+    if (!selectedFile || !selectedFile.name.match(/\.(xlsx|xls|csv)$/i)) {
       setMessage('Por favor selecciona un archivo Excel válido (.xlsx, .xls, .csv)');
       return;
     }
@@ -27,9 +28,10 @@ function ImportExcel({ onImportComplete }) {
             errorCount++;
             continue;
           }
+          // Guardar el RUT tal como viene (sin puntos ni guión)
           await agregarAlumno({
             nombre: alumno["Nombre Completo"],
-            rut: alumno["RUT"],
+            rut: String(alumno["RUT"]),
             carrera: alumno["Carrera"],
             institucion: alumno["Institución"]
           });
@@ -69,9 +71,9 @@ function ImportExcel({ onImportComplete }) {
         <p><strong>Formato esperado:</strong></p>
         <pre className="bg-gray-50 p-2 rounded mt-1">
 {`Nombre Completo | RUT | Carrera | Institución
-Juan Pérez      | 12.345.678-9 | Técnico en Enfermería | CFT`}
+Gerson Uziel Valdebenito | 203550618 | Ing. En Informatica | IP ST`}
         </pre>
-        <p className="mt-2">Asegúrate de que la primera fila del Excel tenga los nombres de las columnas como en el ejemplo.</p>
+        <p className="mt-2">El RUT debe ir sin puntos ni guión, solo números y dígito verificador.</p>
       </div>
     </div>
   );

@@ -14,5 +14,5 @@ export function exportarAExcel(alumnos) {
 
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
-  saveAs(data, 'alumnos.xlsx');
+  saveAs(data, 'AlumnosPresentes.xlsx');
 } 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import ImportJSON from './admin/ImportJSON';
+import ImportExcel from './admin/ImportExcel';
 import DeleteCollection from './admin/DeleteCollection';
 import AlumnosLista from './AlumnosLista';
 import AdminLogin from './AdminLogin';
@@ -97,7 +97,7 @@ function AdminPanel({
       </header>
       {/* Modal de configuración */}
       <ModalPanel show={modal === 'import'} onClose={() => setModal(null)}>
-        <ImportJSON onImportComplete={() => setModal(null)} />
+        <ImportExcel onImportComplete={() => setModal(null)} />
       </ModalPanel>
       <ModalPanel show={modal === 'delete'} onClose={() => setModal(null)}>
         <DeleteCollection onDeleteComplete={() => setModal(null)} totalAlumnos={totalAlumnos} />
