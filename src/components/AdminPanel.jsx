@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import ImportJSON from './admin/ImportJSON';
+import ImportExcel from './admin/ImportExcel';
 import DeleteCollection from './admin/DeleteCollection';
 import AlumnosLista from './AlumnosLista';
 import AdminLogin from './AdminLogin';
 import EstadisticasPanel from './EstadisticasPanel';
+import ExportarExcelButton from './admin/ExportarExcelButton';
 
-function ConfigMenuPortal({ show, onImport, onDelete, onClose }) {
+function ConfigMenuPortal({ show, onImport, onDelete, alumnos, onClose }) {
   if (!show) return null;
   return ReactDOM.createPortal(
     <div className="fixed right-6 top-20 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
       <button onClick={onImport} className="block w-full px-4 py-3 text-left hover:bg-gray-50 text-gray-700 text-base">Importar JSON</button>
+      <ExportarExcelButton alumnos={alumnos} />
       <button onClick={onDelete} className="block w-full px-4 py-3 text-left hover:bg-gray-50 text-red-600 text-base">Borrar Colección</button>
       <button onClick={onClose} className="block w-full px-4 py-2 text-center text-gray-400 hover:text-gray-700">Cerrar</button>
     </div>,
@@ -69,6 +71,7 @@ function AdminPanel({
               show={showConfig}
               onImport={() => { setModal('import'); setShowConfig(false); }}
               onDelete={() => { setModal('delete'); setShowConfig(false); }}
+              alumnos={alumnos}
               onClose={() => setShowConfig(false)}
             />
           </div>
@@ -77,7 +80,7 @@ function AdminPanel({
       </header>
       {/* Modal de configuración */}
       <ModalPanel show={modal === 'import'} onClose={() => setModal(null)}>
-        <ImportJSON onImportComplete={() => setModal(null)} />
+        <ImportExcel onImportComplete={() => setModal(null)} />
       </ModalPanel>
       <ModalPanel show={modal === 'delete'} onClose={() => setModal(null)}>
         <DeleteCollection onDeleteComplete={() => setModal(null)} totalAlumnos={totalAlumnos} />

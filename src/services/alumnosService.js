@@ -10,6 +10,8 @@ import {
   onSnapshot 
 } from 'firebase/firestore';
 import { db } from '../connection/firebase.js';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 const COLLECTION_NAME = 'alumnos';
 
@@ -169,4 +171,20 @@ export const borrarColeccionAlumnos = async () => {
     console.error('Error al borrar la colección:', error);
     throw error;
   }
+}; 
+
+const exportarAExcel = (alumnos) => {
+  // Mapeo para mostrar "Presente" o "Ausente"
+  const datosFormateados = alumnos.map(alumno => ({
+    ...alumno,
+    presente: alumno.presente ? "Presente" : "Ausente"
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(datosFormateados);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Alumnos');
+
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+  saveAs(data, 'alumnos.xlsx');
 }; 
