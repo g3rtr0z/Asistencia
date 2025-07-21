@@ -10,7 +10,7 @@ const Inicio = ({ onLogin }) => {
   const formatRut = (value) => {
     // Eliminar todo excepto números y K/k
     let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
-    
+
     // Limitar a máximo 10 caracteres (9 números + 1 dígito verificador)
     clean = clean.slice(0, 9);
     return clean;
@@ -67,7 +67,7 @@ const Inicio = ({ onLogin }) => {
                   value={rut}
                   onChange={e => setRut(formatRut(e.target.value))}
                   onKeyPress={handleKeyPress}
-                  placeholder="12.345.678-9"
+                  placeholder="123456789"
                   maxLength={13}
                   className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm sm:text-base"
                 />

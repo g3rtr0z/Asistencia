@@ -12,7 +12,7 @@ function ConfigMenuPortal({ show, onImport, onDelete, onExport, onClose }) {
   if (!show) return null;
   return ReactDOM.createPortal(
     <div className="fixed right-6 top-20 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
-      <button onClick={onImport} className="block w-full px-4 py-3 text-left hover:bg-gray-50 text-gray-700 text-base">Importar JSON</button>
+      <button onClick={onImport} className="block w-full px-4 py-3 text-left hover:bg-gray-50 text-gray-700 text-base">Importar Excel</button>
       <button onClick={onDelete} className="block w-full px-4 py-3 text-left hover:bg-gray-50 text-red-600 text-base">Borrar Colección</button>
       <button onClick={onExport} className="block w-full px-4 py-3 text-left hover:bg-gray-50 text-green-700 text-base">Exportar a Excel</button>
       <button onClick={onClose} className="block w-full px-4 py-2 text-center text-gray-400 hover:text-gray-700">Cerrar</button>

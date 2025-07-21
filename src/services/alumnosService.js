@@ -63,8 +63,6 @@ export const verificarAsistenciaPorRut = async (rut) => {
 // Escuchar cambios en tiempo real
 export const subscribeToAlumnos = (callback, errorCallback) => {
   try {
-    console.log('Intentando suscribirse a la colección:', COLLECTION_NAME);
-    console.log('Instancia de db:', db);
     
     // Verificar que db esté inicializado
     if (!db) {
@@ -72,11 +70,9 @@ export const subscribeToAlumnos = (callback, errorCallback) => {
     }
     
     const unsubscribe = onSnapshot(collection(db, COLLECTION_NAME), (querySnapshot) => {
-      console.log('Datos recibidos de Firestore:', querySnapshot.size, 'documentos');
       const alumnos = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        console.log('Documento:', doc.id, data);
         alumnos.push({
           id: doc.id,
           nombre: data["Nombre Completo"],
@@ -86,7 +82,6 @@ export const subscribeToAlumnos = (callback, errorCallback) => {
           presente: Boolean(data.presente) // Convertir a booleano explícitamente
         });
       });
-      console.log('Alumnos procesados:', alumnos);
       callback(alumnos);
     }, (error) => {
       console.error('Error en onSnapshot:', error);
