@@ -11,27 +11,8 @@ const Inicio = ({ onLogin }) => {
     // Eliminar todo excepto números y K/k
     let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
     // Limitar a máximo 10 caracteres (9 números + 1 dígito verificador)
-    clean = clean.slice(0, 10);
-    if (clean.length === 0) return '';
-    // Separar dígito verificador
-    let dv = clean.slice(-1);
-    let num = clean.slice(0, -1);
-    // Formatear con puntos
-    let formatted = '';
-    let i = 0;
-    for (let j = num.length - 1; j >= 0; j--) {
-      formatted = num[j] + formatted;
-      i++;
-      if (i % 3 === 0 && j !== 0) {
-        formatted = '.' + formatted;
-      }
-    }
-    if (num.length > 0) {
-      formatted += '-' + dv;
-    } else {
-      formatted = dv;
-    }
-    return formatted;
+    clean = clean.slice(0, 9);
+    return clean;
   };
 
   const handleSubmit = async (e) => {
