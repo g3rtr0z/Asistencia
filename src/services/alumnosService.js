@@ -54,7 +54,7 @@ export const getAlumnos = async () => {
 export const verificarAsistenciaPorRut = async (rut) => {
   const alumnos = await getAlumnos();
   const encontrado = alumnos.find(alumno => alumno.rut === rut);
-  return encontrado?.presente === true; // devuelve true si ya marcó asistencia
+  return encontrado?.presente === true; 
 };
 
 

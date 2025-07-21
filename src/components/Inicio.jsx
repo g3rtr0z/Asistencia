@@ -13,7 +13,7 @@ const Inicio = () => {
   let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
 
   // Limitar a máximo 9 dígitos + 1 verificador
-  clean = clean.slice(0, 10);
+  clean = clean.slice(0, 9);
 
   return clean;
 };
