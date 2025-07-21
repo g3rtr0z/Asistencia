@@ -51,8 +51,6 @@ export const getAlumnos = async () => {
   }
 };
 
-//validacion de rut
-
 export const verificarAsistenciaPorRut = async (rut) => {
   const alumnos = await getAlumnos();
   const encontrado = alumnos.find(alumno => alumno.rut === rut);
