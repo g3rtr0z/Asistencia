@@ -46,9 +46,9 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
   };
 
   return (
-    <div className=" flex flex-col items-center justify-center sm:justify-start bg-white sm:py-12">
+    <div className=" flex flex-col items-center justify-center sm:justify-start bg-white sm:py-2">
       <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-        <div className="text-center mb-8">
+        <div className="text-center mb-5">
           <img
             src={Logo}
             alt="Logo"
