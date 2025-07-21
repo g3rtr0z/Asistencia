@@ -1,22 +1,19 @@
 import React, { useState } from "react";
-import Logo from '../assets/logo3.png'
+import Logo from '../assets/logo3.png';
 
 const Inicio = ({ onLogin }) => {
   const [rut, setRut] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [ingresados, setIngresados] = useState([]); // 👈 NUEVO ESTADO
 
   const formatRut = (value) => {
-    // Eliminar todo excepto números y K/k
     let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
-    // Limitar a máximo 10 caracteres (9 números + 1 dígito verificador)
     clean = clean.slice(0, 10);
     if (clean.length === 0) return '';
-    // Separar dígito verificador
     let dv = clean.slice(-1);
     let num = clean.slice(0, -1);
-    // Formatear con puntos
     let formatted = '';
     let i = 0;
     for (let j = num.length - 1; j >= 0; j--) {
@@ -36,17 +33,28 @@ const Inicio = ({ onLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!rut.trim()) {
+    const rutTrimmed = rut.trim();
+
+    if (!rutTrimmed) {
       setError("Por favor ingresa tu RUT");
       return;
     }
+
+    if (ingresados.includes(rutTrimmed)) {
+      setError("Este RUT ya fue ingresado anteriormente.");
+      setResult(null);
+      return;
+    }
+
     setError("");
     setLoading(true);
     setResult(null);
+
     try {
-      const res = await onLogin(rut.trim());
+      const res = await onLogin(rutTrimmed);
       if (res && res.nombre) {
         setResult(res);
+        setIngresados(prev => [...prev, rutTrimmed]); // 👈 Se agrega a la lista
       }
     } catch (error) {
       setError("Error al procesar el login");
