@@ -55,6 +55,10 @@ function App() {
   const [showDelete, setShowDelete] = useState(false);
   const [errorVisual, setErrorVisual] = useState("");
   const [showAlumnosModal, setShowAlumnosModal] = useState(false);
+  // Filtros para el modal de alumnos
+  const [filtroCarrera, setFiltroCarrera] = useState("");
+  const [filtroInstitucion, setFiltroInstitucion] = useState("");
+  const [filtroRUT, setFiltroRUT] = useState("");
 
   // Filtrado para la vista de admin (memorizado)
   const alumnosFiltrados = useMemo(() => {
@@ -65,6 +69,15 @@ function App() {
     }
     return alumnos;
   }, [alumnos, filtroEstado]);
+
+  // Filtrado para el modal de alumnos (Inicio)
+  const alumnosFiltradosModal = useMemo(() => {
+    return alumnos.filter(alumno =>
+      (filtroCarrera === "" || alumno.carrera === filtroCarrera) &&
+      (filtroInstitucion === "" || alumno.institucion === filtroInstitucion) &&
+      (filtroRUT === "" || alumno.rut.includes(filtroRUT))
+    );
+  }, [alumnos, filtroCarrera, filtroInstitucion, filtroRUT]);
 
   // Login de alumno
   const handleLogin = async (rut) => {
@@ -99,7 +112,7 @@ function App() {
   // Ocultar errorVisual después de 1 segundo
   React.useEffect(() => {
     if (errorVisual) {
-      const timeout = setTimeout(() => setErrorVisual("") , 2000);
+      const timeout = setTimeout(() => setErrorVisual(""), 2000);
       return () => clearTimeout(timeout);
     }
   }, [errorVisual]);
@@ -149,18 +162,26 @@ function App() {
             >×</button>
             <h2 className="text-xl font-bold mb-4 text-green-800">Lista de Alumnos</h2>
             {/* Estadísticas arriba de la lista */}
-            <EstadisticasPanel alumnos={alumnos} />
-            <AlumnosLista alumnos={alumnos} />
+            <EstadisticasPanel alumnos={alumnosFiltradosModal} />
+            <AlumnosLista
+              alumnos={alumnos}
+              filtroCarrera={filtroCarrera}
+              setFiltroCarrera={setFiltroCarrera}
+              filtroInstitucion={filtroInstitucion}
+              setFiltroInstitucion={setFiltroInstitucion}
+              filtroRUT={filtroRUT}
+              setFiltroRUT={setFiltroRUT}
+            />
           </div>
         </div>
       )}
       {/* Alerta de errorVisual en la esquina superior izquierda */}
       {errorVisual && (
-        <div className="fixed top-6 left-6 z-50 flex items-center bg-white border border-red-200 rounded-lg py-3 px-5 shadow-xl space-x-3 animate-fade-in">
-          <svg className="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="fixed top-6 left-2 sm:top-6 sm:left-6 sm:max-w-md z-50 flex items-center bg-white border border-red-200 rounded-lg py-2 px-3 sm:py-3 sm:px-5 shadow-xl space-x-2 sm:space-x-3 animate-fade-in">
+          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span className="text-red-700 text-base font-semibold">{errorVisual}</span>
+          <span className="text-red-700 text-xs sm:text-base font-semibold leading-tight">{errorVisual}</span>
         </div>
       )}
       <main className="flex-1 flex flex-col items-center justify-center w-full px-2 py-4">

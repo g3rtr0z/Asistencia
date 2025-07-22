@@ -11,10 +11,19 @@ function getInstitucionLabel(value) {
   return found ? found.label : value;
 }
 
-const AlumnosLista = ({ alumnos = [], soloPresentes = false }) => {
-  const [filtroCarrera, setFiltroCarrera] = useState("");
-  const [filtroRUT, setFiltroRUT] = useState("");
-  const [filtroInstitucion, setFiltroInstitucion] = useState("");
+// Recibe los filtros y setters como props (opcional)
+const AlumnosLista = ({ alumnos = [], soloPresentes = false, filtroCarrera, setFiltroCarrera, filtroInstitucion, setFiltroInstitucion, filtroRUT, setFiltroRUT }) => {
+  // Si no vienen por props, usar estado local (para compatibilidad con admin)
+  const [localCarrera, setLocalCarrera] = useState("");
+  const [localRUT, setLocalRUT] = useState("");
+  const [localInstitucion, setLocalInstitucion] = useState("");
+
+  const carrera = filtroCarrera !== undefined ? filtroCarrera : localCarrera;
+  const setCarrera = setFiltroCarrera || setLocalCarrera;
+  const institucion = filtroInstitucion !== undefined ? filtroInstitucion : localInstitucion;
+  const setInstitucion = setFiltroInstitucion || setLocalInstitucion;
+  const rut = filtroRUT !== undefined ? filtroRUT : localRUT;
+  const setRUT = setFiltroRUT || setLocalRUT;
 
   // Generar opciones dinámicamente desde los datos
 
@@ -41,9 +50,9 @@ const AlumnosLista = ({ alumnos = [], soloPresentes = false }) => {
 
   const alumnosFiltrados = alumnos.filter(alumno =>
     (!soloPresentes || alumno.presente) &&
-    (filtroCarrera === "" || alumno.carrera === filtroCarrera) &&
-    (filtroRUT === "" || alumno.rut.includes(filtroRUT)) &&
-    (filtroInstitucion === "" || alumno.institucion === filtroInstitucion)
+    (carrera === "" || alumno.carrera === carrera) &&
+    (rut === "" || alumno.rut.startsWith(rut)) &&
+    (institucion === "" || alumno.institucion === institucion)
   );
 
   return (
@@ -52,8 +61,8 @@ const AlumnosLista = ({ alumnos = [], soloPresentes = false }) => {
       <div className="flex flex-col sm:flex-row gap-2 mb-4 w-full max-w-4xl items-center justify-center">
         <select
           className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-          value={filtroCarrera}
-          onChange={e => setFiltroCarrera(e.target.value)}
+          value={carrera}
+          onChange={e => setCarrera(e.target.value)}
         >
           <option value="">Todas las carreras</option>
           {Object.entries(carrerasPorInstitucion).map(([institucion, carreras]) => (
@@ -66,8 +75,8 @@ const AlumnosLista = ({ alumnos = [], soloPresentes = false }) => {
         </select>
         <select
           className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-          value={filtroInstitucion}
-          onChange={e => setFiltroInstitucion(e.target.value)}
+          value={institucion}
+          onChange={e => setInstitucion(e.target.value)}
         >
           <option value="">Todas las instituciones</option>
           {opcionesInstituciones.map(inst => (
@@ -78,14 +87,14 @@ const AlumnosLista = ({ alumnos = [], soloPresentes = false }) => {
           type="text"
           placeholder="Buscar por RUT"
           className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-          value={filtroRUT}
-          onChange={e => setFiltroRUT(e.target.value)}
+          value={rut}
+          onChange={e => setRUT(e.target.value)}
         />
         <button
           onClick={() => {
-            setFiltroCarrera("");
-            setFiltroInstitucion("");
-            setFiltroRUT("");
+            setCarrera("");
+            setInstitucion("");
+            setRUT("");
           }}
           className="px-4 py-2 bg-gray-100 text-gray-700 rounded border border-gray-300 text-sm font-medium hover:bg-gray-200 transition"
         >
