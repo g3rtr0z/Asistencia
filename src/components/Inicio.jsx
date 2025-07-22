@@ -48,16 +48,15 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
   return (
     <div className=" flex flex-col items-center justify-center sm:justify-start bg-white sm:py-2">
       <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-        <div className="text-center mb-5">
+        <div className="text-center mb-8">
           <img
             src={Logo}
             alt="Logo"
             className="mx-auto mb-2 w-20 h-20 object-contain z-50"
           />
           <h1 className="text-2xl sm:text-3xl font-bold text-green-800 mb-2">Mi Asistencia</h1>
-          <p className="text-gray-600 text-sm sm:text-base">Ingresa un RUT</p>
         </div>
-        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-xl p-4 sm:p-6 mb-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -69,7 +68,7 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
                   value={rut}
                   onChange={e => setRut(formatRut(e.target.value))}
                   onKeyPress={handleKeyPress}
-                  placeholder="123456789"
+                  placeholder="Ingresa tu RUT"
                   maxLength={13}
                   className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm sm:text-base"
                 />
