@@ -5,7 +5,7 @@ import { buscarAlumnoPorRut } from '../services/alumnosService';
 const Inicio = ({ onLogin, setErrorVisual }) => {
   const [rut, setRut] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(null); // { data: alumno, rut: string }
 
   const formatRut = (value) => {
     let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
@@ -30,7 +30,7 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
       }
       const res = await onLogin(rut.trim());
       if (res && res.nombre) {
-        setResult(res);
+        setResult({ data: res, rut });
       }
     } catch (error) {
       setErrorVisual("Error al procesar el login");
@@ -120,19 +120,19 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">RUT:</span>
-                <span className="text-gray-800">{rut}</span>
+                <span className="text-gray-800">{result.rut}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">Nombre: </span>
-                <span className="text-gray-800 font-semibold">{result.nombre}</span>
+                <span className="text-gray-800 font-semibold">{result.data.nombre}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">Carrera:</span>
-                <span className="text-gray-800">{result.carrera}</span>
+                <span className="text-gray-800">{result.data.carrera}</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-600 font-medium">Institución:</span>
-                <span className="text-gray-800 font-semibold">{result.institucion}</span>
+                <span className="text-gray-800 font-semibold">{result.data.institucion}</span>
               </div>
             </div>
           </div>

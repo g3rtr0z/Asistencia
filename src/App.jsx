@@ -5,6 +5,7 @@ import useAlumnos from './hooks/useAlumnos';
 import { actualizarPresencia } from './services/alumnosService';
 import AdminButton from './components/AdminButton';
 import AlumnosLista from './components/AlumnosLista';
+import EstadisticasPanel from './components/EstadisticasPanel';
 
 // Loader
 function Loader() {
@@ -95,10 +96,10 @@ function App() {
     return () => clearTimeout(timeout);
   }, [showConfirm]);
 
-  // Ocultar errorVisual después de 2 segundos
+  // Ocultar errorVisual después de 1 segundo
   React.useEffect(() => {
     if (errorVisual) {
-      const timeout = setTimeout(() => setErrorVisual(""), 2000);
+      const timeout = setTimeout(() => setErrorVisual("") , 2000);
       return () => clearTimeout(timeout);
     }
   }, [errorVisual]);
@@ -140,15 +141,26 @@ function App() {
       {/* Modal de AlumnosLista */}
       {showAlumnosModal && (
         <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-3xl w-full relative">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-5xl w-full relative" style={{ maxHeight: '95vh', overflow: 'auto' }}>
             <button
               onClick={() => setShowAlumnosModal(false)}
               className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600"
               title="Cerrar"
             >×</button>
             <h2 className="text-xl font-bold mb-4 text-green-800">Lista de Alumnos</h2>
+            {/* Estadísticas arriba de la lista */}
+            <EstadisticasPanel alumnos={alumnos} />
             <AlumnosLista alumnos={alumnos} />
           </div>
+        </div>
+      )}
+      {/* Alerta de errorVisual en la esquina superior izquierda */}
+      {errorVisual && (
+        <div className="fixed top-6 left-6 z-50 flex items-center bg-white border border-red-200 rounded-lg py-3 px-5 shadow-xl space-x-3 animate-fade-in">
+          <svg className="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-red-700 text-base font-semibold">{errorVisual}</span>
         </div>
       )}
       <main className="flex-1 flex flex-col items-center justify-center w-full px-2 py-4">
@@ -174,14 +186,6 @@ function App() {
             <div className="animate-fade-in-scale w-full flex flex-col items-center justify-center">
               {/* Mensaje de error visual */}
               <Inicio onLogin={handleLogin} setErrorVisual={setErrorVisual} />
-              {errorVisual && (
-                <div className="bg-red-50 border border-red-200 rounded-lg py-2 px-4 mb-2 mt-4 sm:mt-8 flex items-center space-x-2 text-base">
-                  <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-red-700">{errorVisual}</span>
-                </div>
-              )}
               <div className="text-center text-gray-500 text-xs sm:text-sm mt-2 mb-1">
                 <p>Versión 1.0</p>
               </div>
