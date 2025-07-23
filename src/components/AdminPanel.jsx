@@ -5,8 +5,7 @@ import DeleteCollection from './admin/DeleteCollection';
 import AlumnosLista from './AlumnosLista';
 import AdminLogin from './AdminLogin';
 import EstadisticasPanel from './EstadisticasPanel';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+import {exportarAExcel} from '../components/admin/exportarAExcel'
 
 function ConfigMenuPortal({ show, onImport, onDelete, onExport, onClose }) {
   if (!show) return null;
@@ -37,44 +36,19 @@ function ModalPanel({ show, onClose, children }) {
 function AdminPanel({
   alumnos,
   onSalir,
-  onImportComplete,
-  onDeleteComplete,
   filtroEstado,
   setFiltroEstado,
-  showImport,
-  setShowImport,
-  showDelete,
-  setShowDelete,
   alumnosFiltrados,
   totalAlumnos
 }) {
   const [adminAuth, setAdminAuth] = useState(false);
   const [tab, setTab] = useState('panel');
   const [showConfig, setShowConfig] = useState(false);
-  const [modal, setModal] = useState(null); // 'import' | 'delete' | null
+  const [modal, setModal] = useState(null);
 
   if (!adminAuth) {
     return <AdminLogin onAuth={() => setAdminAuth(true)} onSalir={onSalir} />;
   }
-
-  const exportarAExcel = (alumnos) => {
-    // Mapeo para mostrar "Presente" o "Ausente" y ordenar las columnas
-    const alumnosFormateados = alumnos.map(({ id, nombre, rut, carrera, institucion, presente }) => ({
-      "Nombre Completo": nombre,
-      "RUT": rut,
-      "Carrera": carrera,
-      "Institución": institucion,
-      "Estado": presente ? "Presente" : "Ausente"
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(alumnosFormateados);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Alumnos');
-
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(data, 'AlumnosPresentes.xlsx');
-  };
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col relative" id="admin-panel-root">
@@ -111,30 +85,18 @@ function AdminPanel({
           className={`flex-1 py-3 text-lg font-semibold transition border-b-2 ${tab === 'panel' ? 'border-green-600 text-green-700 bg-green-50' : 'border-transparent text-gray-400 hover:text-green-600 bg-white'}`}
           onClick={() => setTab('panel')}
         >Panel</button>
-        <button
-          className={`flex-1 py-3 text-lg font-semibold transition border-b-2 ${tab === 'estadisticas' ? 'border-green-600 text-green-700 bg-green-50' : 'border-transparent text-gray-400 hover:text-green-600 bg-white'}`}
-          onClick={() => setTab('estadisticas')}
-        >Estadísticas</button>
       </div>
+      
       {/* Contenido de pestañas */}
       <div className="flex-1 w-full max-w-7xl mx-auto px-2 sm:px-6 md:px-10 py-6">
+      <EstadisticasPanel alumnos={alumnos} />
         {tab === 'panel' && (
           <div className="w-full">
             {/* Filtros */}
-            <div className="flex flex-row gap-2 mb-6 w-full max-w-2xl mx-auto justify-center">
-              <button onClick={() => setFiltroEstado('todos')} className={`px-4 py-2 rounded border font-medium text-base transition ${filtroEstado==='todos' ? 'bg-green-600 text-white border-green-600' : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-green-50'}`}>Registrados</button>
-              <button onClick={() => setFiltroEstado('presentes')} className={`px-4 py-2 rounded border font-medium text-base transition ${filtroEstado==='presentes' ? 'bg-green-600 text-white border-green-600' : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-green-50'}`}>Presentes</button>
-              <button onClick={() => setFiltroEstado('ausentes')} className={`px-4 py-2 rounded border font-medium text-base transition ${filtroEstado==='ausentes' ? 'bg-green-600 text-white border-green-600' : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-green-50'}`}>Ausentes</button>
-            </div>
             {/* Lista de alumnos */}
             <div className="w-full flex justify-center">
               <AlumnosLista alumnos={alumnosFiltrados} soloPresentes={false} />
             </div>
-          </div>
-        )}
-        {tab === 'estadisticas' && (
-          <div className="w-full flex flex-col items-center">
-            <EstadisticasPanel alumnos={alumnos} />
           </div>
         )}
       </div>
