@@ -53,9 +53,9 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
   };
 
   return (
-    <div className=" flex flex-col items-center justify-center sm:justify-start bg-white sm:py-2">
+    <div className="flex flex-col sm:flex-row items-start justify-center bg-white sm:py-10 sm:gap-x-8">
       <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-        <div className="text-center mb-8">
+        <div className="text-center mb-5">
           <img
             src={Logo}
             alt="Logo"
@@ -63,7 +63,7 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
           />
           <h1 className="text-2xl sm:text-3xl font-bold text-green-800 mb-2">Mi Asistencia</h1>
         </div>
-        <div className="bg-white rounded-xl shadow-xl p-4 sm:p-6 mb-6">
+        <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-xl p-4 sm:p-6 mb-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -78,7 +78,7 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
                   onKeyPress={handleKeyPress}
                   placeholder="Ingresa tu RUT"
                   maxLength={13}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm sm:text-base"
+                  className="w-full  min-w-[300px] px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm sm:text-base"
                 />
                 <div className="absolute right-3 top-3">
                   {rut && rut.length >= 10 && (
@@ -125,19 +125,19 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
               <h2 className="text-lg sm:text-xl font-semibold text-green-800">Asistencia Realizada</h2>
             </div>
             <div className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <div className="flex justify-between items-center py-2 border-b border-gray-100 gap-x-6">
                 <span className="text-gray-600 font-medium">RUT:</span>
                 <span className="text-gray-800">{result.rut}</span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-600 font-medium">Nombre: </span>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100 gap-x-6">
+                <span className="text-gray-600 font-medium">Nombre:</span>
                 <span className="text-gray-800 font-semibold">{result.data.nombre}</span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <div className="flex justify-between items-center py-2 border-b border-gray-100 gap-x-6">
                 <span className="text-gray-600 font-medium">Carrera:</span>
                 <span className="text-gray-800">{result.data.carrera}</span>
               </div>
-              <div className="flex justify-between items-center py-2">
+              <div className="flex justify-between items-center py-2 gap-x-6">
                 <span className="text-gray-600 font-medium">Institución:</span>
                 <span className="text-gray-800 font-semibold">{result.data.institucion}</span>
               </div>
@@ -149,4 +149,4 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
   );
 };
 
-export default Inicio; 
+export default Inicio;

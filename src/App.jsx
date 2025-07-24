@@ -233,7 +233,7 @@ function App() {
           ) : (
             <div className="animate-fade-in-scale w-full flex flex-col items-center justify-center">
               {/* Mensaje de error visual */}
-              <Inicio onLogin={handleLogin} setErrorVisual={setErrorVisual} />
+              <Inicio className="w-full"onLogin={handleLogin} setErrorVisual={setErrorVisual} />
               <div className="text-center text-gray-500 text-xs sm:text-sm mt-2 mb-2">
                 <p>Versión 1.0</p>
               </div>
