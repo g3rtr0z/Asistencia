@@ -1,5 +1,5 @@
 import React from 'react';
-import { exportarAExcel } from './exportarExcel';
+import { exportarAExcel } from './exportarAExcel';
 
 const ExportarExcelButton = ({ alumnos }) => (
   <button

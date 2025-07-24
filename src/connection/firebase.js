@@ -13,16 +13,9 @@ const firebaseConfig = {
   measurementId: "G-0E78V5SLTW"
 };
 
-// Inicializar Firebase
-console.log('Configuración de Firebase:', firebaseConfig);
-
 const app = initializeApp(firebaseConfig);
-
 // Obtener instancia de Firestore
 export const db = getFirestore(app);
 // Obtener instancia de Auth
 export const auth = getAuth(app);
-
-console.log('Firebase inicializado correctamente');
-
 export default app;

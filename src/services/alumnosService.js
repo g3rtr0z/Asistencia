@@ -1,34 +1,17 @@
-import { 
-  collection, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
   deleteDoc,
-  doc, 
-  query, 
+  doc,
+  query,
   where,
-  onSnapshot 
+  onSnapshot
 } from 'firebase/firestore';
 import { db } from '../connection/firebase.js';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
 
-const COLLECTION_NAME = 'alumnos';
-
-// Función para probar la conexión a Firebase
-export const testFirebaseConnection = async () => {
-  try {
-    console.log('Probando conexión a Firebase...');
-    const testQuery = await getDocs(collection(db, COLLECTION_NAME));
-    console.log('Conexión exitosa. Documentos encontrados:', testQuery.size);
-    return true;
-  } catch (error) {
-    console.error('Error en la conexión a Firebase:', error);
-    return false;
-  }
-};
-
-// Obtener todos los alumnos
+const COLLECTION_NAME = 'alumnos'
 export const getAlumnos = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
@@ -61,12 +44,12 @@ export const verificarAsistenciaPorRut = async (rut) => {
 // Escuchar cambios en tiempo real
 export const subscribeToAlumnos = (callback, errorCallback) => {
   try {
-    
+
     // Verificar que db esté inicializado
     if (!db) {
       throw new Error('Firestore no está inicializado');
     }
-    
+
     const unsubscribe = onSnapshot(collection(db, COLLECTION_NAME), (querySnapshot) => {
       const alumnos = [];
       querySnapshot.forEach((doc) => {
@@ -88,11 +71,8 @@ export const subscribeToAlumnos = (callback, errorCallback) => {
       console.error('Detalles del error:', error);
       if (errorCallback) errorCallback(error);
     });
-    
-    console.log('Suscripción creada exitosamente');
     return unsubscribe;
   } catch (error) {
-    console.error('Error al suscribirse a alumnos:', error);
     if (errorCallback) errorCallback(error);
   }
 };
@@ -102,7 +82,7 @@ export const buscarAlumnoPorRut = async (rut) => {
   try {
     const q = query(collection(db, COLLECTION_NAME), where("RUT", "==", rut));
     const querySnapshot = await getDocs(q);
-    
+
     if (!querySnapshot.empty) {
       const doc = querySnapshot.docs[0];
       const data = doc.data();
@@ -158,7 +138,7 @@ export const borrarColeccionAlumnos = async () => {
   try {
     console.log('Iniciando borrado de colección...');
     const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
-    
+
     if (querySnapshot.empty) {
       console.log('La colección ya está vacía');
       return { success: true, deletedCount: 0 };
@@ -166,27 +146,11 @@ export const borrarColeccionAlumnos = async () => {
 
     const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
     await Promise.all(deletePromises);
-    
+
     console.log(`Colección borrada exitosamente. ${querySnapshot.size} documentos eliminados.`);
     return { success: true, deletedCount: querySnapshot.size };
   } catch (error) {
     console.error('Error al borrar la colección:', error);
     throw error;
   }
-}; 
-
-const exportarAExcel = (alumnos) => {
-  // Mapeo para mostrar "Presente" o "Ausente"
-  const datosFormateados = alumnos.map(alumno => ({
-    ...alumno,
-    presente: alumno.presente ? "Presente" : "Ausente"
-  }));
-
-  const worksheet = XLSX.utils.json_to_sheet(datosFormateados);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Alumnos');
-
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-  const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
-  saveAs(data, 'alumnos.xlsx');
-}; 
+};

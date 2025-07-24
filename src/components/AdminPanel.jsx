@@ -5,7 +5,7 @@ import DeleteCollection from './admin/DeleteCollection';
 import AlumnosLista from './AlumnosLista';
 import AdminLogin from './AdminLogin';
 import EstadisticasPanel from './EstadisticasPanel';
-import {exportarAExcel} from '../components/admin/exportarAExcel'
+import { exportarAExcel } from '../components/admin/exportarAExcel'
 
 function ConfigMenuPortal({ show, onImport, onDelete, onExport, onClose }) {
   if (!show) return null;
@@ -20,6 +20,7 @@ function ConfigMenuPortal({ show, onImport, onDelete, onExport, onClose }) {
   );
 }
 
+{/* Cerrar tab */ }
 function ModalPanel({ show, onClose, children }) {
   if (!show) return null;
   return ReactDOM.createPortal(
@@ -36,11 +37,9 @@ function ModalPanel({ show, onClose, children }) {
 function AdminPanel({
   alumnos,
   onSalir,
-  filtroEstado,
-  setFiltroEstado,
-  alumnosFiltrados,
   totalAlumnos
 }) {
+  const [soloPresentes, setSoloPresentes] = useState("");
   const [adminAuth, setAdminAuth] = useState(false);
   const [tab, setTab] = useState('panel');
   const [showConfig, setShowConfig] = useState(false);
@@ -86,16 +85,14 @@ function AdminPanel({
           onClick={() => setTab('panel')}
         >Panel</button>
       </div>
-      
+
       {/* Contenido de pestañas */}
       <div className="flex-1 w-full max-w-7xl mx-auto px-2 sm:px-6 md:px-10 py-6">
-      <EstadisticasPanel alumnos={alumnos} />
+        <EstadisticasPanel alumnos={alumnos} soloPresentes={soloPresentes} setSoloPresentes={setSoloPresentes} />
         {tab === 'panel' && (
           <div className="w-full">
-            {/* Filtros */}
-            {/* Lista de alumnos */}
             <div className="w-full flex justify-center">
-              <AlumnosLista alumnos={alumnosFiltrados} soloPresentes={false} />
+              <AlumnosLista alumnos={alumnos} soloPresentes={soloPresentes} setSoloPresentes={setSoloPresentes} />
             </div>
           </div>
         )}

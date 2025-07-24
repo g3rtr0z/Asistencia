@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Logo from '../assets/logo3.png'
 import { buscarAlumnoPorRut } from '../services/alumnosService';
 
@@ -6,6 +6,7 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
   const [rut, setRut] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { data: alumno, rut: string }
+  const rutInputRef = useRef(null);
 
   const formatRut = (value) => {
     let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
@@ -15,6 +16,12 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setRut(''); // Limpia el campo RUT
+
+    // Vuelve a enfocar el input
+    if (rutInputRef.current) {
+      rutInputRef.current.focus();
+    }
     if (!rut.trim()) {
       setErrorVisual("Por favor ingresa tu RUT");
       return;
@@ -66,6 +73,7 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
                 <input
                   type="text"
                   value={rut}
+                  ref={rutInputRef}
                   onChange={e => setRut(formatRut(e.target.value))}
                   onKeyPress={handleKeyPress}
                   placeholder="Ingresa tu RUT"
@@ -107,7 +115,7 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
             </button>
           </form>
         </div>
-        {/* Results */}
+        {/* Resultados */}
         {result && (
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-12">
             <div className="flex items-center space-x-2 mb-4">

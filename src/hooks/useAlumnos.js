@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { subscribeToAlumnos, testFirebaseConnection, borrarColeccionAlumnos } from '../services/alumnosService';
+import { subscribeToAlumnos, borrarColeccionAlumnos } from '../services/alumnosService';
 
 export default function useAlumnos() {
   const [alumnos, setAlumnos] = useState([]);
@@ -12,13 +12,6 @@ export default function useAlumnos() {
     const loadData = async () => {
       setLoading(true);
       setError(null);
-      // Probar conexión primero
-      const isConnected = await testFirebaseConnection();
-      if (!isConnected) {
-        setError('No se puede conectar a Firebase. Verifica las reglas de Firestore.');
-        setLoading(false);
-        return;
-      }
       // Timeout para detectar si Firebase no responde
       timeoutId = setTimeout(() => {
         setError('Firebase no responde. Verifica la configuración.');
@@ -43,8 +36,6 @@ export default function useAlumnos() {
 
   // Refrescar datos después de importar
   const handleImportComplete = useCallback(() => {
-    // Los datos se actualizarán automáticamente gracias a onSnapshot
-    // Solo mostramos mensaje en consola
   }, []);
 
   // Borrar colección

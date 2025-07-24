@@ -59,6 +59,8 @@ function App() {
   const [filtroCarrera, setFiltroCarrera] = useState("");
   const [filtroInstitucion, setFiltroInstitucion] = useState("");
   const [filtroRUT, setFiltroRUT] = useState("");
+  const [soloPresentes, setSoloPresentes] = useState("");
+
 
   // Filtrado para la vista de admin (memorizado)
   const alumnosFiltrados = useMemo(() => {
@@ -93,7 +95,7 @@ function App() {
         setErrorVisual('RUT no encontrado en la base de datos.');
       }
     } catch (error) {
-      setErrorVisual('Error al procesar el login. Inténtalo de nuevo.');
+      setErrorVisual('Error al procesar el RUT. Inténtalo de nuevo.');
     }
   };
 
@@ -136,7 +138,7 @@ function App() {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Mostrar AdminButton e icono de información solo si NO está en el panel de administración */}
       {!admin && (
-        <div className="fixed top-4 right-4 z-50 flex flex-row items-center space-x-14">
+        <div className="fixed top-8 right-4 z-50 flex flex-row items-center space-x-14">
           {/* Icono de información */}
           <button
             className="bg-blue-600 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center"
@@ -154,7 +156,8 @@ function App() {
       {/* Modal de AlumnosLista */}
       {showAlumnosModal && (
         <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-5xl w-full relative" style={{ maxHeight: '95vh', overflow: 'auto' }}>
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-5xl w-full relative max-h-[95vh] overflow-auto">
+
             <button
               onClick={() => setShowAlumnosModal(false)}
               className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600"
@@ -162,26 +165,50 @@ function App() {
             >×</button>
             <h2 className="text-xl font-bold mb-4 text-green-800">Lista de Alumnos</h2>
             {/* Estadísticas arriba de la lista */}
-            <EstadisticasPanel alumnos={alumnosFiltradosModal} />
+            <EstadisticasPanel alumnos={alumnosFiltradosModal} soloPresentes={soloPresentes} setSoloPresentes={setSoloPresentes} />
             <AlumnosLista
               alumnos={alumnos}
+              soloPresentes={soloPresentes}
+              setSoloPresentes={setSoloPresentes}
               filtroCarrera={filtroCarrera}
               setFiltroCarrera={setFiltroCarrera}
               filtroInstitucion={filtroInstitucion}
               setFiltroInstitucion={setFiltroInstitucion}
-              filtroRUT={filtroRUT}
-              setFiltroRUT={setFiltroRUT}
+
             />
           </div>
         </div>
       )}
       {/* Alerta de errorVisual en la esquina superior izquierda */}
       {errorVisual && (
-        <div className="fixed top-6 left-2 sm:top-6 sm:left-6 sm:max-w-md z-50 flex items-center bg-white border border-red-200 rounded-lg py-2 px-3 sm:py-3 sm:px-5 shadow-xl space-x-2 sm:space-x-3 animate-fade-in">
-          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className="text-red-700 text-xs sm:text-base font-semibold leading-tight">{errorVisual}</span>
+
+        <div className="fixed top-6 left-2 sm:top-6 sm:left-6 sm:max-w-md z-50 flex items-center">
+
+          <div
+            role="alert"
+            className="border-s-4 border-red-700 bg-red-50 p-4 max-w-md mx-auto rounded-md shadow-md"
+          >
+            <div className="flex items-center gap-2 text-red-700">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                  clipRule="evenodd"
+                />
+              </svg>
+
+              <strong className="font-medium">Algo salió mal</strong>
+            </div>
+            <p className="mt-2 text-sm text-red-700">
+              {errorVisual}
+            </p>
+          </div>
+
         </div>
       )}
       <main className="flex-1 flex flex-col items-center justify-center w-full px-2 py-4">
@@ -214,9 +241,7 @@ function App() {
                 <p>Departamento de Informática -  Santo Tomas Temuco 2025</p>
                 <p>Todos los derechos reservados &copy;</p>
               </div>
-
             </div>
-
           )}
         </div>
       </main>

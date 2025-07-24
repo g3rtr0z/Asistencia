@@ -1,16 +1,43 @@
+/* 
+  Si te da error al importar la fuente con @import url(...) en Vite o un entorno moderno, 
+  prueba a importar la fuente en el archivo index.html dentro de la etiqueta <head> así:
+
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+  Luego, en tu CSS, puedes usar la fuente normalmente:
+  font-family: 'Roboto', sans-serif;
+
+  Si aún así quieres mantenerlo en el CSS y te da error, asegúrate de que la línea sea la primera del archivo,
+  antes de cualquier otra regla o importación de Tailwind. Ejemplo:
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
 
 @keyframes fade-in-scale {
-    0% {
-      opacity: 0;
-      transform: scale(1.2);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
+  0% {
+    opacity: 0;
+    transform: scale(1.2);
   }
-  
-  .animate-fade-in-scale {
-    animation: fade-in-scale 0.5s cubic-bezier(0.4,0,0.2,1);
-  } 
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 
+  Recuerda: Si usas Tailwind, puedes personalizar la fuente en tailwind.config.js para que 'font-sans' use Roboto.
+  Ejemplo:
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Roboto', 'ui-sans-serif', 'system-ui'],
+      },
+    },
+  }
+*/

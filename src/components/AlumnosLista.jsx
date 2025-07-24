@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { FaFilter } from "react-icons/fa";
 
 const INSTITUCIONES = [
   { value: "CFT", label: "Centro de Formación Técnica" },
@@ -12,18 +13,27 @@ function getInstitucionLabel(value) {
 }
 
 // Recibe los filtros y setters como props (opcional)
-const AlumnosLista = ({ alumnos = [], soloPresentes = false, filtroCarrera, setFiltroCarrera, filtroInstitucion, setFiltroInstitucion, filtroRUT, setFiltroRUT }) => {
+const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCarrera, setFiltroCarrera, filtroInstitucion, setFiltroInstitucion, filtroRUT, setFiltroRUT, setFiltroGrupo, filtroGrupo }) => {
   // Si no vienen por props, usar estado local (para compatibilidad con admin)
   const [localCarrera, setLocalCarrera] = useState("");
   const [localRUT, setLocalRUT] = useState("");
   const [localInstitucion, setLocalInstitucion] = useState("");
-
   const carrera = filtroCarrera !== undefined ? filtroCarrera : localCarrera;
   const setCarrera = setFiltroCarrera || setLocalCarrera;
   const institucion = filtroInstitucion !== undefined ? filtroInstitucion : localInstitucion;
   const setInstitucion = setFiltroInstitucion || setLocalInstitucion;
   const rut = filtroRUT !== undefined ? filtroRUT : localRUT;
   const setRUT = setFiltroRUT || setLocalRUT;
+  const [ordenAlfabetico, setOrdenAlfabetico] = useState("asc");
+  const [mostrarFiltros, setMostrarFiltros] = useState(false);
+  const grupo = filtroGrupo !== undefined ? filtroGrupo : "";
+  const setGrupo = setFiltroGrupo || (() => { });
+
+  const opcionesGrupos = useMemo(() => {
+    const grupos = [...new Set(alumnos.map(a => a.grupo).filter(Boolean))].sort();
+    return grupos;
+  }, [alumnos]);
+
 
   // Generar opciones dinámicamente desde los datos
 
@@ -49,57 +59,109 @@ const AlumnosLista = ({ alumnos = [], soloPresentes = false, filtroCarrera, setF
   }, [alumnos]);
 
   const alumnosFiltrados = alumnos.filter(alumno =>
-    (!soloPresentes || alumno.presente) &&
+    (
+      soloPresentes === "presentes" ? alumno.presente :
+        soloPresentes === "ausentes" ? !alumno.presente :
+          true
+    ) &&
     (carrera === "" || alumno.carrera === carrera) &&
     (rut === "" || alumno.rut.startsWith(rut)) &&
-    (institucion === "" || alumno.institucion === institucion)
+    (institucion === "" || alumno.institucion === institucion) &&
+    (grupo === "" || alumno.grupo === grupo)
   );
+
+  const alumnosOrdenados = [...alumnosFiltrados].sort((a, b) => {
+    if (ordenAlfabetico === "asc") {
+      return a.nombre.localeCompare(b.nombre);
+    } else {
+      return b.nombre.localeCompare(a.nombre);
+    }
+  });
 
   return (
     <div className="flex flex-col items-center w-full">
-      {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-4 w-full max-w-4xl items-center justify-center">
-        <select
-          className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-          value={carrera}
-          onChange={e => setCarrera(e.target.value)}
-        >
-          <option value="">Todas las carreras</option>
-          {Object.entries(carrerasPorInstitucion).map(([institucion, carreras]) => (
-            <optgroup key={institucion} label={getInstitucionLabel(institucion)}>
-              {carreras.map(carrera => (
-                <option key={carrera} value={carrera}>{carrera}</option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-        <select
-          className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-          value={institucion}
-          onChange={e => setInstitucion(e.target.value)}
-        >
-          <option value="">Todas las instituciones</option>
-          {opcionesInstituciones.map(inst => (
-            <option key={inst} value={inst}>{getInstitucionLabel(inst)}</option>
-          ))}
-        </select>
+
+      <div className="relative mb-4 w-full max-w-4xl flex justify-end gap-2">
         <input
           type="text"
           placeholder="Buscar por RUT"
-          className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+          className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-auto"
           value={rut}
           onChange={e => setRUT(e.target.value)}
         />
+        {/*Mostrar Filtros*/}
         <button
-          onClick={() => {
-            setCarrera("");
-            setInstitucion("");
-            setRUT("");
-          }}
-          className="px-4 py-2 bg-gray-100 text-gray-700 rounded border border-gray-300 text-sm font-medium hover:bg-gray-200 transition"
+          className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+          onClick={() => setMostrarFiltros(!mostrarFiltros)}
         >
-          Limpiar Filtros
+          <FaFilter />
+          Filtros
         </button>
+
+        {mostrarFiltros && (
+          <div className="absolute top-full right-0 mt-2 w-full sm:w-[600px] bg-white shadow-lg rounded border border-gray-200 z-50 p-4">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+              <select
+                className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-200 h-10"
+                value={grupo}
+                onChange={e => setGrupo(e.target.value)}
+              >
+                <option value="">Todos los grupos</option>
+                {opcionesGrupos.map(grupo => (
+                  <option key={grupo} value={grupo}>{grupo}</option>
+                ))}
+              </select>
+              {/*Filtrar por Carrera*/}
+              <select
+                className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-auto"
+                value={carrera}
+                onChange={e => setCarrera(e.target.value)}
+              >
+                <option value="">Todas las carreras</option>
+                {Object.entries(carrerasPorInstitucion).map(([institucion, carreras]) => (
+                  <optgroup key={institucion} label={getInstitucionLabel(institucion)}>
+                    {carreras.map(carrera => (
+                      <option key={carrera} value={carrera}>{carrera}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              {/*Filtrar por Institución*/}
+              <select
+                className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-auto"
+                value={institucion}
+                onChange={e => setInstitucion(e.target.value)}
+              >
+                <option value="">Todas las instituciones</option>
+                {opcionesInstituciones.map(inst => (
+                  <option key={inst} value={inst}>{getInstitucionLabel(inst)}</option>
+                ))}
+              </select>
+              {/* Orden Alfabetico */}
+              <select
+                className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-auto"
+                value={ordenAlfabetico}
+                onChange={e => setOrdenAlfabetico(e.target.value)}
+              >
+                <option value="asc">Nombre A - Z</option>
+                <option value="desc">Nombre Z - A</option>
+              </select>
+              {/* Limpiar Filtros*/}
+              <button
+                onClick={() => {
+                  setCarrera("");
+                  setInstitucion("");
+                  setRUT("");
+                  setGrupo("")
+                  if (setSoloPresentes) setSoloPresentes("");
+                }}
+                className="px-3 py-2 bg-gray-100 text-gray-700 rounded border border-gray-300 text-sm hover:bg-gray-200 transition w-full sm:w-auto"
+              >
+                Limpiar Filtros
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       {/* Tabla */}
       <div className="w-full flex justify-center">
@@ -120,7 +182,7 @@ const AlumnosLista = ({ alumnos = [], soloPresentes = false, filtroCarrera, setF
                   <td colSpan={5} className="py-8 text-center text-gray-500">No hay alumnos para mostrar</td>
                 </tr>
               )}
-              {alumnosFiltrados.map((alumno, idx) => (
+              {alumnosOrdenados.map((alumno, idx) => (
                 <tr
                   key={alumno.rut}
                   className={

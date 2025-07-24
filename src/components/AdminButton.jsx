@@ -3,7 +3,7 @@ import React from 'react';
 function AdminButton({ onClick }) {
   return (
     <button
-      className="fixed top-4 right-4 z-50 bg-green-800 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-400 flex items-center justify-center"
+      className="fixed top-8 right-4 z-50 bg-green-800 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-400 flex items-center justify-center"
       title="Entrar como Administrador"
       onClick={onClick}
       style={{ transition: 'background 0.2s' }}
