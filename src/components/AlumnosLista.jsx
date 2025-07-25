@@ -125,7 +125,7 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
           onChange={e => setRUT(e.target.value)}
         />
         <select
-          className="border border-gray-300 rounded px-3 py-2 text-sm w-40"
+          className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-40 min-w-[120px] max-w-xs"
           value={carrera}
           onChange={e => setCarrera(e.target.value)}
         >
@@ -139,7 +139,7 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
           ))}
         </select>
         <select
-          className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-auto"
+          className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-40 min-w-[120px] max-w-xs"
           value={institucion}
           onChange={e => setInstitucion(e.target.value)}
         >
@@ -149,7 +149,7 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
           ))}
         </select>
         <select
-          className="border border-gray-300 rounded px-3 py-2 text-sm w-32"
+          className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-32 min-w-[120px] max-w-xs"
           value={grupo}
           onChange={e => setGrupo(e.target.value)}
         >
