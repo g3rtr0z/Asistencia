@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../connection/firebase.js';
 
-const COLLECTION_NAME = 'alumnos'
+const COLLECTION_NAME = 'hola'
 export const getAlumnos = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
@@ -20,11 +20,15 @@ export const getAlumnos = async () => {
       const data = doc.data();
       alumnos.push({
         id: doc.id,
-        nombre: data["Nombre Completo"],
+        nombres: data["Nombres"] ?? null,
+        apellidos: data["Apellidos"] ?? null,
+        nombre: data["Nombre Completo"] ?? ((data["Nombres"] && data["Apellidos"]) ? `${data["Nombres"]} ${data["Apellidos"]}` : null),
         rut: data["RUT"],
         carrera: data["Carrera"],
         institucion: data["Institución"],
-        presente: Boolean(data.presente) // Convertir a booleano explícitamente
+        presente: Boolean(data.presente), // Convertir a booleano explícitamente
+        asiento: data["asiento"] ?? null,
+        grupo: data["grupo"] ?? null
       });
     });
     return alumnos;
@@ -56,11 +60,15 @@ export const subscribeToAlumnos = (callback, errorCallback) => {
         const data = doc.data();
         alumnos.push({
           id: doc.id,
-          nombre: data["Nombre Completo"],
+          nombres: data["Nombres"] ?? null,
+          apellidos: data["Apellidos"] ?? null,
+          nombre: data["Nombre Completo"] ?? ((data["Nombres"] && data["Apellidos"]) ? `${data["Nombres"]} ${data["Apellidos"]}` : null),
           rut: data["RUT"],
           carrera: data["Carrera"],
           institucion: data["Institución"],
-          presente: Boolean(data.presente) // Convertir a booleano explícitamente
+          presente: Boolean(data.presente), // Convertir a booleano explícitamente
+          asiento: data["asiento"] ?? null,
+          grupo: data["grupo"] ?? null
         });
       });
       callback(alumnos);
@@ -88,11 +96,15 @@ export const buscarAlumnoPorRut = async (rut) => {
       const data = doc.data();
       return {
         id: doc.id,
-        nombre: data["Nombre Completo"],
+        nombres: data["Nombres"] ?? null,
+        apellidos: data["Apellidos"] ?? null,
+        nombre: data["Nombre Completo"] ?? ((data["Nombres"] && data["Apellidos"]) ? `${data["Nombres"]} ${data["Apellidos"]}` : null),
         rut: data["RUT"],
         carrera: data["Carrera"],
         institucion: data["Institución"],
-        presente: Boolean(data.presente) // Convertir a booleano explícitamente
+        presente: Boolean(data.presente), // Convertir a booleano explícitamente
+        asiento: data["asiento"] ?? null,
+        grupo: data["grupo"] ?? null
       };
     }
     return null;
@@ -106,11 +118,15 @@ export const buscarAlumnoPorRut = async (rut) => {
 export const agregarAlumno = async (alumno) => {
   try {
     const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+      "Nombres": alumno.nombres ?? null,
+      "Apellidos": alumno.apellidos ?? null,
       "Nombre Completo": alumno.nombre,
       "RUT": alumno.rut,
       "Carrera": alumno.carrera,
       "Institución": alumno.institucion,
-      presente: false
+      presente: false,
+      asiento: alumno.asiento ?? null,
+      grupo: alumno.grupo ?? null
     });
     return docRef.id;
   } catch (error) {

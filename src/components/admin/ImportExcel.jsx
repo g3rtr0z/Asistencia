@@ -24,16 +24,31 @@ function ImportExcel({ onImportComplete }) {
       let errorCount = 0;
       for (const alumno of jsonData) {
         try {
-          if (!alumno["Nombre Completo"] || !alumno["RUT"] || !alumno["Carrera"] || !alumno["Institución"]) {
+          const nombres = alumno["Nombres"] ?? null;
+          const apellidos = alumno["Apellidos"] ?? null;
+          let nombreCompleto = alumno["Nombre Completo"] ?? null;
+          // Si no hay nombre completo pero sí nombres y apellidos, lo armo solo para compatibilidad
+          if (!nombreCompleto && nombres && apellidos) {
+            nombreCompleto = `${nombres} ${apellidos}`;
+          }
+          if (!(nombres && apellidos) && !nombreCompleto) {
+            errorCount++;
+            continue;
+          }
+          if (!alumno["RUT"] || !alumno["Carrera"] || !alumno["Institución"]) {
             errorCount++;
             continue;
           }
           // Guardar el RUT tal como viene (sin puntos ni guión)
           await agregarAlumno({
-            nombre: alumno["Nombre Completo"],
+            nombres,
+            apellidos,
+            nombre: nombreCompleto,
             rut: String(alumno["RUT"]),
             carrera: alumno["Carrera"],
-            institucion: alumno["Institución"]
+            institucion: alumno["Institución"],
+            asiento: alumno["asiento"] ?? alumno["Asiento"] ?? null,
+            grupo: alumno["grupo"] ?? alumno["Grupo"] ?? null
           });
           successCount++;
         } catch (error) {

@@ -25,9 +25,20 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
   const rut = filtroRUT !== undefined ? filtroRUT : localRUT;
   const setRUT = setFiltroRUT || setLocalRUT;
   const [ordenAlfabetico, setOrdenAlfabetico] = useState("asc");
+  const [ordenCampo, setOrdenCampo] = useState("nombre"); // 'nombre' o 'apellidos'
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
-  const grupo = filtroGrupo !== undefined ? filtroGrupo : "";
-  const setGrupo = setFiltroGrupo || (() => { });
+  const [localGrupo, setLocalGrupo] = useState("");
+  const grupo = filtroGrupo !== undefined ? filtroGrupo : localGrupo;
+  const setGrupo = setFiltroGrupo || setLocalGrupo;
+
+  function handleOrdenarPor(campo) {
+    if (ordenCampo === campo) {
+      setOrdenAlfabetico(ordenAlfabetico === "asc" ? "desc" : "asc");
+    } else {
+      setOrdenCampo(campo);
+      setOrdenAlfabetico("asc");
+    }
+  }
 
   const opcionesGrupos = useMemo(() => {
     const grupos = [...new Set(alumnos.map(a => a.grupo).filter(Boolean))].sort();
@@ -58,7 +69,23 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
     return grupos;
   }, [alumnos]);
 
-  const alumnosFiltrados = alumnos.filter(alumno =>
+  // Obtener los grupos únicos presentes en los alumnos
+  const gruposUnicos = useMemo(() => {
+    const set = new Set();
+    alumnos.forEach(a => {
+      if (a.grupo) set.add(a.grupo);
+    });
+    return Array.from(set).sort((a, b) => a - b);
+  }, [alumnos]);
+
+  // Método para filtrar por grupo
+  function filtrarPorGrupo(alumnos, grupo) {
+    if (!grupo) return alumnos;
+    const grupoNum = Number(grupo);
+    return alumnos.filter(alumno => Number(alumno.grupo) === grupoNum);
+  }
+
+  let alumnosFiltrados = alumnos.filter(alumno =>
     (
       soloPresentes === "presentes" ? alumno.presente :
         soloPresentes === "ausentes" ? !alumno.presente :
@@ -66,22 +93,30 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
     ) &&
     (carrera === "" || alumno.carrera === carrera) &&
     (rut === "" || alumno.rut.startsWith(rut)) &&
-    (institucion === "" || alumno.institucion === institucion) &&
-    (grupo === "" || alumno.grupo === grupo)
+    (institucion === "" || alumno.institucion === institucion)
   );
+  alumnosFiltrados = filtrarPorGrupo(alumnosFiltrados, grupo);
 
   const alumnosOrdenados = [...alumnosFiltrados].sort((a, b) => {
-    if (ordenAlfabetico === "asc") {
-      return a.nombre.localeCompare(b.nombre);
+    let campoA, campoB;
+    if (ordenCampo === "apellidos") {
+      campoA = (a.apellidos ?? (a.nombre ? a.nombre.split(' ').slice(1).join(' ') : '')).toLowerCase();
+      campoB = (b.apellidos ?? (b.nombre ? b.nombre.split(' ').slice(1).join(' ') : '')).toLowerCase();
     } else {
-      return b.nombre.localeCompare(a.nombre);
+      campoA = (a.nombres ?? a.nombre ?? '').toLowerCase();
+      campoB = (b.nombres ?? b.nombre ?? '').toLowerCase();
+    }
+    if (ordenAlfabetico === "asc") {
+      return campoA.localeCompare(campoB);
+    } else {
+      return campoB.localeCompare(campoA);
     }
   });
 
   return (
     <div className="flex flex-col items-center w-full">
 
-      <div className="relative mb-4 w-full max-w-4xl flex justify-end gap-2">
+      <div className="mb-4 w-full max-w-7xl flex flex-wrap gap-2 items-center justify-center">
         <input
           type="text"
           placeholder="Buscar por RUT"
@@ -89,87 +124,80 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
           value={rut}
           onChange={e => setRUT(e.target.value)}
         />
-        {/*Mostrar Filtros*/}
-        <button
-          className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-          onClick={() => setMostrarFiltros(!mostrarFiltros)}
+        <select
+          className="border border-gray-300 rounded px-3 py-2 text-sm w-40"
+          value={carrera}
+          onChange={e => setCarrera(e.target.value)}
         >
-          <FaFilter />
-          Filtros
+          <option value="">Todas las carreras</option>
+          {Object.entries(carrerasPorInstitucion).map(([institucion, carreras]) => (
+            <optgroup key={institucion} label={getInstitucionLabel(institucion)}>
+              {carreras.map(carrera => (
+                <option key={carrera} value={carrera}>{carrera}</option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+        <select
+          className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-auto"
+          value={institucion}
+          onChange={e => setInstitucion(e.target.value)}
+        >
+          <option value="">Todas las instituciones</option>
+          {opcionesInstituciones.map(inst => (
+            <option key={inst} value={inst}>{getInstitucionLabel(inst)}</option>
+          ))}
+        </select>
+        <select
+          className="border border-gray-300 rounded px-3 py-2 text-sm w-32"
+          value={grupo}
+          onChange={e => setGrupo(e.target.value)}
+        >
+          <option value="">Todos los grupos</option>
+          {gruposUnicos.map(gr => (
+            <option key={gr} value={gr}>{`Grupo ${gr}`}</option>
+          ))}
+        </select>
+        {/* El orden ahora se maneja haciendo click en los encabezados de Nombres y Apellidos */}
+        <button
+          onClick={() => {
+            setCarrera("");
+            setInstitucion("");
+            setRUT("");
+            setGrupo("")
+            if (setSoloPresentes) setSoloPresentes("");
+          }}
+          className="px-3 py-2 bg-gray-100 text-gray-700 rounded border border-gray-300 text-sm hover:bg-gray-200 transition w-full sm:w-auto"
+        >
+          Limpiar Filtros
         </button>
-
-        {mostrarFiltros && (
-          <div className="absolute top-full right-0 mt-2 w-full sm:w-[600px] bg-white shadow-lg rounded border border-gray-200 z-50 p-4">
-            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
-              <select
-                className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-200 h-10"
-                value={grupo}
-                onChange={e => setGrupo(e.target.value)}
-              >
-                <option value="">Todos los grupos</option>
-                {opcionesGrupos.map(grupo => (
-                  <option key={grupo} value={grupo}>{grupo}</option>
-                ))}
-              </select>
-              {/*Filtrar por Carrera*/}
-              <select
-                className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-auto"
-                value={carrera}
-                onChange={e => setCarrera(e.target.value)}
-              >
-                <option value="">Todas las carreras</option>
-                {Object.entries(carrerasPorInstitucion).map(([institucion, carreras]) => (
-                  <optgroup key={institucion} label={getInstitucionLabel(institucion)}>
-                    {carreras.map(carrera => (
-                      <option key={carrera} value={carrera}>{carrera}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-              {/*Filtrar por Institución*/}
-              <select
-                className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-auto"
-                value={institucion}
-                onChange={e => setInstitucion(e.target.value)}
-              >
-                <option value="">Todas las instituciones</option>
-                {opcionesInstituciones.map(inst => (
-                  <option key={inst} value={inst}>{getInstitucionLabel(inst)}</option>
-                ))}
-              </select>
-              {/* Orden Alfabetico */}
-              <select
-                className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-auto"
-                value={ordenAlfabetico}
-                onChange={e => setOrdenAlfabetico(e.target.value)}
-              >
-                <option value="asc">Nombre A - Z</option>
-                <option value="desc">Nombre Z - A</option>
-              </select>
-              {/* Limpiar Filtros*/}
-              <button
-                onClick={() => {
-                  setCarrera("");
-                  setInstitucion("");
-                  setRUT("");
-                  setGrupo("")
-                  if (setSoloPresentes) setSoloPresentes("");
-                }}
-                className="px-3 py-2 bg-gray-100 text-gray-700 rounded border border-gray-300 text-sm hover:bg-gray-200 transition w-full sm:w-auto"
-              >
-                Limpiar Filtros
-              </button>
-            </div>
-          </div>
-        )}
       </div>
       {/* Tabla */}
       <div className="w-full flex justify-center">
-        <div className="w-full max-w-5xl overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
-          <table className="min-w-[700px] w-full text-sm">
+        <div className="w-full overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
+          <table className="w-full text-sm">
             <thead className="bg-green-100 sticky top-0 z-10">
               <tr>
-                <th className="py-3 px-4 text-left font-bold text-green-900">Nombre</th>
+                <th className="py-3 px-4 text-left font-bold text-green-900">Grupo</th>
+                <th className="py-3 px-4 text-left font-bold text-green-900">Asiento</th>
+                <th
+                  className="py-3 px-4 text-left font-bold text-green-900 cursor-pointer select-none hover:bg-st-pastel"
+                  onClick={() => handleOrdenarPor('nombre')}
+                >
+                  Nombres
+                  {ordenCampo === 'nombre' && (
+                    <span className="ml-1">{ordenAlfabetico === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </th>
+                <th
+                  className="py-3 px-4 text-left font-bold text-green-900 cursor-pointer select-none hover:bg-st-pastel"
+                  onClick={() => handleOrdenarPor('apellidos')}
+                >
+                  Apellidos
+                  {ordenCampo === 'apellidos' && (
+                    <span className="ml-1">{ordenAlfabetico === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </th>
                 <th className="py-3 px-4 text-left font-bold text-green-900">Carrera</th>
                 <th className="py-3 px-4 text-left font-bold text-green-900">RUT</th>
                 <th className="py-3 px-4 text-left font-bold text-green-900">Institución</th>
@@ -188,7 +216,10 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
                   className={
                     `${idx % 2 === 0 ? 'bg-green-50' : 'bg-white'} hover:bg-green-100 transition`}
                 >
-                  <td className="py-3 px-4 text-green-900 font-medium">{alumno.nombre}</td>
+                  <td className="py-3 px-4 font-bold text-green-800 text-center">{alumno.grupo ?? '-'}</td>
+                  <td className="py-3 px-4 font-bold text-green-800 text-center">{alumno.asiento ?? '-'}</td>
+                  <td className="py-3 px-4 text-green-900 font-medium">{alumno.nombres ?? alumno.nombre ?? '-'}</td>
+                  <td className="py-3 px-4 text-green-900 font-medium">{alumno.apellidos ?? (alumno.nombre ? alumno.nombre.split(' ').slice(1).join(' ') : '-')}</td>
                   <td className="py-3 px-4">{alumno.carrera}</td>
                   <td className="py-3 px-4">{alumno.rut}</td>
                   <td className="py-3 px-4">{getInstitucionLabel(alumno.institucion)}</td>

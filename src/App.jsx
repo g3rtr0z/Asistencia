@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import Inicio from './components/Inicio';
 import AdminPanel from './components/AdminPanel';
 import useAlumnos from './hooks/useAlumnos';
@@ -50,7 +51,9 @@ function App() {
   } = useAlumnos();
 
   const [usuario, setUsuario] = useState(null);
-  const [vista, setVista] = useState('inicio'); // 'inicio' | 'admin-login' | 'admin-panel'
+  // Navegación con react-router-dom
+  const navigate = useNavigate();
+  const location = useLocation();
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [showConfirm, setShowConfirm] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -62,6 +65,7 @@ function App() {
   const [filtroInstitucion, setFiltroInstitucion] = useState("");
   const [filtroRUT, setFiltroRUT] = useState("");
   const [soloPresentes, setSoloPresentes] = useState("");
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
 
   // Filtrado para la vista de admin (memorizado)
@@ -130,24 +134,30 @@ function App() {
   }, [alumnos]);
 
   // Acciones admin
-  const handleAdminClick = () => setVista('admin-login');
-  const handleAuthAdmin = () => setVista('admin-panel');
-  const handleSalirAdmin = () => setVista('inicio');
+  const handleAdminClick = () => navigate('/admin');
+  const handleAuthAdmin = () => {
+    setIsAdminAuthenticated(true);
+    navigate('/panel');
+  };
+  const handleSalirAdmin = () => {
+    setIsAdminAuthenticated(false);
+    navigate('/');
+  };
 
   if (loading) return <Loader />;
   if (error) return <ErrorMessage error={error} />;
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <AnimatePresence>
-        {vista === 'inicio' && (
+      <AnimatePresence mode="wait">
+        {location.pathname === '/' && (
           <motion.div
             key="botones-inicio"
             className="fixed top-8 right-4 z-50 flex flex-row items-center space-x-14"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
           >
             {/* Icono de información */}
             <button
@@ -176,11 +186,11 @@ function App() {
             key="modal-bg"
           >
             <motion.div
-              className="bg-white rounded-xl shadow-2xl p-8 max-w-5xl w-full relative max-h-[95vh] overflow-auto"
+              className="bg-white rounded-xl shadow-2xl p-8 max-w-7xl w-full relative max-h-[95vh] overflow-auto"
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2 }}
               key="modal-content"
             >
               <button
@@ -245,62 +255,68 @@ function App() {
       <main className="flex-1 flex flex-col items-center justify-center w-full px-2 py-4">
         <div className="w-full flex flex-col items-center justify-center">
           <AnimatePresence mode="wait">
-            {vista === 'inicio' && (
-              <motion.div
-                key="inicio"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="w-full flex flex-col items-center justify-center"
-              >
-                <Inicio className="w-full" onLogin={handleLogin} setErrorVisual={setErrorVisual} />
-                <div className="text-center text-gray-500 text-xs sm:text-sm mt-2 mb-2">
-                  <p>Versión 1.0</p>
-                </div>
-                <div className="text-center text-gray-500 text-xs sm:text-sm">
-                  <p>Departamento de Informática -  Santo Tomas Temuco 2025</p>
-                  <p>Todos los derechos reservados &copy;</p>
-                </div>
-              </motion.div>
-            )}
-            {vista === 'admin-login' && (
-              <motion.div
-                key="admin-login"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="w-full flex flex-col items-center justify-center"
-              >
-                <AdminLogin onAuth={handleAuthAdmin} onSalir={handleSalirAdmin} />
-              </motion.div>
-            )}
-            {vista === 'admin-panel' && (
-              <motion.div
-                key="admin-panel"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="w-full flex flex-col items-center justify-center"
-              >
-                <AdminPanel
-                  alumnos={alumnos}
-                  onSalir={handleSalirAdmin}
-                  onImportComplete={handleImportComplete}
-                  onDeleteComplete={handleDeleteComplete}
-                  filtroEstado={filtroEstado}
-                  setFiltroEstado={setFiltroEstado}
-                  showImport={showImport}
-                  setShowImport={setShowImport}
-                  showDelete={showDelete}
-                  setShowDelete={setShowDelete}
-                  alumnosFiltrados={alumnosFiltrados}
-                  totalAlumnos={alumnos.length}
-                />
-              </motion.div>
-            )}
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={
+                <motion.div
+                  key="inicio"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-full flex flex-col items-center justify-center"
+                >
+                  <Inicio className="w-full" onLogin={handleLogin} setErrorVisual={setErrorVisual} />
+                  <div className="text-center text-gray-500 text-xs sm:text-sm mt-2 mb-2">
+                    <p>Versión 1.0</p>
+                  </div>
+                  <div className="text-center text-gray-500 text-xs sm:text-sm">
+                    <p>Departamento de Informática -  Santo Tomas Temuco 2025</p>
+                    <p>Todos los derechos reservados &copy;</p>
+                  </div>
+                </motion.div>
+              } />
+              <Route path="/admin" element={
+                <motion.div
+                  key="admin-login"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-full flex flex-col items-center justify-center"
+                >
+                  <AdminLogin onAuth={handleAuthAdmin} onSalir={handleSalirAdmin} />
+                </motion.div>
+              } />
+              <Route path="/panel" element={
+                isAdminAuthenticated ? (
+                  <motion.div
+                    key="admin-panel"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full flex flex-col items-center justify-center"
+                  >
+                    <AdminPanel
+                      alumnos={alumnos}
+                      onSalir={handleSalirAdmin}
+                      onImportComplete={handleImportComplete}
+                      onDeleteComplete={handleDeleteComplete}
+                      filtroEstado={filtroEstado}
+                      setFiltroEstado={setFiltroEstado}
+                      showImport={showImport}
+                      setShowImport={setShowImport}
+                      showDelete={showDelete}
+                      setShowDelete={setShowDelete}
+                      alumnosFiltrados={alumnosFiltrados}
+                      totalAlumnos={alumnos.length}
+                    />
+                  </motion.div>
+                ) : (
+                  <Navigate to="/admin" replace />
+                )
+              } />
+            </Routes>
           </AnimatePresence>
         </div>
       </main>

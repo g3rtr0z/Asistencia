@@ -30,6 +30,23 @@
   animation: fade-in-scale 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+body {
+  background-color: #F5F5F5;
+  color: #222222;
+  font-family: 'Roboto', sans-serif;
+}
+
+.bg-st-verde { background-color: #006341 !important; }
+.bg-st-verdeClaro { background-color: #00B388 !important; }
+.bg-st-grisClaro { background-color: #F5F5F5 !important; }
+.bg-st-pastel { background-color: #E6F4F1 !important; }
+.text-st-verde { color: #006341 !important; }
+.text-st-verdeClaro { color: #00B388 !important; }
+.text-st-negro { color: #222222 !important; }
+.border-st-verde { border-color: #006341 !important; }
+.border-st-grisMedio { border-color: #E0E0E0 !important; }
+.shadow-st { box-shadow: 0 2px 8px 0 #00634122; }
+
 /* 
   Recuerda: Si usas Tailwind, puedes personalizar la fuente en tailwind.config.js para que 'font-sans' use Roboto.
   Ejemplo:

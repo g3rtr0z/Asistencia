@@ -134,6 +134,14 @@ const Inicio = ({ onLogin, setErrorVisual }) => {
                 <span className="text-gray-800 font-semibold">{result.data.nombre}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100 gap-x-6">
+                <span className="text-gray-600 font-medium">Asiento:</span>
+                <span className="text-gray-800 font-semibold">{result.data.asiento ?? '-'}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100 gap-x-6">
+                <span className="text-gray-600 font-medium">Grupo:</span>
+                <span className="text-gray-800 font-semibold">{result.data.grupo ?? '-'}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100 gap-x-6">
                 <span className="text-gray-600 font-medium">Carrera:</span>
                 <span className="text-gray-800">{result.data.carrera}</span>
               </div>
