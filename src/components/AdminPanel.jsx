@@ -156,7 +156,7 @@ function AdminPanel({
           transition={{ duration: 0.2 }}
         >
           <motion.div
-            className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-xl flex flex-col items-center relative"
+            className="bg-white rounded-2xl shadow-2xl p-8 sm:p-8 w-full max-w-xl max-w-full flex flex-col items-center relative overflow-auto max-h-[70vh]"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -164,7 +164,7 @@ function AdminPanel({
           >
             <button onClick={() => setShowAdminModal(false)} className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600">×</button>
             <h3 className="text-2xl font-bold text-st-verde mb-4">Agregar Alumno</h3>
-            <form className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-6" onSubmit={handleAgregarAlumno}>
+            <form className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-6" style={{ minWidth: 0 }} onSubmit={handleAgregarAlumno}>
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-st-verde mb-1">Nombres</label>
                 <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Nombres" value={nuevoAlumno.nombres} onChange={e => setNuevoAlumno(a => ({ ...a, nombres: e.target.value }))} required />
@@ -198,7 +198,7 @@ function AdminPanel({
               </div>
             </form>
             <h3 className="text-2xl font-bold text-red-700 mb-4 mt-2">Eliminar Alumno</h3>
-            <form className="flex flex-col sm:flex-row gap-4 w-full items-end" onSubmit={handleEliminarAlumno}>
+            <form className="flex flex-col sm:flex-row gap-4 w-full items-end" style={{ minWidth: 0 }} onSubmit={handleEliminarAlumno}>
               <div className="flex-1 flex flex-col">
                 <label className="text-sm font-medium text-red-700 mb-1">RUT del alumno</label>
                 <input className="border border-red-400 rounded px-3 py-2 text-base" placeholder="RUT del alumno" value={rutEliminar} onChange={e => setRutEliminar(e.target.value)} required />
