@@ -40,6 +40,60 @@ function ErrorMessage({ error }) {
   );
 }
 
+// Modal para pedir PIN
+function PinModal({ onSuccess, onCancel }) {
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState('');
+  const PIN_CORRECTO = '1234'; // Cambia este valor por el PIN real
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (pin === PIN_CORRECTO) {
+      setError('');
+      onSuccess();
+    } else {
+      setError('PIN incorrecto');
+    }
+  }
+
+  return (
+    <motion.div
+      className="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <motion.div
+        className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-xs flex flex-col items-center"
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <h2 className="text-lg font-bold mb-4 text-st-verde">Ingresa el PIN de 4 dígitos</h2>
+        <form onSubmit={handleSubmit} className="w-full flex flex-col items-center gap-3">
+          <input
+            type="password"
+            maxLength={4}
+            pattern="[0-9]*"
+            inputMode="numeric"
+            className="border border-st-verde rounded px-4 py-2 text-center text-2xl tracking-widest w-32"
+            value={pin}
+            onChange={e => setPin(e.target.value.replace(/[^0-9]/g, ''))}
+            autoFocus
+          />
+          {error && <div className="text-red-600 text-sm">{error}</div>}
+          <div className="flex gap-2 mt-2">
+            <button type="submit" className="bg-st-verde text-white px-4 py-2 rounded font-bold">Ingresar</button>
+            <button type="button" className="bg-gray-200 text-gray-700 px-4 py-2 rounded" onClick={onCancel}>Cancelar</button>
+          </div>
+        </form>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function App() {
   // Custom hook para la lógica de alumnos
   const {
@@ -60,6 +114,8 @@ function App() {
   const [showDelete, setShowDelete] = useState(false);
   const [errorVisual, setErrorVisual] = useState("");
   const [showAlumnosModal, setShowAlumnosModal] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinAutorizado, setPinAutorizado] = useState(false);
   // Filtros para el modal de alumnos
   const [filtroCarrera, setFiltroCarrera] = useState("");
   const [filtroInstitucion, setFiltroInstitucion] = useState("");
@@ -164,7 +220,7 @@ function App() {
               className="bg-blue-600 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center"
               title="Ver lista de alumnos"
               style={{ transition: 'background 0.2s' }}
-              onClick={() => setShowAlumnosModal(true)}
+              onClick={() => { setShowPinModal(true); setPinAutorizado(false); }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6.75v.75m0 3v.75m0 3v.75m0 3v.75m-3-12h6a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0116.5 21h-9A2.25 2.25 0 015.25 18.75V5.25A2.25 2.25 0 017.5 3h3z" />
@@ -174,9 +230,24 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Modal de AlumnosLista */}
+      {/* Modal de PIN antes de mostrar la lista de alumnos */}
       <AnimatePresence>
-        {showAlumnosModal && (
+        {showPinModal && (
+          <PinModal
+            onSuccess={() => {
+              setPinAutorizado(true);
+              setShowPinModal(false);
+              setShowAlumnosModal(true);
+            }}
+            onCancel={() => {
+              setShowPinModal(false);
+              setPinAutorizado(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showAlumnosModal && pinAutorizado && (
           <motion.div
             className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50"
             initial={{ opacity: 0 }}
@@ -194,7 +265,7 @@ function App() {
               key="modal-content"
             >
               <button
-                onClick={() => setShowAlumnosModal(false)}
+                onClick={() => { setShowAlumnosModal(false); setPinAutorizado(false); }}
                 className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600"
                 title="Cerrar"
               >×</button>

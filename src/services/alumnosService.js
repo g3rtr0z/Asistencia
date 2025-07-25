@@ -114,6 +114,21 @@ export const buscarAlumnoPorRut = async (rut) => {
   }
 };
 
+// Eliminar alumno por RUT
+export const deleteAlumnoPorRut = async (rut) => {
+  try {
+    const q = query(collection(db, COLLECTION_NAME), where("RUT", "==", rut));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) throw new Error('No se encontró alumno con ese RUT');
+    const docRef = querySnapshot.docs[0].ref;
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar alumno por RUT:', error);
+    throw error;
+  }
+};
+
 // Agregar nuevo alumno
 export const agregarAlumno = async (alumno) => {
   try {
