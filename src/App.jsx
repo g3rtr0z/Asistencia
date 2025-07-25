@@ -122,6 +122,7 @@ function App() {
   const [filtroRUT, setFiltroRUT] = useState("");
   const [soloPresentes, setSoloPresentes] = useState("");
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [filtroGrupo, setFiltroGrupo] = useState("");
 
 
   // Filtrado para la vista de admin (memorizado)
@@ -134,14 +135,19 @@ function App() {
     return alumnos;
   }, [alumnos, filtroEstado]);
 
-  // Filtrado para el modal de alumnos (Inicio)
+  // Filtrado para el modal de alumnos (Inicio), incluyendo grupo
   const alumnosFiltradosModal = useMemo(() => {
-    return alumnos.filter(alumno =>
+    let filtrados = alumnos.filter(alumno =>
       (filtroCarrera === "" || alumno.carrera === filtroCarrera) &&
       (filtroInstitucion === "" || alumno.institucion === filtroInstitucion) &&
       (filtroRUT === "" || alumno.rut.includes(filtroRUT))
     );
-  }, [alumnos, filtroCarrera, filtroInstitucion, filtroRUT]);
+    if (filtroGrupo) {
+      const grupoNum = Number(filtroGrupo);
+      filtrados = filtrados.filter(alumno => Number(alumno.grupo) === grupoNum);
+    }
+    return filtrados;
+  }, [alumnos, filtroCarrera, filtroInstitucion, filtroRUT, filtroGrupo]);
 
   // Login de alumno
   const handleLogin = async (rut) => {
@@ -280,6 +286,8 @@ function App() {
                 setFiltroCarrera={setFiltroCarrera}
                 filtroInstitucion={filtroInstitucion}
                 setFiltroInstitucion={setFiltroInstitucion}
+                filtroGrupo={filtroGrupo}
+                setFiltroGrupo={setFiltroGrupo}
               />
             </motion.div>
           </motion.div>
