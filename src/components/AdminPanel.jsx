@@ -40,14 +40,9 @@ function AdminPanel({
   totalAlumnos
 }) {
   const [soloPresentes, setSoloPresentes] = useState("");
-  const [adminAuth, setAdminAuth] = useState(false);
   const [tab, setTab] = useState('panel');
   const [showConfig, setShowConfig] = useState(false);
   const [modal, setModal] = useState(null);
-
-  if (!adminAuth) {
-    return <AdminLogin onAuth={() => setAdminAuth(true)} onSalir={onSalir} />;
-  }
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col relative" id="admin-panel-root">
