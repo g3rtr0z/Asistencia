@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../connection/firebase.js';
 
-const COLLECTION_NAME = 'hola'
+const COLLECTION_NAME = 'alumnos'
 export const getAlumnos = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
