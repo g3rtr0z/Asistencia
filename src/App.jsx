@@ -44,7 +44,7 @@ function ErrorMessage({ error }) {
 function PinModal({ onSuccess, onCancel }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
-  const PIN_CORRECTO = '1234'; // Cambia este valor por el PIN real
+  const PIN_CORRECTO = '2234'; // Cambia este valor por el PIN real
 
   function handleSubmit(e) {
     e.preventDefault();
