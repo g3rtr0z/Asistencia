@@ -40,9 +40,9 @@ export default function useAlumnos() {
   }, []);
 
   // Borrar colección
-  const handleDeleteComplete = useCallback(async () => {
+  const handleDeleteComplete = useCallback(async (eventoId) => {
     try {
-      await borrarColeccionAlumnos();
+      await borrarColeccionAlumnos(eventoId);
       console.log('Borrado completado');
     } catch (e) {
       setError('Error al borrar la colección: ' + e.message);

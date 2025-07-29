@@ -1,14 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import Inicio from './components/Inicio';
-import AdminPanel from './components/AdminPanel';
-import useAlumnos from './hooks/useAlumnos';
-import { actualizarPresencia } from './services/alumnosService';
-import AdminButton from './components/AdminButton';
-import AlumnosLista from './components/AlumnosLista';
-import EstadisticasPanel from './components/EstadisticasPanel';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import AdminLogin from './components/AdminLogin';
+import { actualizarPresencia } from './services/alumnosService';
+import useAlumnosEvento from './hooks/useAlumnosEvento';
+import useEventos from './hooks/useEventos';
+import { Inicio } from './components/ui';
+import AdminLogin from './components/admin/AdminLogin';
+import AdminPanel from './components/admin/AdminPanel';
+import AlumnosLista from './components/alumnos/AlumnosLista';
+import AdminButton from './components/admin/AdminButton';
+import EventoActivoMinimalista from './components/eventos/EventoActivoMinimalista';
+import EstadisticasPanel from './components/alumnos/EstadisticasPanel';
 
 // Loader
 function Loader() {
@@ -58,35 +60,52 @@ function PinModal({ onSuccess, onCancel }) {
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
       <motion.div
-        className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-xs flex flex-col items-center"
+        className="bg-white rounded-xl shadow-lg p-4 w-full max-w-xs"
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         transition={{ duration: 0.2 }}
       >
-        <h2 className="text-lg font-bold mb-4 text-st-verde">Ingresa el PIN de 4 dígitos</h2>
-        <form onSubmit={handleSubmit} className="w-full flex flex-col items-center gap-3">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800 text-center">Código de Acceso</h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="password"
             maxLength={4}
             pattern="[0-9]*"
             inputMode="numeric"
-            className="border border-st-verde rounded px-4 py-2 text-center text-2xl tracking-widest w-32"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-center text-2xl tracking-widest font-mono focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none"
             value={pin}
             onChange={e => setPin(e.target.value.replace(/[^0-9]/g, ''))}
             autoFocus
+            placeholder="••••"
           />
-          {error && <div className="text-red-600 text-sm">{error}</div>}
-          <div className="flex gap-2 mt-2">
-            <button type="submit" className="bg-st-verde text-white px-4 py-2 rounded font-bold">Ingresar</button>
-            <button type="button" className="bg-gray-200 text-gray-700 px-4 py-2 rounded" onClick={onCancel}>Cancelar</button>
+
+          {error && (
+            <div className="text-red-500 text-sm text-center">{error}</div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+              onClick={onCancel}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+            >
+              Ingresar
+            </button>
           </div>
         </form>
       </motion.div>
@@ -101,7 +120,10 @@ function App() {
     loading,
     error,
     handleDeleteComplete
-  } = useAlumnos();
+  } = useAlumnosEvento();
+
+  // Hook para eventos
+  const { eventoActivo } = useEventos();
 
   const [usuario, setUsuario] = useState(null);
   const navigate = useNavigate();
@@ -112,7 +134,7 @@ function App() {
   const [showAlumnosModal, setShowAlumnosModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinAutorizado, setPinAutorizado] = useState(false);
-  
+
   // Filtros para el modal de alumnos
   const [filtroCarrera, setFiltroCarrera] = useState("");
   const [filtroInstitucion, setFiltroInstitucion] = useState("");
@@ -148,15 +170,20 @@ function App() {
   // Login de alumno
   const handleLogin = async (rut) => {
     try {
+      if (!eventoActivo) {
+        setErrorVisual('No hay un evento activo en este momento.');
+        return;
+      }
+
       const alumno = alumnos.find(a => a.rut === rut);
       if (alumno) {
-        await actualizarPresencia(alumno.id, true);
+        await actualizarPresencia(alumno.id, true, eventoActivo.id);
         const actualizado = { ...alumno, presente: true };
         setUsuario(actualizado);
         setShowConfirm(true);
         return actualizado;
       } else {
-        setErrorVisual('RUT no encontrado en la base de datos.');
+        setErrorVisual('RUT no encontrado en la base de datos del evento activo.');
       }
     } catch (error) {
       setErrorVisual('Error al procesar el RUT. Inténtalo de nuevo.');
@@ -232,7 +259,10 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
+      {/* Evento activo minimalista - solo en la página principal */}
+      {location.pathname === '/' && <EventoActivoMinimalista eventoActivo={eventoActivo} />}
+
       {/* Modal de PIN antes de mostrar la lista de alumnos */}
       <AnimatePresence>
         {showPinModal && (
@@ -249,7 +279,7 @@ function App() {
           />
         )}
       </AnimatePresence>
-      
+
       <AnimatePresence>
         {showAlumnosModal && pinAutorizado && (
           <motion.div
@@ -275,7 +305,7 @@ function App() {
               >×</button>
               <h2 className="text-xl font-bold mb-4 text-green-800">Lista de Alumnos</h2>
               {/* Estadísticas arriba de la lista */}
-              <EstadisticasPanel alumnos={alumnosFiltradosModal} soloPresentes={soloPresentes} setSoloPresentes={setSoloPresentes} />
+              <EstadisticasPanel alumnos={alumnosFiltradosModal} soloPresentes={soloPresentes} setSoloPresentes={setSoloPresentes} alumnosCompletos={alumnos} />
               <AlumnosLista
                 alumnos={alumnos}
                 soloPresentes={soloPresentes}
@@ -291,7 +321,7 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {/* Alerta de errorVisual en la esquina superior izquierda */}
       <AnimatePresence>
         {errorVisual && (
@@ -329,7 +359,7 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       <main className="flex-1 flex flex-col items-center justify-center w-full px-2 py-4">
         <div className="w-full flex flex-col items-center justify-center">
           <AnimatePresence mode="wait">
@@ -343,7 +373,12 @@ function App() {
                   transition={{ duration: 0.2 }}
                   className="w-full flex flex-col items-center justify-center"
                 >
-                  <Inicio className="w-full" onLogin={handleLogin} setErrorVisual={setErrorVisual} />
+                  <Inicio
+                    className="w-full"
+                    onLogin={handleLogin}
+                    setErrorVisual={setErrorVisual}
+                    eventoActivo={eventoActivo}
+                  />
                   <div className="text-center text-gray-500 text-xs sm:text-sm mt-2 mb-2">
                     <p>Versión 1.0</p>
                   </div>
@@ -376,10 +411,7 @@ function App() {
                     className="w-full flex flex-col items-center justify-center"
                   >
                     <AdminPanel
-                      alumnos={alumnos}
                       onSalir={handleSalirAdmin}
-                      onDeleteComplete={handleDeleteComplete}
-                      totalAlumnos={alumnos.length}
                     />
                   </motion.div>
                 ) : (

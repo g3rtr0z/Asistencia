@@ -1,10 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { agregarAlumno } from '../../services/alumnosService';
+import { getEventoActivo } from '../../services/eventosService';
 import * as XLSX from 'xlsx';
 
-function ImportExcel({ onImportComplete }) {
+function ImportExcel({ onImportComplete, eventoId = null }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [eventoActivo, setEventoActivo] = useState(null);
+
+  useEffect(() => {
+    const obtenerEvento = async () => {
+      try {
+        if (eventoId) {
+          // Si se proporciona un eventoId específico, usarlo
+          setEventoActivo({ id: eventoId });
+        } else {
+          // Si no se proporciona eventoId, obtener el evento activo
+          const evento = await getEventoActivo();
+          setEventoActivo(evento);
+        }
+      } catch (error) {
+        console.error('Error al obtener evento:', error);
+      }
+    };
+    obtenerEvento();
+  }, [eventoId]);
 
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
@@ -12,6 +32,12 @@ function ImportExcel({ onImportComplete }) {
       setMessage('Por favor selecciona un archivo Excel válido (.xlsx, .xls, .csv)');
       return;
     }
+
+    if (!eventoActivo) {
+      setMessage('Error: No hay un evento disponible para importar alumnos.');
+      return;
+    }
+
     setLoading(true);
     setMessage('Importando datos...');
     try {
@@ -49,7 +75,7 @@ function ImportExcel({ onImportComplete }) {
             institucion: alumno["Institución"],
             asiento: alumno["asiento"] ?? alumno["Asiento"] ?? null,
             grupo: alumno["grupo"] ?? alumno["Grupo"] ?? null
-          });
+          }, eventoActivo.id); // Pasar el eventoId
           successCount++;
         } catch (error) {
           errorCount++;
@@ -69,13 +95,22 @@ function ImportExcel({ onImportComplete }) {
   return (
     <div className="bg-white p-6 rounded-xl shadow border border-gray-200 w-full max-w-md mx-auto">
       <h3 className="text-xl font-bold text-green-800 mb-4">Importar Datos Excel</h3>
+      
+      {eventoActivo && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-800">
+            <strong>Evento:</strong> {eventoId ? 'Nuevo evento' : 'Evento activo'}
+          </p>
+        </div>
+      )}
+      
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-2">Seleccionar archivo Excel</label>
         <input
           type="file"
           accept=".xlsx,.xls,.csv"
           onChange={handleFileChange}
-          disabled={loading}
+          disabled={loading || !eventoActivo}
           className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 disabled:opacity-50"
         />
       </div>
@@ -89,6 +124,11 @@ function ImportExcel({ onImportComplete }) {
 Gerson Uziel Valdebenito | 203550618 | Ing. En Informatica | IP ST`}
         </pre>
         <p className="mt-2">El RUT debe ir sin puntos ni guión, solo números y dígito verificador.</p>
+        {!eventoActivo && (
+          <p className="mt-2 text-red-600">
+            <strong>Importante:</strong> Necesitas tener un evento disponible para importar alumnos.
+          </p>
+        )}
       </div>
     </div>
   );
