@@ -22,4 +22,4 @@ function AdminButton({ onClick }) {
   );
 }
 
-export default AdminButton; 
+export default AdminButton;

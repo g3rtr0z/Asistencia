@@ -67,7 +67,7 @@ function PinModal({ onSuccess, onCancel }) {
       transition={{ duration: 0.2 }}
     >
       <motion.div
-        className="bg-white rounded-xl shadow-lg p-4 w-full max-w-xs"
+        className="bg-white rounded-xl shadow-lg p-6 w-full max-w-xs"
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
