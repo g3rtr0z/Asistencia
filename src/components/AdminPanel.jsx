@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import ImportExcel from './admin/ImportExcel';
 import DeleteCollection from './admin/DeleteCollection';
 import AlumnosLista from './AlumnosLista';
-import AdminLogin from './AdminLogin';
 import EstadisticasPanel from './EstadisticasPanel';
 import { exportarAExcel } from '../components/admin/exportarAExcel'
 import { agregarAlumno, deleteAlumnoPorRut } from '../services/alumnosService';
@@ -22,7 +21,6 @@ function ConfigMenuPortal({ show, onImport, onDelete, onExport, onClose }) {
   );
 }
 
-{/* Cerrar tab */ }
 function ModalPanel({ show, onClose, children }) {
   if (!show) return null;
   return ReactDOM.createPortal(
@@ -41,7 +39,6 @@ function AdminPanel({
   onSalir,
   totalAlumnos
 }) {
-  const [soloPresentes, setSoloPresentes] = useState("");
   const [tab, setTab] = useState('panel');
   const [showConfig, setShowConfig] = useState(false);
   const [modal, setModal] = useState(null);
@@ -65,17 +62,14 @@ function AdminPanel({
   const [filtroInstitucion, setFiltroInstitucion] = useState("");
   const [filtroGrupo, setFiltroGrupo] = useState("");
 
-  // Filtrado sincronizado para estadísticas
-  function filtrarPorGrupo(alumnos, grupo) {
-    if (!grupo) return alumnos;
-    const grupoNum = Number(grupo);
-    return alumnos.filter(alumno => Number(alumno.grupo) === grupoNum);
-  }
-  let alumnosFiltrados = alumnos.filter(alumno =>
-    (filtroCarrera === "" || alumno.carrera === filtroCarrera) &&
-    (filtroInstitucion === "" || alumno.institucion === filtroInstitucion)
-  );
-  alumnosFiltrados = filtrarPorGrupo(alumnosFiltrados, filtroGrupo);
+  // Filtrado simplificado
+  const alumnosFiltrados = alumnos.filter(alumno => {
+    const cumpleCarrera = !filtroCarrera || alumno.carrera === filtroCarrera;
+    const cumpleInstitucion = !filtroInstitucion || alumno.institucion === filtroInstitucion;
+    const cumpleGrupo = !filtroGrupo || Number(alumno.grupo) === Number(filtroGrupo);
+    
+    return cumpleCarrera && cumpleInstitucion && cumpleGrupo;
+  });
 
   async function handleAgregarAlumno(e) {
     e.preventDefault();
@@ -92,7 +86,6 @@ function AdminPanel({
       });
       setMensajeAdmin('Alumno agregado correctamente');
       setNuevoAlumno({ nombres: '', apellidos: '', rut: '', carrera: '', institucion: '', asiento: '', grupo: '' });
-      if (onImportComplete) onImportComplete();
     } catch (err) {
       setMensajeAdmin('Error al agregar alumno');
     }
@@ -104,7 +97,6 @@ function AdminPanel({
       await deleteAlumnoPorRut(rutEliminar);
       setMensajeAdmin('Alumno eliminado correctamente');
       setRutEliminar('');
-      if (onDeleteComplete) onDeleteComplete();
     } catch (err) {
       setMensajeAdmin('Error al eliminar alumno');
     }
@@ -118,15 +110,15 @@ function AdminPanel({
         <div className="flex items-center gap-4">
           {/* Configuración */}
           <div className="relative flex items-center gap-2">
-            <button onClick={() => setShowConfig(v => !v)} className="bg-white rounded-full p-2 hover:bg-gray-100 transition" title="Configuración">
-              <svg width="26" height="26" fill="none" stroke="#444" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06A1.65 1.65 0 0015 19.4a1.65 1.65 0 00-1.31.76 1.65 1.65 0 01-2.78 0A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-.76-1.31 1.65 1.65 0 010-2.78A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001.31-.76 1.65 1.65 0 012.78 0A1.65 1.65 0 0015 4.6a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.24.22.51.22.78s-.08.54-.22.78z" /></svg>
-            </button>
             <button
               onClick={() => setShowAdminModal(true)}
               className="bg-st-verde text-white rounded-full w-10 h-10 flex items-center justify-center text-3xl font-bold shadow-lg hover:bg-st-verdeClaro transition"
               title="Agregar/Quitar Alumnos"
             >
               +
+            </button>
+            <button onClick={() => setShowConfig(v => !v)} className="bg-white rounded-full p-2 hover:bg-gray-100 transition" title="Configuración">
+              <svg width="26" height="26" fill="none" stroke="#444" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06A1.65 1.65 0 0015 19.4a1.65 1.65 0 00-1.31.76 1.65 1.65 0 01-2.78 0A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-.76-1.31 1.65 1.65 0 010-2.78A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001.31-.76 1.65 1.65 0 012.78 0A1.65 1.65 0 0015 4.6a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.24.22.51.22.78s-.08.54-.22.78z" /></svg>
             </button>
             <ConfigMenuPortal
               show={showConfig}
@@ -139,6 +131,7 @@ function AdminPanel({
           <button onClick={onSalir} className="px-5 py-2 rounded border border-gray-300 bg-white text-gray-600 font-medium hover:bg-gray-100 transition">Salir</button>
         </div>
       </header>
+      
       {/* Modal de configuración */}
       <ModalPanel show={modal === 'import'} onClose={() => setModal(null)}>
         <ImportExcel onImportComplete={() => setModal(null)} />
@@ -146,6 +139,7 @@ function AdminPanel({
       <ModalPanel show={modal === 'delete'} onClose={() => setModal(null)}>
         <DeleteCollection onDeleteComplete={() => setModal(null)} totalAlumnos={totalAlumnos} />
       </ModalPanel>
+      
       {/* Modal para agregar y eliminar alumnos */}
       {showAdminModal && (
         <motion.div
@@ -209,6 +203,7 @@ function AdminPanel({
           </motion.div>
         </motion.div>
       )}
+      
       {/* Tabs */}
       <div className="w-full flex gap-2 border-b border-gray-200 bg-white sticky top-0 z-10">
         <button
@@ -219,14 +214,12 @@ function AdminPanel({
 
       {/* Contenido de pestañas */}
       <div className="flex-1 w-full max-w-7xl mx-auto px-2 sm:px-6 md:px-10 py-6">
-        <EstadisticasPanel alumnos={alumnosFiltrados} soloPresentes={soloPresentes} setSoloPresentes={setSoloPresentes} />
+        <EstadisticasPanel alumnos={alumnosFiltrados} />
         {tab === 'panel' && (
           <div className="w-full">
             <div className="w-full flex justify-center">
               <AlumnosLista
                 alumnos={alumnos}
-                soloPresentes={soloPresentes}
-                setSoloPresentes={setSoloPresentes}
                 filtroCarrera={filtroCarrera}
                 setFiltroCarrera={setFiltroCarrera}
                 filtroInstitucion={filtroInstitucion}

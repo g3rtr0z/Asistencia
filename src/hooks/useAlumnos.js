@@ -9,14 +9,17 @@ export default function useAlumnos() {
   useEffect(() => {
     let unsubscribe = null;
     let timeoutId = null;
+    
     const loadData = async () => {
       setLoading(true);
       setError(null);
+      
       // Timeout para detectar si Firebase no responde
       timeoutId = setTimeout(() => {
         setError('Firebase no responde. Verifica la configuración.');
         setLoading(false);
       }, 10000);
+      
       unsubscribe = subscribeToAlumnos((alumnosData) => {
         clearTimeout(timeoutId);
         setAlumnos(alumnosData);
@@ -27,22 +30,19 @@ export default function useAlumnos() {
         setLoading(false);
       });
     };
+    
     loadData();
+    
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
       if (unsubscribe) unsubscribe();
     };
   }, []);
 
-  // Refrescar datos después de importar
-  const handleImportComplete = useCallback(() => {
-  }, []);
-
   // Borrar colección
   const handleDeleteComplete = useCallback(async () => {
     try {
       await borrarColeccionAlumnos();
-      // Los datos se actualizarán automáticamente
       console.log('Borrado completado');
     } catch (e) {
       setError('Error al borrar la colección: ' + e.message);
@@ -53,7 +53,6 @@ export default function useAlumnos() {
     alumnos,
     loading,
     error,
-    handleImportComplete,
     handleDeleteComplete
   };
 } 

@@ -11,27 +11,29 @@ import {
 } from 'firebase/firestore';
 import { db } from '../connection/firebase.js';
 
-const COLLECTION_NAME = 'alumnos'
+const COLLECTION_NAME = 'alumnos';
+
+// Función helper para mapear datos de Firestore
+function mapFirestoreData(doc) {
+  const data = doc.data();
+  return {
+    id: doc.id,
+    nombres: data["Nombres"] ?? null,
+    apellidos: data["Apellidos"] ?? null,
+    nombre: data["Nombre Completo"] ?? ((data["Nombres"] && data["Apellidos"]) ? `${data["Nombres"]} ${data["Apellidos"]}` : null),
+    rut: data["RUT"],
+    carrera: data["Carrera"],
+    institucion: data["Institución"],
+    presente: Boolean(data.presente),
+    asiento: data["asiento"] ?? null,
+    grupo: data["grupo"] ?? null
+  };
+}
+
 export const getAlumnos = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
-    const alumnos = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      alumnos.push({
-        id: doc.id,
-        nombres: data["Nombres"] ?? null,
-        apellidos: data["Apellidos"] ?? null,
-        nombre: data["Nombre Completo"] ?? ((data["Nombres"] && data["Apellidos"]) ? `${data["Nombres"]} ${data["Apellidos"]}` : null),
-        rut: data["RUT"],
-        carrera: data["Carrera"],
-        institucion: data["Institución"],
-        presente: Boolean(data.presente), // Convertir a booleano explícitamente
-        asiento: data["asiento"] ?? null,
-        grupo: data["grupo"] ?? null
-      });
-    });
-    return alumnos;
+    return querySnapshot.docs.map(mapFirestoreData);
   } catch (error) {
     console.error('Error al obtener alumnos:', error);
     throw error;
@@ -41,42 +43,21 @@ export const getAlumnos = async () => {
 export const verificarAsistenciaPorRut = async (rut) => {
   const alumnos = await getAlumnos();
   const encontrado = alumnos.find(alumno => alumno.rut === rut);
-  return encontrado?.presente === true; // devuelve true si ya marcó asistencia
+  return encontrado?.presente === true;
 };
-
 
 // Escuchar cambios en tiempo real
 export const subscribeToAlumnos = (callback, errorCallback) => {
   try {
-
-    // Verificar que db esté inicializado
     if (!db) {
       throw new Error('Firestore no está inicializado');
     }
 
     const unsubscribe = onSnapshot(collection(db, COLLECTION_NAME), (querySnapshot) => {
-      const alumnos = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        alumnos.push({
-          id: doc.id,
-          nombres: data["Nombres"] ?? null,
-          apellidos: data["Apellidos"] ?? null,
-          nombre: data["Nombre Completo"] ?? ((data["Nombres"] && data["Apellidos"]) ? `${data["Nombres"]} ${data["Apellidos"]}` : null),
-          rut: data["RUT"],
-          carrera: data["Carrera"],
-          institucion: data["Institución"],
-          presente: Boolean(data.presente), // Convertir a booleano explícitamente
-          asiento: data["asiento"] ?? null,
-          grupo: data["grupo"] ?? null
-        });
-      });
+      const alumnos = querySnapshot.docs.map(mapFirestoreData);
       callback(alumnos);
     }, (error) => {
       console.error('Error en onSnapshot:', error);
-      console.error('Código de error:', error.code);
-      console.error('Mensaje de error:', error.message);
-      console.error('Detalles del error:', error);
       if (errorCallback) errorCallback(error);
     });
     return unsubscribe;
@@ -92,20 +73,7 @@ export const buscarAlumnoPorRut = async (rut) => {
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-      const doc = querySnapshot.docs[0];
-      const data = doc.data();
-      return {
-        id: doc.id,
-        nombres: data["Nombres"] ?? null,
-        apellidos: data["Apellidos"] ?? null,
-        nombre: data["Nombre Completo"] ?? ((data["Nombres"] && data["Apellidos"]) ? `${data["Nombres"]} ${data["Apellidos"]}` : null),
-        rut: data["RUT"],
-        carrera: data["Carrera"],
-        institucion: data["Institución"],
-        presente: Boolean(data.presente), // Convertir a booleano explícitamente
-        asiento: data["asiento"] ?? null,
-        grupo: data["grupo"] ?? null
-      };
+      return mapFirestoreData(querySnapshot.docs[0]);
     }
     return null;
   } catch (error) {
@@ -155,7 +123,7 @@ export const actualizarPresencia = async (alumnoId, presente) => {
   try {
     const alumnoRef = doc(db, COLLECTION_NAME, alumnoId);
     await updateDoc(alumnoRef, {
-      presente: Boolean(presente), // Asegurar que sea booleano
+      presente: Boolean(presente),
       ultimaActualizacion: new Date()
     });
   } catch (error) {

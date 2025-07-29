@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from "react";
-import { FaFilter } from "react-icons/fa";
 
 const INSTITUCIONES = [
   { value: "CFT", label: "Centro de Formación Técnica" },
@@ -13,23 +12,36 @@ function getInstitucionLabel(value) {
 }
 
 // Recibe los filtros y setters como props (opcional)
-const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCarrera, setFiltroCarrera, filtroInstitucion, setFiltroInstitucion, filtroRUT, setFiltroRUT, setFiltroGrupo, filtroGrupo }) => {
+const AlumnosLista = ({ 
+  alumnos = [], 
+  soloPresentes, 
+  setSoloPresentes, 
+  filtroCarrera, 
+  setFiltroCarrera, 
+  filtroInstitucion, 
+  setFiltroInstitucion, 
+  filtroRUT, 
+  setFiltroRUT, 
+  setFiltroGrupo, 
+  filtroGrupo 
+}) => {
   // Si no vienen por props, usar estado local (para compatibilidad con admin)
   const [localCarrera, setLocalCarrera] = useState("");
   const [localRUT, setLocalRUT] = useState("");
   const [localInstitucion, setLocalInstitucion] = useState("");
+  const [localGrupo, setLocalGrupo] = useState("");
+  
   const carrera = filtroCarrera !== undefined ? filtroCarrera : localCarrera;
   const setCarrera = setFiltroCarrera || setLocalCarrera;
   const institucion = filtroInstitucion !== undefined ? filtroInstitucion : localInstitucion;
   const setInstitucion = setFiltroInstitucion || setLocalInstitucion;
   const rut = filtroRUT !== undefined ? filtroRUT : localRUT;
   const setRUT = setFiltroRUT || setLocalRUT;
-  const [ordenAlfabetico, setOrdenAlfabetico] = useState("asc");
-  const [ordenCampo, setOrdenCampo] = useState("nombre"); // 'nombre' o 'apellidos'
-  const [mostrarFiltros, setMostrarFiltros] = useState(false);
-  const [localGrupo, setLocalGrupo] = useState("");
   const grupo = filtroGrupo !== undefined ? filtroGrupo : localGrupo;
   const setGrupo = setFiltroGrupo || setLocalGrupo;
+  
+  const [ordenAlfabetico, setOrdenAlfabetico] = useState("asc");
+  const [ordenCampo, setOrdenCampo] = useState("nombre");
 
   function handleOrdenarPor(campo) {
     if (ordenCampo === campo) {
@@ -40,17 +52,9 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
     }
   }
 
-  const opcionesGrupos = useMemo(() => {
-    const grupos = [...new Set(alumnos.map(a => a.grupo).filter(Boolean))].sort();
-    return grupos;
-  }, [alumnos]);
-
-
   // Generar opciones dinámicamente desde los datos
-
   const opcionesInstituciones = useMemo(() => {
-    const instituciones = [...new Set(alumnos.map(a => a.institucion))].sort();
-    return instituciones;
+    return [...new Set(alumnos.map(a => a.institucion))].sort();
   }, [alumnos]);
 
   // Agrupar carreras por institución
@@ -78,44 +82,40 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
     return Array.from(set).sort((a, b) => a - b);
   }, [alumnos]);
 
-  // Método para filtrar por grupo
-  function filtrarPorGrupo(alumnos, grupo) {
-    if (!grupo) return alumnos;
-    const grupoNum = Number(grupo);
-    return alumnos.filter(alumno => Number(alumno.grupo) === grupoNum);
-  }
+  // Filtrado simplificado
+  const alumnosFiltrados = useMemo(() => {
+    return alumnos.filter(alumno => {
+      const cumplePresente = !soloPresentes || 
+        (soloPresentes === "presentes" ? alumno.presente : !alumno.presente);
+      const cumpleCarrera = !carrera || alumno.carrera === carrera;
+      const cumpleRut = !rut || alumno.rut.startsWith(rut);
+      const cumpleInstitucion = !institucion || alumno.institucion === institucion;
+      const cumpleGrupo = !grupo || Number(alumno.grupo) === Number(grupo);
+      
+      return cumplePresente && cumpleCarrera && cumpleRut && cumpleInstitucion && cumpleGrupo;
+    });
+  }, [alumnos, soloPresentes, carrera, rut, institucion, grupo]);
 
-  let alumnosFiltrados = alumnos.filter(alumno =>
-    (
-      soloPresentes === "presentes" ? alumno.presente :
-        soloPresentes === "ausentes" ? !alumno.presente :
-          true
-    ) &&
-    (carrera === "" || alumno.carrera === carrera) &&
-    (rut === "" || alumno.rut.startsWith(rut)) &&
-    (institucion === "" || alumno.institucion === institucion)
-  );
-  alumnosFiltrados = filtrarPorGrupo(alumnosFiltrados, grupo);
-
-  const alumnosOrdenados = [...alumnosFiltrados].sort((a, b) => {
-    let campoA, campoB;
-    if (ordenCampo === "apellidos") {
-      campoA = (a.apellidos ?? (a.nombre ? a.nombre.split(' ').slice(1).join(' ') : '')).toLowerCase();
-      campoB = (b.apellidos ?? (b.nombre ? b.nombre.split(' ').slice(1).join(' ') : '')).toLowerCase();
-    } else {
-      campoA = (a.nombres ?? a.nombre ?? '').toLowerCase();
-      campoB = (b.nombres ?? b.nombre ?? '').toLowerCase();
-    }
-    if (ordenAlfabetico === "asc") {
-      return campoA.localeCompare(campoB);
-    } else {
-      return campoB.localeCompare(campoA);
-    }
-  });
+  const alumnosOrdenados = useMemo(() => {
+    return [...alumnosFiltrados].sort((a, b) => {
+      let campoA, campoB;
+      if (ordenCampo === "apellidos") {
+        campoA = (a.apellidos ?? (a.nombre ? a.nombre.split(' ').slice(1).join(' ') : '')).toLowerCase();
+        campoB = (b.apellidos ?? (b.nombre ? b.nombre.split(' ').slice(1).join(' ') : '')).toLowerCase();
+      } else {
+        campoA = (a.nombres ?? a.nombre ?? '').toLowerCase();
+        campoB = (b.nombres ?? b.nombre ?? '').toLowerCase();
+      }
+      if (ordenAlfabetico === "asc") {
+        return campoA.localeCompare(campoB);
+      } else {
+        return campoB.localeCompare(campoA);
+      }
+    });
+  }, [alumnosFiltrados, ordenCampo, ordenAlfabetico]);
 
   return (
     <div className="flex flex-col items-center w-full">
-
       <div className="mb-4 w-full max-w-7xl flex flex-wrap gap-2 items-center justify-center">
         <input
           type="text"
@@ -158,7 +158,6 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
             <option key={gr} value={gr}>{`Grupo ${gr}`}</option>
           ))}
         </select>
-        {/* El orden ahora se maneja haciendo click en los encabezados de Nombres y Apellidos */}
         <button
           onClick={() => {
             setCarrera("");
@@ -172,6 +171,7 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
           Limpiar Filtros
         </button>
       </div>
+      
       {/* Tabla */}
       <div className="w-full flex justify-center">
         <div className="w-full overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
@@ -207,14 +207,13 @@ const AlumnosLista = ({ alumnos = [], soloPresentes, setSoloPresentes, filtroCar
             <tbody>
               {alumnosFiltrados.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-gray-500">No hay alumnos para mostrar</td>
+                  <td colSpan={8} className="py-8 text-center text-gray-500">No hay alumnos para mostrar</td>
                 </tr>
               )}
               {alumnosOrdenados.map((alumno, idx) => (
                 <tr
                   key={alumno.rut}
-                  className={
-                    `${idx % 2 === 0 ? 'bg-green-50' : 'bg-white'} hover:bg-green-100 transition`}
+                  className={`${idx % 2 === 0 ? 'bg-green-50' : 'bg-white'} hover:bg-green-100 transition`}
                 >
                   <td className="py-3 px-4 font-bold text-green-800 text-center">{alumno.grupo ?? '-'}</td>
                   <td className="py-3 px-4 font-bold text-green-800 text-center">{alumno.asiento ?? '-'}</td>

@@ -100,22 +100,19 @@ function App() {
     alumnos,
     loading,
     error,
-    handleImportComplete,
     handleDeleteComplete
   } = useAlumnos();
 
   const [usuario, setUsuario] = useState(null);
-  // Navegación con react-router-dom
   const navigate = useNavigate();
   const location = useLocation();
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showImport, setShowImport] = useState(false);
-  const [showDelete, setShowDelete] = useState(false);
   const [errorVisual, setErrorVisual] = useState("");
   const [showAlumnosModal, setShowAlumnosModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinAutorizado, setPinAutorizado] = useState(false);
+  
   // Filtros para el modal de alumnos
   const [filtroCarrera, setFiltroCarrera] = useState("");
   const [filtroInstitucion, setFiltroInstitucion] = useState("");
@@ -123,7 +120,6 @@ function App() {
   const [soloPresentes, setSoloPresentes] = useState("");
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [filtroGrupo, setFiltroGrupo] = useState("");
-
 
   // Filtrado para la vista de admin (memorizado)
   const alumnosFiltrados = useMemo(() => {
@@ -158,7 +154,7 @@ function App() {
         const actualizado = { ...alumno, presente: true };
         setUsuario(actualizado);
         setShowConfirm(true);
-        return actualizado; // <-- Retorna el alumno actualizado
+        return actualizado;
       } else {
         setErrorVisual('RUT no encontrado en la base de datos.');
       }
@@ -236,6 +232,7 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      
       {/* Modal de PIN antes de mostrar la lista de alumnos */}
       <AnimatePresence>
         {showPinModal && (
@@ -252,6 +249,7 @@ function App() {
           />
         )}
       </AnimatePresence>
+      
       <AnimatePresence>
         {showAlumnosModal && pinAutorizado && (
           <motion.div
@@ -293,6 +291,7 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      
       {/* Alerta de errorVisual en la esquina superior izquierda */}
       <AnimatePresence>
         {errorVisual && (
@@ -321,7 +320,6 @@ function App() {
                     clipRule="evenodd"
                   />
                 </svg>
-
                 <strong className="font-medium">Algo salió mal</strong>
               </div>
               <p className="mt-2 text-sm text-red-700">
@@ -331,6 +329,7 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      
       <main className="flex-1 flex flex-col items-center justify-center w-full px-2 py-4">
         <div className="w-full flex flex-col items-center justify-center">
           <AnimatePresence mode="wait">
@@ -379,15 +378,7 @@ function App() {
                     <AdminPanel
                       alumnos={alumnos}
                       onSalir={handleSalirAdmin}
-                      onImportComplete={handleImportComplete}
                       onDeleteComplete={handleDeleteComplete}
-                      filtroEstado={filtroEstado}
-                      setFiltroEstado={setFiltroEstado}
-                      showImport={showImport}
-                      setShowImport={setShowImport}
-                      showDelete={showDelete}
-                      setShowDelete={setShowDelete}
-                      alumnosFiltrados={alumnosFiltrados}
                       totalAlumnos={alumnos.length}
                     />
                   </motion.div>
