@@ -35,7 +35,7 @@ export const getAlumnos = async () => {
     const eventosRef = collection(db, 'eventos');
     const eventosSnapshot = await getDocs(eventosRef);
     const eventos = eventosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
+
     // Obtener alumnos de cada evento
     const todosLosAlumnos = [];
     for (const evento of eventos) {
@@ -44,7 +44,7 @@ export const getAlumnos = async () => {
       const alumnos = alumnosSnapshot.docs.map(mapFirestoreData);
       todosLosAlumnos.push(...alumnos);
     }
-    
+
     return todosLosAlumnos;
   } catch (error) {
     console.error('Error al obtener todos los alumnos:', error);
@@ -68,26 +68,26 @@ export const getAlumnosPorEvento = async (eventoId) => {
 export const getAlumnosEventoActivo = async () => {
   try {
     console.log('getAlumnosEventoActivo: Iniciando búsqueda del evento activo...');
-    
+
     // Primero obtener el evento activo
     const eventosRef = collection(db, 'eventos');
     const qEvento = query(eventosRef, where("activo", "==", true));
     const eventoSnapshot = await getDocs(qEvento);
-    
+
     if (eventoSnapshot.empty) {
       console.log('getAlumnosEventoActivo: No hay evento activo');
       return [];
     }
-    
+
     const eventoActivo = eventoSnapshot.docs[0];
     const eventoId = eventoActivo.id;
     console.log('getAlumnosEventoActivo: Evento activo encontrado:', eventoId, eventoActivo.data().nombre);
-    
+
     // Luego obtener los alumnos de la colección específica de ese evento
     const alumnosRef = collection(db, `eventos/${eventoId}/alumnos`);
     const alumnosSnapshot = await getDocs(alumnosRef);
     const alumnos = alumnosSnapshot.docs.map(mapFirestoreData);
-    
+
     console.log('getAlumnosEventoActivo: Alumnos encontrados:', alumnos.length);
     return alumnos;
   } catch (error) {
@@ -113,7 +113,7 @@ export const subscribeToAlumnos = (callback, errorCallback) => {
     const eventosRef = collection(db, 'eventos');
     const unsubscribeEventos = onSnapshot(eventosRef, async (eventosSnapshot) => {
       const eventos = eventosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
+
       // Obtener alumnos de todos los eventos
       const todosLosAlumnos = [];
       for (const evento of eventos) {
@@ -122,13 +122,13 @@ export const subscribeToAlumnos = (callback, errorCallback) => {
         const alumnos = alumnosSnapshot.docs.map(mapFirestoreData);
         todosLosAlumnos.push(...alumnos);
       }
-      
+
       callback(todosLosAlumnos);
     }, (error) => {
       console.error('Error en onSnapshot eventos:', error);
       if (errorCallback) errorCallback(error);
     });
-    
+
     return unsubscribeEventos;
   } catch (error) {
     if (errorCallback) errorCallback(error);
@@ -168,20 +168,20 @@ export const subscribeToAlumnosEventoActivo = (callback, errorCallback) => {
     // Suscribirse a cambios en eventos activos
     const eventosRef = collection(db, 'eventos');
     const qEvento = query(eventosRef, where("activo", "==", true));
-    
+
     const unsubscribeEventos = onSnapshot(qEvento, async (eventoSnapshot) => {
       console.log('subscribeToAlumnosEventoActivo: Cambio en eventos activos detectado');
-      
+
       if (eventoSnapshot.empty) {
         console.log('subscribeToAlumnosEventoActivo: No hay eventos activos');
         callback([]);
         return;
       }
-      
+
       const eventoActivo = eventoSnapshot.docs[0];
       const eventoId = eventoActivo.id;
       console.log('subscribeToAlumnosEventoActivo: Evento activo:', eventoId, eventoActivo.data().nombre);
-      
+
       // Suscribirse a cambios en alumnos de la colección específica de ese evento
       const alumnosRef = collection(db, `eventos/${eventoId}/alumnos`);
       const unsubscribeAlumnos = onSnapshot(alumnosRef, (alumnosSnapshot) => {
@@ -192,7 +192,7 @@ export const subscribeToAlumnosEventoActivo = (callback, errorCallback) => {
         console.error('Error en onSnapshot alumnos evento activo:', error);
         if (errorCallback) errorCallback(error);
       });
-      
+
       // Retornar función para cancelar ambas suscripciones
       return () => {
         unsubscribeAlumnos();
@@ -201,7 +201,7 @@ export const subscribeToAlumnosEventoActivo = (callback, errorCallback) => {
       console.error('Error en onSnapshot evento activo:', error);
       if (errorCallback) errorCallback(error);
     });
-    
+
     return unsubscribeEventos;
   } catch (error) {
     if (errorCallback) errorCallback(error);
@@ -232,17 +232,17 @@ export const buscarAlumnoPorRut = async (rut) => {
     const eventosRef = collection(db, 'eventos');
     const eventosSnapshot = await getDocs(eventosRef);
     const eventos = eventosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
+
     for (const evento of eventos) {
       const alumnosRef = collection(db, `eventos/${evento.id}/alumnos`);
       const q = query(alumnosRef, where("RUT", "==", rut));
       const querySnapshot = await getDocs(q);
-      
+
       if (!querySnapshot.empty) {
         return mapFirestoreData(querySnapshot.docs[0]);
       }
     }
-    
+
     return null;
   } catch (error) {
     console.error('Error al buscar alumno por RUT:', error);
@@ -273,19 +273,19 @@ export const deleteAlumnoPorRut = async (rut) => {
     const eventosRef = collection(db, 'eventos');
     const eventosSnapshot = await getDocs(eventosRef);
     const eventos = eventosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
+
     for (const evento of eventos) {
       const alumnosRef = collection(db, `eventos/${evento.id}/alumnos`);
       const q = query(alumnosRef, where("RUT", "==", rut));
       const querySnapshot = await getDocs(q);
-      
+
       if (!querySnapshot.empty) {
         const docRef = querySnapshot.docs[0].ref;
         await deleteDoc(docRef);
         return true;
       }
     }
-    
+
     throw new Error('No se encontró alumno con ese RUT');
   } catch (error) {
     console.error('Error al eliminar alumno por RUT:', error);
@@ -355,4 +355,74 @@ export const borrarColeccionAlumnos = async (eventoId) => {
 // Borrar alumnos de un evento específico (alias para mantener compatibilidad)
 export const borrarAlumnosDeEvento = async (eventoId) => {
   return await borrarColeccionAlumnos(eventoId);
+};
+
+export const importarAlumnosDesdeExcel = async (file, eventoId) => {
+  try {
+    // Importar XLSX dinámicamente
+    const XLSX = await import('xlsx');
+
+    // Leer el archivo
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const alumno of jsonData) {
+      try {
+        const nombres = alumno["Nombres"] ?? null;
+        const apellidos = alumno["Apellidos"] ?? null;
+        let nombreCompleto = alumno["Nombre Completo"] ?? null;
+
+        // Si no hay nombre completo pero sí nombres y apellidos, lo armo
+        if (!nombreCompleto && nombres && apellidos) {
+          nombreCompleto = `${nombres} ${apellidos}`;
+        }
+
+        if (!(nombres && apellidos) && !nombreCompleto) {
+          errorCount++;
+          continue;
+        }
+
+        if (!alumno["RUT"] || !alumno["Carrera"] || !alumno["Institución"]) {
+          errorCount++;
+          continue;
+        }
+
+        // Guardar el RUT tal como viene (sin puntos ni guión)
+        await agregarAlumno({
+          nombres,
+          apellidos,
+          nombre: nombreCompleto,
+          rut: String(alumno["RUT"]),
+          carrera: alumno["Carrera"],
+          institucion: alumno["Institución"],
+          asiento: alumno["asiento"] ?? alumno["Asiento"] ?? null,
+          grupo: alumno["grupo"] ?? alumno["Grupo"] ?? null
+        }, eventoId);
+
+        successCount++;
+      } catch (error) {
+        console.error('Error al importar alumno:', error);
+        errorCount++;
+      }
+    }
+
+    if (successCount === 0 && errorCount > 0) {
+      throw new Error(`No se pudo importar ningún alumno. Verifica el formato del archivo.`);
+    }
+
+    return {
+      successCount,
+      errorCount,
+      message: `Importación completada: ${successCount} exitosos, ${errorCount} errores`
+    };
+  } catch (error) {
+    console.error('Error en importarAlumnosDesdeExcel:', error);
+    throw new Error(`Error al procesar el archivo: ${error.message}`);
+  }
 };

@@ -84,14 +84,13 @@ function AdminLogin({ onAuth, onSalir }) {
 
               <div className="flex gap-3 pt-4">
 
-              <motion.button
+                <motion.button
                   type="submit"
                   disabled={loading || !email.trim() || !pass.trim()}
-                  className={`flex-1 py-4 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm ${
-                    loading || !email.trim() || !pass.trim()
-                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                      : 'bg-green-600 hover:bg-green-700 text-white'
-                  }`}
+                  className={`flex-1 py-4 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm ${loading || !email.trim() || !pass.trim()
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
                   whileHover={!loading && email.trim() && pass.trim() ? { scale: 1.02 } : {}}
                   whileTap={!loading && email.trim() && pass.trim() ? { scale: 0.98 } : {}}
                 >
@@ -111,7 +110,7 @@ function AdminLogin({ onAuth, onSalir }) {
                 </motion.button>
                 <motion.button
                   type="button"
-                  className="flex-1 py-4 px-4 text-slate-600 text-sm hover:text-slate-800 transition-colors border border-slate-300 rounded-lg hover:bg-slate-50"
+                  className="flex-1 py-4 px-4 text-green-800 text-sm hover:text-green-900 transition-colors border border-slate-300 rounded-lg hover:bg-green-50"
                   onClick={onSalir}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}

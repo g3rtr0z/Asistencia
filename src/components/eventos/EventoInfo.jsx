@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { exportarAExcel } from '../admin/exportarAExcel';
 
 function EventoInfo({ eventoActivo, totalAlumnos, alumnos }) {
@@ -50,23 +50,23 @@ function EventoInfo({ eventoActivo, totalAlumnos, alumnos }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Header simple */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <h3 className="text-lg font-semibold text-slate-800">
+      {/* Header con título y estado */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
+          <h3 className="text-base sm:text-lg font-semibold text-slate-800 truncate">
             {eventoActivo.nombre}
           </h3>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getStatusColor()}`}>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className={`px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap ${getStatusColor()}`}>
             {getStatusText()}
           </span>
 
           {alumnos && alumnos.length > 0 && (
             <motion.button
-              onClick={() => exportarAExcel(alumnos)}
+              onClick={() => exportarAExcel(alumnos, eventoActivo.nombre)}
               className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -80,19 +80,41 @@ function EventoInfo({ eventoActivo, totalAlumnos, alumnos }) {
         </div>
       </div>
 
-      {/* Información básica siempre visible */}
-      <div className="mt-3 grid grid-cols-3 gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-slate-500">Inicio:</span>
-          <span className="font-medium text-slate-700">{formatDate(eventoActivo.fechaInicio)}</span>
+      {/* Información organizada en secciones */}
+      <div className="space-y-3">
+        {/* Fecha de inicio */}
+        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="text-sm font-medium text-slate-700">Fecha de Inicio</span>
+          </div>
+          <span className="text-sm text-slate-600 font-medium">{formatDate(eventoActivo.fechaInicio)}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-slate-500">Alumnos:</span>
-          <span className="font-medium text-slate-700">{totalAlumnos}</span>
+
+        {/* Total de alumnos */}
+        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+            </svg>
+            <span className="text-sm font-medium text-slate-700">Total de Alumnos</span>
+          </div>
+          <span className="text-sm text-slate-600 font-medium">{totalAlumnos}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-slate-500">Estado:</span>
-          <span className="font-medium text-slate-700">{getStatusText()}</span>
+
+        {/* Estado del evento */}
+        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm font-medium text-slate-700">Estado del Evento</span>
+          </div>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getStatusColor()}`}>
+            {getStatusText()}
+          </span>
         </div>
       </div>
     </motion.div>

@@ -1,40 +1,54 @@
-import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 
+export const exportarAExcel = (alumnos, nombreEvento = 'Evento') => {
+  try {
+    // Preparar los datos para exportar
+    const datosParaExportar = alumnos.map(alumno => ({
+      'RUT': alumno.rut || '',
+      'Nombres': alumno.nombres || '',
+      'Apellidos': alumno.apellidos || '',
+      'Nombre Completo': alumno.nombre || '',
+      'Carrera': alumno.carrera || '',
+      'Institución': alumno.institucion || '',
+      'Asiento': alumno.asiento || '',
+      'Grupo': alumno.grupo || '',
+      'Presente': alumno.presente ? 'Sí' : 'No',
+      'Fecha de Registro': alumno.fechaRegistro ? new Date(alumno.fechaRegistro.toDate()).toLocaleString('es-ES') : ''
+    }));
 
-export const exportarAExcel = (alumnos) => {
-    // Mapeo para mostrar "Presente" o "Ausente" y separar nombres y apellidos
-    const alumnosFormateados = alumnos.map((al) => {
-        let nombres = al.nombres;
-        let apellidos = al.apellidos;
-        if (!nombres || !apellidos) {
-            // Si no existen, intentar separar el nombre completo
-            if (al.nombre) {
-                const partes = al.nombre.split(' ');
-                nombres = partes.slice(0, -2).join(' ') || partes[0] || '';
-                apellidos = partes.slice(-2).join(' ') || '';
-            } else {
-                nombres = '';
-                apellidos = '';
-            }
-        }
-        return {
-            "Nombres": nombres,
-            "Apellidos": apellidos,
-            "RUT": al.rut,
-            "Carrera": al.carrera,
-            "Institución": al.institucion,
-            "Estado": al.presente ? "Presente" : "Ausente",
-            "Asiento": al.asiento,
-            "Grupo": al.grupo ?? ''
-        };
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(alumnosFormateados);
+    // Crear el workbook
     const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(datosParaExportar);
+
+    // Ajustar el ancho de las columnas
+    const columnWidths = [
+      { wch: 15 }, // RUT
+      { wch: 20 }, // Nombres
+      { wch: 20 }, // Apellidos
+      { wch: 30 }, // Nombre Completo
+      { wch: 25 }, // Carrera
+      { wch: 20 }, // Institución
+      { wch: 10 }, // Asiento
+      { wch: 10 }, // Grupo
+      { wch: 10 }, // Presente
+      { wch: 20 }  // Fecha de Registro
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Agregar la hoja al workbook
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Alumnos');
 
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(data, 'AlumnosPresentes.xlsx');
+    // Generar el nombre del archivo con el nombre del evento
+    const fecha = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const nombreArchivo = `${nombreEvento}_Alumnos_${fecha}.xlsx`;
+
+    // Exportar el archivo
+    XLSX.writeFile(workbook, nombreArchivo);
+
+    console.log(`Archivo exportado: ${nombreArchivo}`);
+    return true;
+  } catch (error) {
+    console.error('Error al exportar a Excel:', error);
+    return false;
+  }
 };
