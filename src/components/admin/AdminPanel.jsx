@@ -91,7 +91,7 @@ function AdminPanel({
     <div className="min-h-screen w-full flex flex-col relative" id="admin-panel-root">
       {/* Header del Panel de Administración */}
       <div className="lg p-6 mb-2">
-        <div className="max-w-[1200px] mx-auto">
+        <div className="max-w-[1060px] mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
               <div>
@@ -179,12 +179,12 @@ function AdminPanel({
 
       {/* Tabs Optimizadas para móviles */}
       <div className="relative bg-white border-b border-slate-200">
-        <div className="flex max-w-7xl mx-auto px-2 sm:px-6 md:px-10">
+        <div className="flex max-w-6xl mx-auto px-2 sm:px-6 md:px-10">
           <div className="flex relative w-full">
             <motion.button
               onClick={() => setTab('eventos')}
               className={`relative flex-1 px-4 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-300 rounded-t-lg ${tab === 'eventos'
-                ? 'text-green-700 bg-white shadow-lg'
+                ? 'text-green-800 bg-white shadow-lg'
                 : 'text-slate-600 hover:text-slate-800 hover:bg-white/50'
                 }`}
               whileHover={{ y: -1 }}
@@ -211,7 +211,7 @@ function AdminPanel({
             <motion.button
               onClick={() => setTab('alumnos')}
               className={`relative flex-1 px-4 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-300 rounded-t-lg ${tab === 'alumnos'
-                ? 'text-green-700 bg-white shadow-lg'
+                ? 'text-green-800 bg-white shadow-lg'
                 : 'text-slate-600 hover:text-slate-800 hover:bg-white/50'
                 }`}
               whileHover={{ y: -1 }}
@@ -239,7 +239,7 @@ function AdminPanel({
       </div>
 
       {/* Contenido de pestañas */}
-      <div className="flex-1 w-full max-w-7xl mx-auto px-2 sm:px-6 md:px-10 py-4 sm:py-6">
+      <div className="flex-1 w-full max-w-6xl mx-auto px-2 sm:px-6 md:px-10 py-4 sm:py-6">
         {tab === 'alumnos' && (
           <div className="space-y-4 sm:space-y-6">
             {/* Botón para agregar/quitar alumnos */}

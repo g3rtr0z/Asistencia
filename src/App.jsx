@@ -94,17 +94,17 @@ function PinModal({ onSuccess, onCancel }) {
 
           <div className="flex gap-2">
             <button
+              type="submit"
+              className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+            >
+              Ingresar
+            </button>
+            <button
               type="button"
               className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
               onClick={onCancel}
             >
               Cancelar
-            </button>
-            <button
-              type="submit"
-              className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
-            >
-              Ingresar
             </button>
           </div>
         </form>
