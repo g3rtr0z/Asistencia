@@ -88,31 +88,28 @@ function AdminPanel({
   }
 
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col relative" id="admin-panel-root">
+    <div className="min-h-screen w-full flex flex-col relative" id="admin-panel-root">
       {/* Header del Panel de Administración */}
-      <div className="bg-white border border-slate-200 rounded-lg p-6 mb-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
+      <div className="lg p-6 mb-2">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Panel de Administración</h1>
+                <p className="text-sm text-slate-500">Gestiona eventos, alumnos y configuraciones</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Panel de Administración</h1>
-              <p className="text-sm text-slate-500">Gestiona eventos, alumnos y configuraciones</p>
-            </div>
-          </div>
 
-          {/* Botón Salir */}
-          <motion.button
-            onClick={onSalir}
-            className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50 transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            Salir
-          </motion.button>
+            {/* Botón Salir */}
+            <motion.button
+              onClick={onSalir}
+              className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50 transition-colors"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Salir
+            </motion.button>
+          </div>
         </div>
       </div>
 
@@ -134,7 +131,7 @@ function AdminPanel({
           >
             <button onClick={() => setShowAdminModal(false)} className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600">×</button>
             <h3 className="text-2xl font-bold text-st-verde mb-4">Agregar Alumno</h3>
-            <form className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-6" style={{ minWidth: 0 }} onSubmit={handleAgregarAlumno}>
+            <form className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-6 min-w-0" onSubmit={handleAgregarAlumno}>
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-st-verde mb-1">Nombres</label>
                 <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Nombres" value={nuevoAlumno.nombres} onChange={e => setNuevoAlumno(a => ({ ...a, nombres: e.target.value }))} required />
@@ -168,7 +165,7 @@ function AdminPanel({
               </div>
             </form>
             <h3 className="text-2xl font-bold text-red-700 mb-4 mt-2">Eliminar Alumno</h3>
-            <form className="flex flex-col sm:flex-row gap-4 w-full items-end" style={{ minWidth: 0 }} onSubmit={handleEliminarAlumno}>
+            <form className="flex flex-col sm:flex-row gap-4 w-full items-end min-w-0" onSubmit={handleEliminarAlumno}>
               <div className="flex-1 flex flex-col">
                 <label className="text-sm font-medium text-red-700 mb-1">RUT del alumno</label>
                 <input className="border border-red-400 rounded px-3 py-2 text-base" placeholder="RUT del alumno" value={rutEliminar} onChange={e => setRutEliminar(e.target.value)} required />
@@ -181,13 +178,13 @@ function AdminPanel({
       )}
 
       {/* Tabs Optimizadas para móviles */}
-      <div className="relative bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200">
+      <div className="relative bg-white border-b border-slate-200">
         <div className="flex max-w-7xl mx-auto px-2 sm:px-6 md:px-10">
           <div className="flex relative w-full">
             <motion.button
               onClick={() => setTab('eventos')}
               className={`relative flex-1 px-4 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-300 rounded-t-lg ${tab === 'eventos'
-                ? 'text-green-700 bg-white shadow-lg border border-slate-200 border-b-0'
+                ? 'text-green-700 bg-white shadow-lg'
                 : 'text-slate-600 hover:text-slate-800 hover:bg-white/50'
                 }`}
               whileHover={{ y: -1 }}
@@ -214,7 +211,7 @@ function AdminPanel({
             <motion.button
               onClick={() => setTab('alumnos')}
               className={`relative flex-1 px-4 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-300 rounded-t-lg ${tab === 'alumnos'
-                ? 'text-green-700 bg-white shadow-lg border border-slate-200 border-b-0'
+                ? 'text-green-700 bg-white shadow-lg'
                 : 'text-slate-600 hover:text-slate-800 hover:bg-white/50'
                 }`}
               whileHover={{ y: -1 }}

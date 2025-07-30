@@ -79,9 +79,8 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
               placeholder="Ingresa tu RUT"
               maxLength={13}
               disabled={!eventoActivo}
-              className={`min-w-[280px] h-12 text-base px-4 font-medium ${
-                !eventoActivo ? 'bg-gray-100 cursor-not-allowed' : ''
-              }`}
+              className={`min-w-[280px] h-12 text-base px-4 font-medium ${!eventoActivo ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
             />
             <Button
               type="submit"
@@ -99,7 +98,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
           <Card className="mb-12">
             <div className="flex items-center space-x-2 mb-4">
               <svg
-                className="w-6 h-6 text-green-500"
+                className="w-6 h-6 text-green-800"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
