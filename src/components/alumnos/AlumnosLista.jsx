@@ -134,7 +134,7 @@ const AlumnosLista = ({
             whileHover={{ backgroundColor: '#f8fafc' }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-800 to-emerald-800 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
                 </svg>
@@ -171,7 +171,7 @@ const AlumnosLista = ({
                       <input
                         type="text"
                         placeholder="Ingresa RUT..."
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
                         value={rut}
                         onChange={e => setRUT(e.target.value)}
                       />
@@ -180,7 +180,7 @@ const AlumnosLista = ({
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-slate-700">Carrera</label>
                       <select
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
                         value={carrera}
                         onChange={e => setCarrera(e.target.value)}
                       >
@@ -198,7 +198,7 @@ const AlumnosLista = ({
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-slate-700">Institución</label>
                       <select
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
                         value={institucion}
                         onChange={e => setInstitucion(e.target.value)}
                       >
@@ -212,7 +212,7 @@ const AlumnosLista = ({
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-slate-700">Grupo</label>
                       <select
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
                         value={grupo}
                         onChange={e => setGrupo(e.target.value)}
                       >
@@ -260,12 +260,36 @@ const AlumnosLista = ({
         >
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gradient-to-r from-green-500 to-emerald-600 text-white sticky top-0 z-10">
+              <thead className="bg-gradient-to-r from-green-800 to-emerald-600 text-white sticky top-0 z-10">
                 <tr>
                   <th className="py-4 px-4 text-left font-semibold">Grupo</th>
                   <th className="py-4 px-4 text-left font-semibold">Asiento</th>
-                  <th className="py-4 px-4 text-left font-semibold">Nombres</th>
-                  <th className="py-4 px-4 text-left font-semibold">Apellidos</th>
+                  <th
+                    className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors"
+                    onClick={() => handleOrdenarPor("nombre")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Nombres</span>
+                      {ordenCampo === "nombre" && (
+                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d={ordenAlfabetico === "asc" ? "M7 14l5-5 5 5z" : "M7 10l5 5 5-5z"} />
+                        </svg>
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors"
+                    onClick={() => handleOrdenarPor("apellidos")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Apellidos</span>
+                      {ordenCampo === "apellidos" && (
+                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d={ordenAlfabetico === "asc" ? "M7 14l5-5 5 5z" : "M7 10l5 5 5-5z"} />
+                        </svg>
+                      )}
+                    </div>
+                  </th>
                   <th className="py-4 px-4 text-left font-semibold">Carrera</th>
                   <th className="py-4 px-4 text-left font-semibold">RUT</th>
                   <th className="py-4 px-4 text-left font-semibold">Institución</th>
@@ -309,7 +333,7 @@ const AlumnosLista = ({
                       <td className="py-4 px-4 text-center">
                         {alumno.presente ? (
                           <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <div className="w-2 h-2 bg-green-800 rounded-full"></div>
                             Presente
                           </span>
                         ) : (

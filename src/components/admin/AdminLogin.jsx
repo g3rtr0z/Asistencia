@@ -35,7 +35,7 @@ function AdminLogin({ onAuth, onSalir }) {
           <div className="bg-white border border-slate-200 rounded-lg p-10 shadow-sm">
             {/* Header */}
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-green-800 rounded-full"></div>
               <h2 className="text-lg font-semibold text-slate-800">Acceso Administrador</h2>
             </div>
 
@@ -89,7 +89,7 @@ function AdminLogin({ onAuth, onSalir }) {
                   disabled={loading || !email.trim() || !pass.trim()}
                   className={`flex-1 py-4 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm ${loading || !email.trim() || !pass.trim()
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-green-800 hover:bg-green-700 text-white'
                     }`}
                   whileHover={!loading && email.trim() && pass.trim() ? { scale: 1.02 } : {}}
                   whileTap={!loading && email.trim() && pass.trim() ? { scale: 0.98 } : {}}

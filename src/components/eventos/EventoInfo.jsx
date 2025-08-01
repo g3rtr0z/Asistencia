@@ -28,8 +28,8 @@ function EventoInfo({ eventoActivo, totalAlumnos, alumnos }) {
 
     if (!eventoActivo.activo) return 'bg-gray-500';
     if (now < start) return 'bg-yellow-500';
-    if (now >= start && now <= end) return 'bg-green-500';
-    return 'bg-red-500';
+    if (now >= start && now <= end) return 'bg-green-800';
+    return 'bg-red-800';
   };
 
   const getStatusText = () => {
@@ -53,7 +53,7 @@ function EventoInfo({ eventoActivo, totalAlumnos, alumnos }) {
       {/* Header con título y estado */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
+          <div className="w-3 h-3 bg-green-800 rounded-full flex-shrink-0"></div>
           <h3 className="text-base sm:text-lg font-semibold text-slate-800 truncate">
             {eventoActivo.nombre}
           </h3>
@@ -67,7 +67,7 @@ function EventoInfo({ eventoActivo, totalAlumnos, alumnos }) {
           {alumnos && alumnos.length > 0 && (
             <motion.button
               onClick={() => exportarAExcel(alumnos, eventoActivo.nombre)}
-              className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
+              className="px-3 py-1 bg-green-800 text-white text-xs rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
