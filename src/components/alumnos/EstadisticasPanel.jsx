@@ -2,8 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 function EstadisticasPanel({ alumnos, soloPresentes, setSoloPresentes, alumnosCompletos }) {
-  // Usar alumnos filtrados para que las estadísticas cambien con los filtros
-  const datosParaEstadisticas = alumnos;
+  // Las estadísticas siempre se calculan con TODOS los alumnos (alumnosCompletos)
+  // para que los números no cambien al filtrar por estado
+  // El prop 'alumnos' se usa solo para determinar el estado activo de los botones
+  const datosParaEstadisticas = alumnosCompletos || alumnos;
 
   const total = datosParaEstadisticas.length;
   const presentes = datosParaEstadisticas.filter(a => a.presente).length;

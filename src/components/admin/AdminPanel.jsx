@@ -259,7 +259,7 @@ function AdminPanel({
 
             {eventoActivo ? (
               <>
-                <EventoInfo eventoActivo={eventoActivo} totalAlumnos={alumnosFiltrados.length} alumnos={alumnosFiltrados} />
+                <EventoInfo eventoActivo={eventoActivo} totalAlumnos={alumnos.length} alumnos={alumnosFiltrados} />
                 <EstadisticasPanel
                   alumnos={alumnosFiltrados}
                   soloPresentes={soloPresentes}

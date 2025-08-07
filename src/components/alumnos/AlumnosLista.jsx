@@ -45,6 +45,18 @@ const AlumnosLista = ({
   const [ordenCampo, setOrdenCampo] = useState("nombre");
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
+  // Configuración de columnas visibles
+  const [columnasVisibles, setColumnasVisibles] = useState({
+    grupo: true,
+    asiento: true,
+    nombres: true,
+    apellidos: true,
+    carrera: true,
+    rut: true,
+    institucion: true,
+    estado: true
+  });
+
   function handleOrdenarPor(campo) {
     if (ordenCampo === campo) {
       setOrdenAlfabetico(ordenAlfabetico === "asc" ? "desc" : "asc");
@@ -52,6 +64,26 @@ const AlumnosLista = ({
       setOrdenCampo(campo);
       setOrdenAlfabetico("asc");
     }
+  }
+
+  function toggleColumna(columna) {
+    setColumnasVisibles(prev => ({
+      ...prev,
+      [columna]: !prev[columna]
+    }));
+  }
+
+  function mostrarTodasLasColumnas() {
+    setColumnasVisibles({
+      grupo: true,
+      asiento: true,
+      nombres: true,
+      apellidos: true,
+      carrera: true,
+      rut: true,
+      institucion: true,
+      estado: true
+    });
   }
 
   // Generar opciones dinámicamente desde los datos
@@ -164,27 +196,27 @@ const AlumnosLista = ({
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <div className="p-6 border-t border-slate-200">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Buscar por RUT</label>
+                <div className="p-4 border-t border-slate-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-3">
+                    <div className="space-y-1">
+                      <label className="block text-xs font-medium text-slate-700">RUT</label>
                       <input
                         type="text"
-                        placeholder="Ingresa RUT..."
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                        placeholder="Buscar RUT..."
+                        className="w-full border border-slate-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-800 focus:border-transparent transition-all duration-200"
                         value={rut}
                         onChange={e => setRUT(e.target.value)}
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Carrera</label>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-medium text-slate-700">Carrera</label>
                       <select
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                        className="w-full border border-slate-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-800 focus:border-transparent transition-all duration-200"
                         value={carrera}
                         onChange={e => setCarrera(e.target.value)}
                       >
-                        <option value="">Todas las carreras</option>
+                        <option value="">Todas</option>
                         {Object.entries(carrerasPorInstitucion).map(([institucion, carreras]) => (
                           <optgroup key={institucion} label={getInstitucionLabel(institucion)}>
                             {carreras.map(carrera => (
@@ -195,32 +227,68 @@ const AlumnosLista = ({
                       </select>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Institución</label>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-medium text-slate-700">Institución</label>
                       <select
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                        className="w-full border border-slate-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-800 focus:border-transparent transition-all duration-200"
                         value={institucion}
                         onChange={e => setInstitucion(e.target.value)}
                       >
-                        <option value="">Todas las instituciones</option>
+                        <option value="">Todas</option>
                         {opcionesInstituciones.map(inst => (
                           <option key={inst} value={inst}>{getInstitucionLabel(inst)}</option>
                         ))}
                       </select>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Grupo</label>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-medium text-slate-700">Grupo</label>
                       <select
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                        className="w-full border border-slate-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-800 focus:border-transparent transition-all duration-200"
                         value={grupo}
                         onChange={e => setGrupo(e.target.value)}
                       >
-                        <option value="">Todos los grupos</option>
+                        <option value="">Todos</option>
                         {gruposUnicos.map(gr => (
-                          <option key={gr} value={gr}>{`Grupo ${gr}`}</option>
+                          <option key={gr} value={gr}>{`G${gr}`}</option>
                         ))}
                       </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-xs font-medium text-slate-700">Columnas</label>
+                      <select
+                        className="w-full border border-slate-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                        value=""
+                        onChange={(e) => {
+                          if (e.target.value === "mostrar-todas") {
+                            mostrarTodasLasColumnas();
+                          } else if (e.target.value) {
+                            toggleColumna(e.target.value);
+                          }
+                          e.target.value = ""; // Reset select
+                        }}
+                      >
+                        <option value="">Configurar...</option>
+                        {Object.entries({
+                          grupo: "Grupo",
+                          asiento: "Asiento",
+                          nombres: "Nombres",
+                          apellidos: "Apellidos",
+                          carrera: "Carrera",
+                          rut: "RUT",
+                          institucion: "Institución",
+                          estado: "Estado"
+                        }).map(([key, label]) => (
+                          <option key={key} value={key}>
+                            {columnasVisibles[key] ? "❌" : "✅"} {label}
+                          </option>
+                        ))}
+                        <option value="mostrar-todas">🔄 Todas</option>
+                      </select>
+                      <div className="text-xs text-slate-500">
+                        {Object.values(columnasVisibles).filter(Boolean).length}/{Object.keys(columnasVisibles).length}
+                      </div>
                     </div>
                   </div>
 
@@ -232,6 +300,7 @@ const AlumnosLista = ({
                         setRUT("");
                         setGrupo("")
                         if (setSoloPresentes) setSoloPresentes("");
+                        mostrarTodasLasColumnas(); // Resetear columnas también
                       }}
                       className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg border border-slate-300 text-sm hover:bg-slate-200 transition-all duration-200 flex items-center gap-2"
                       whileHover={{ scale: 1.02 }}
@@ -250,6 +319,8 @@ const AlumnosLista = ({
         </div>
       </motion.div>
 
+
+
       {/* Tabla Simplificada */}
       <div className="w-full flex justify-center">
         <motion.div
@@ -262,44 +333,60 @@ const AlumnosLista = ({
             <table className="w-full text-sm">
               <thead className="bg-gradient-to-r from-green-800 to-emerald-600 text-white sticky top-0 z-10">
                 <tr>
-                  <th className="py-4 px-4 text-left font-semibold">Grupo</th>
-                  <th className="py-4 px-4 text-left font-semibold">Asiento</th>
-                  <th
-                    className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors"
-                    onClick={() => handleOrdenarPor("nombre")}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Nombres</span>
-                      {ordenCampo === "nombre" && (
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                          <path d={ordenAlfabetico === "asc" ? "M7 14l5-5 5 5z" : "M7 10l5 5 5-5z"} />
-                        </svg>
-                      )}
-                    </div>
-                  </th>
-                  <th
-                    className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors"
-                    onClick={() => handleOrdenarPor("apellidos")}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Apellidos</span>
-                      {ordenCampo === "apellidos" && (
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                          <path d={ordenAlfabetico === "asc" ? "M7 14l5-5 5 5z" : "M7 10l5 5 5-5z"} />
-                        </svg>
-                      )}
-                    </div>
-                  </th>
-                  <th className="py-4 px-4 text-left font-semibold">Carrera</th>
-                  <th className="py-4 px-4 text-left font-semibold">RUT</th>
-                  <th className="py-4 px-4 text-left font-semibold">Institución</th>
-                  <th className="py-4 px-4 text-center font-semibold">Estado</th>
+                  {columnasVisibles.grupo && (
+                    <th className="py-4 px-4 text-left font-semibold">Grupo</th>
+                  )}
+                  {columnasVisibles.asiento && (
+                    <th className="py-4 px-4 text-left font-semibold">Asiento</th>
+                  )}
+                  {columnasVisibles.nombres && (
+                    <th
+                      className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors"
+                      onClick={() => handleOrdenarPor("nombre")}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>Nombres</span>
+                        {ordenCampo === "nombre" && (
+                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d={ordenAlfabetico === "asc" ? "M7 14l5-5 5 5z" : "M7 10l5 5 5-5z"} />
+                          </svg>
+                        )}
+                      </div>
+                    </th>
+                  )}
+                  {columnasVisibles.apellidos && (
+                    <th
+                      className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors"
+                      onClick={() => handleOrdenarPor("apellidos")}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>Apellidos</span>
+                        {ordenCampo === "apellidos" && (
+                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d={ordenAlfabetico === "asc" ? "M7 14l5-5 5 5z" : "M7 10l5 5 5-5z"} />
+                          </svg>
+                        )}
+                      </div>
+                    </th>
+                  )}
+                  {columnasVisibles.carrera && (
+                    <th className="py-4 px-4 text-left font-semibold">Carrera</th>
+                  )}
+                  {columnasVisibles.rut && (
+                    <th className="py-4 px-4 text-left font-semibold">RUT</th>
+                  )}
+                  {columnasVisibles.institucion && (
+                    <th className="py-4 px-4 text-left font-semibold">Institución</th>
+                  )}
+                  {columnasVisibles.estado && (
+                    <th className="py-4 px-4 text-center font-semibold">Estado</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {alumnosOrdenados.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center">
+                    <td colSpan={Object.values(columnasVisibles).filter(Boolean).length} className="py-12 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <svg className="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -315,34 +402,50 @@ const AlumnosLista = ({
                       key={alumno.rut}
                       className={`${idx % 2 === 0 ? 'bg-slate-50' : 'bg-white'} hover:bg-green-50 transition-all duration-200 border-b border-slate-100`}
                     >
-                      <td className="py-4 px-4 font-semibold text-slate-700 text-center">
-                        <span className="bg-slate-200 text-slate-700 px-2 py-1 rounded-full text-xs font-bold">
-                          {alumno.grupo ?? '-'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 font-semibold text-slate-700 text-center">
-                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold">
-                          {alumno.asiento ?? '-'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-slate-800 font-medium">{alumno.nombres ?? alumno.nombre ?? '-'}</td>
-                      <td className="py-4 px-4 text-slate-800 font-medium">{alumno.apellidos ?? (alumno.nombre ? alumno.nombre.split(' ').slice(1).join(' ') : '-')}</td>
-                      <td className="py-4 px-4 text-slate-700">{alumno.carrera}</td>
-                      <td className="py-4 px-4 font-mono text-slate-700">{alumno.rut}</td>
-                      <td className="py-4 px-4 text-slate-700">{getInstitucionLabel(alumno.institucion)}</td>
-                      <td className="py-4 px-4 text-center">
-                        {alumno.presente ? (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
-                            <div className="w-2 h-2 bg-green-800 rounded-full"></div>
-                            Presente
+                      {columnasVisibles.grupo && (
+                        <td className="py-4 px-4 font-semibold text-slate-700 text-center">
+                          <span className="bg-slate-200 text-slate-700 px-2 py-1 rounded-full text-xs font-bold">
+                            {alumno.grupo ?? '-'}
                           </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800 border border-red-200">
-                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                            Ausente
+                        </td>
+                      )}
+                      {columnasVisibles.asiento && (
+                        <td className="py-4 px-4 font-semibold text-slate-700 text-center">
+                          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold">
+                            {alumno.asiento ?? '-'}
                           </span>
-                        )}
-                      </td>
+                        </td>
+                      )}
+                      {columnasVisibles.nombres && (
+                        <td className="py-4 px-4 text-slate-800 font-medium">{alumno.nombres ?? alumno.nombre ?? '-'}</td>
+                      )}
+                      {columnasVisibles.apellidos && (
+                        <td className="py-4 px-4 text-slate-800 font-medium">{alumno.apellidos ?? (alumno.nombre ? alumno.nombre.split(' ').slice(1).join(' ') : '-')}</td>
+                      )}
+                      {columnasVisibles.carrera && (
+                        <td className="py-4 px-4 text-slate-700">{alumno.carrera}</td>
+                      )}
+                      {columnasVisibles.rut && (
+                        <td className="py-4 px-4 font-mono text-slate-700">{alumno.rut}</td>
+                      )}
+                      {columnasVisibles.institucion && (
+                        <td className="py-4 px-4 text-slate-700">{getInstitucionLabel(alumno.institucion)}</td>
+                      )}
+                      {columnasVisibles.estado && (
+                        <td className="py-4 px-4 text-center">
+                          {alumno.presente ? (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
+                              <div className="w-2 h-2 bg-green-800 rounded-full"></div>
+                              Presente
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800 border border-red-200">
+                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                              Ausente
+                            </span>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}

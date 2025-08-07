@@ -225,8 +225,20 @@ function App() {
     navigate('/panel');
   };
   const handleSalirAdmin = () => {
+    // Limpiar todos los estados de autenticación y navegación
+    setShowPinModal(false);
+    setPinAutorizado(false);
+    setShowAlumnosModal(false);
+
+    // Limpiar filtros del modal de alumnos
+    setFiltroCarrera("");
+    setFiltroInstitucion("");
+    setFiltroRUT("");
+    setSoloPresentes("");
+    setFiltroGrupo("");
+
+    // Desautenticar y navegar al inicio
     setIsAdminAuthenticated(false);
-    navigate('/');
   };
 
   if (loading) return <Loader />;
@@ -415,7 +427,7 @@ function App() {
                     />
                   </motion.div>
                 ) : (
-                  <Navigate to="/admin" replace />
+                  <Navigate to="/" replace />
                 )
               } />
             </Routes>
