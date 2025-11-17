@@ -49,14 +49,14 @@ const AlumnosLista = ({
   const columnasConDatos = useMemo(() => {
     if (alumnos.length === 0) {
       return {
+        estado: true,
         grupo: false,
         asiento: false,
         nombres: true,
         apellidos: true,
         carrera: true,
         rut: true,
-        institucion: true,
-        estado: true
+        institucion: true
       };
     }
 
@@ -70,27 +70,27 @@ const AlumnosLista = ({
     const tieneInstitucion = alumnos.some(a => a.institucion != null && a.institucion !== '');
 
     return {
+      estado: true,
       grupo: tieneGrupo,
       asiento: tieneAsiento,
       nombres: tieneNombres,
       apellidos: tieneApellidos,
       carrera: tieneCarrera,
       rut: tieneRut,
-      institucion: tieneInstitucion,
-      estado: true // Estado siempre visible
+      institucion: tieneInstitucion
     };
   }, [alumnos]);
 
   // Configuración de columnas visibles - inicializar basado en datos disponibles
   const [columnasVisibles, setColumnasVisibles] = useState({
+    estado: true,
     grupo: true,
     asiento: true,
     nombres: true,
     apellidos: true,
     carrera: true,
     rut: true,
-    institucion: true,
-    estado: true
+    institucion: true
   });
 
   // Actualizar columnas visibles cuando cambian los datos de alumnos
@@ -132,14 +132,14 @@ const AlumnosLista = ({
 
   function mostrarTodasLasColumnas() {
     setColumnasVisibles({
+      estado: true,
       grupo: true,
       asiento: true,
       nombres: true,
       apellidos: true,
       carrera: true,
       rut: true,
-      institucion: true,
-      estado: true
+      institucion: true
     });
   }
 
@@ -330,14 +330,14 @@ const AlumnosLista = ({
                       >
                         <option value="">Configurar...</option>
                         {Object.entries({
+                          estado: "Estado",
                           grupo: "Grupo",
                           asiento: "Asiento",
                           nombres: "Nombres",
                           apellidos: "Apellidos",
                           carrera: "Carrera",
                           rut: "RUT",
-                          institucion: "Institución",
-                          estado: "Estado"
+                          institucion: "Institución"
                         }).map(([key, label]) => (
                           <option key={key} value={key}>
                             {columnasVisibles[key] ? "❌" : "✅"} {label}
@@ -392,6 +392,9 @@ const AlumnosLista = ({
             <table className="w-full text-sm">
               <thead className="bg-gradient-to-r from-green-800 to-emerald-600 text-white sticky top-0 z-10">
                 <tr>
+                  {columnasVisibles.estado && (
+                    <th className="py-4 px-4 text-center font-semibold w-28">Estado</th>
+                  )}
                   {columnasVisibles.grupo && (
                     <th className="py-4 px-4 text-left font-semibold w-20">Grupo</th>
                   )}
@@ -437,9 +440,6 @@ const AlumnosLista = ({
                   {columnasVisibles.institucion && (
                     <th className="py-4 px-4 text-left font-semibold w-40">Institución</th>
                   )}
-                  {columnasVisibles.estado && (
-                    <th className="py-4 px-4 text-center font-semibold w-28">Estado</th>
-                  )}
                 </tr>
               </thead>
               <tbody>
@@ -461,6 +461,21 @@ const AlumnosLista = ({
                       key={alumno.rut}
                       className={`${idx % 2 === 0 ? 'bg-slate-50' : 'bg-white'} hover:bg-green-50 transition-all duration-200 border-b border-slate-100`}
                     >
+                      {columnasVisibles.estado && (
+                        <td className="py-4 px-4 text-center w-28">
+                          {alumno.presente ? (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
+                              <div className="w-2 h-2 bg-green-800 rounded-full"></div>
+                              Presente
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800 border border-red-200">
+                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                              Ausente
+                            </span>
+                          )}
+                        </td>
+                      )}
                       {columnasVisibles.grupo && (
                         <td className="py-4 px-4 font-semibold text-slate-700 text-center w-20">
                           <span className="bg-slate-200 text-slate-700 px-2 py-1 rounded-full text-xs font-bold">
@@ -504,21 +519,6 @@ const AlumnosLista = ({
                           <div className="truncate" title={getInstitucionLabel(alumno.institucion)}>
                             {getInstitucionLabel(alumno.institucion)}
                           </div>
-                        </td>
-                      )}
-                      {columnasVisibles.estado && (
-                        <td className="py-4 px-4 text-center w-28">
-                          {alumno.presente ? (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
-                              <div className="w-2 h-2 bg-green-800 rounded-full"></div>
-                              Presente
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800 border border-red-200">
-                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                              Ausente
-                            </span>
-                          )}
                         </td>
                       )}
                     </tr>

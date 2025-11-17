@@ -369,30 +369,57 @@ export const importarAlumnosDesdeExcel = async (file, eventoId) => {
     const worksheet = workbook.Sheets[sheetName];
     const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-    // Detectar qué columnas existen en el Excel
-    const columnasDisponibles = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
-    
     // Función para verificar si un valor está vacío
     const estaVacio = (valor) => {
       return valor === null || valor === undefined || valor === '' || 
              (typeof valor === 'string' && valor.trim() === '');
     };
 
-    // Campos esperados que deben tener valor si están presentes en el Excel
-    const camposEsperados = [
-      "Nombres", "Apellidos", "Nombre Completo", "RUT", "Carrera", "Institución",
-      "asiento", "Asiento", "grupo", "Grupo"
-    ];
+    const normalizarClave = (clave = '') => 
+      clave
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+    const normalizarAlias = (lista) => lista.map(normalizarClave);
+
+    const aliasCampos = {
+      nombres: normalizarAlias(['nombres', 'nombre', 'nombre(s)', 'name', 'primer nombre']),
+      apellidos: normalizarAlias(['apellidos', 'apellido', 'second name', 'segundo nombre']),
+      nombreCompleto: normalizarAlias(['nombre completo', 'nombrecompleto', 'nombre y apellido', 'nombre y apellidos', 'full name']),
+      rut: normalizarAlias(['rut', 'r.u.t', 'documento', 'dni', 'cedula', 'cédula', 'id', 'identificacion', 'identificación', 'numero documento', 'nro documento']),
+      carrera: normalizarAlias(['carrera', 'programa', 'curso', 'especialidad']),
+      institucion: normalizarAlias(['institucion', 'institución', 'sede', 'universidad', 'colegio', 'centro', 'instituto']),
+      asiento: normalizarAlias(['asiento', 'nro asiento', 'numero asiento', 'seat']),
+      grupo: normalizarAlias(['grupo', 'grupo nro', 'grupo numero', 'group'])
+    };
+
+    const obtenerValorCampo = (fila, alias) => {
+      for (const clave of Object.keys(fila)) {
+        if (alias.includes(clave)) {
+          return fila[clave];
+        }
+      }
+      return null;
+    };
 
     let successCount = 0;
     let errorCount = 0;
 
     for (const alumno of jsonData) {
       try {
-        // Validar campos obligatorios
-        const nombres = alumno["Nombres"] ?? null;
-        const apellidos = alumno["Apellidos"] ?? null;
-        let nombreCompleto = alumno["Nombre Completo"] ?? null;
+        // Normalizar claves de la fila para permitir cualquier nombre de columna
+        const filaNormalizada = {};
+        Object.entries(alumno).forEach(([clave, valor]) => {
+          const claveNormalizada = normalizarClave(clave);
+          filaNormalizada[claveNormalizada] = valor;
+        });
+
+        const nombres = obtenerValorCampo(filaNormalizada, aliasCampos.nombres);
+        const apellidos = obtenerValorCampo(filaNormalizada, aliasCampos.apellidos);
+        let nombreCompleto = obtenerValorCampo(filaNormalizada, aliasCampos.nombreCompleto);
 
         // Si no hay nombre completo pero sí nombres y apellidos, lo armo
         if (!nombreCompleto && nombres && apellidos) {
@@ -400,52 +427,32 @@ export const importarAlumnosDesdeExcel = async (file, eventoId) => {
         }
 
         // Validar que exista nombre (ya sea completo o compuesto)
-        if (!(nombres && apellidos) && !nombreCompleto) {
+        if ((estaVacio(nombres) || estaVacio(apellidos)) && estaVacio(nombreCompleto)) {
           errorCount++;
           continue;
         }
+
+        const rut = obtenerValorCampo(filaNormalizada, aliasCampos.rut);
+        const carrera = obtenerValorCampo(filaNormalizada, aliasCampos.carrera);
+        const institucion = obtenerValorCampo(filaNormalizada, aliasCampos.institucion);
 
         // Validar campos obligatorios
-        if (!alumno["RUT"] || !alumno["Carrera"] || !alumno["Institución"]) {
+        if (estaVacio(rut) || estaVacio(carrera) || estaVacio(institucion)) {
           errorCount++;
           continue;
         }
 
-        // Validar que todas las columnas presentes en el Excel (de los campos esperados) tengan valor
-        // Si una columna existe pero está vacía, se omite la fila
-        let tieneCampoVacio = false;
-        for (const columna of columnasDisponibles) {
-          // Solo validar campos esperados
-          if (camposEsperados.includes(columna)) {
-            // Verificar si la columna tiene un valor vacío
-            if (estaVacio(alumno[columna])) {
-              tieneCampoVacio = true;
-              break;
-            }
-          }
-        }
-
-        if (tieneCampoVacio) {
-          errorCount++;
-          continue;
-        }
-
-        // Obtener valores de asiento y grupo (pueden ser null si no existen en el Excel)
-        const asiento = columnasDisponibles.includes("asiento") || columnasDisponibles.includes("Asiento")
-          ? (alumno["asiento"] ?? alumno["Asiento"] ?? null)
-          : null;
-        const grupo = columnasDisponibles.includes("grupo") || columnasDisponibles.includes("Grupo")
-          ? (alumno["grupo"] ?? alumno["Grupo"] ?? null)
-          : null;
+        const asiento = obtenerValorCampo(filaNormalizada, aliasCampos.asiento);
+        const grupo = obtenerValorCampo(filaNormalizada, aliasCampos.grupo);
 
         // Guardar el RUT tal como viene (sin puntos ni guión)
         await agregarAlumno({
           nombres,
           apellidos,
           nombre: nombreCompleto,
-          rut: String(alumno["RUT"]),
-          carrera: alumno["Carrera"],
-          institucion: alumno["Institución"],
+          rut: String(rut),
+          carrera,
+          institucion,
           asiento,
           grupo
         }, eventoId);

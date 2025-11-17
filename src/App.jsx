@@ -45,77 +45,6 @@ function ErrorMessage({ error }) {
   );
 }
 
-// Modal para pedir PIN
-function PinModal({ onSuccess, onCancel }) {
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState('');
-  const PIN_CORRECTO = '2234'; // Cambia este valor por el PIN real
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (pin === PIN_CORRECTO) {
-      setError('');
-      onSuccess();
-    } else {
-      setError('PIN incorrecto');
-    }
-  }
-
-  return (
-    <motion.div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-    >
-      <motion.div
-        className="bg-white rounded-xl shadow-lg p-6 w-full max-w-xs"
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ duration: 0.2 }}
-      >
-        <h2 className="text-lg font-semibold mb-4 text-gray-800 text-center">Código de Acceso</h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="password"
-            maxLength={4}
-            pattern="[0-9]*"
-            inputMode="numeric"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-center text-2xl tracking-widest font-mono focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none"
-            value={pin}
-            onChange={e => setPin(e.target.value.replace(/[^0-9]/g, ''))}
-            autoFocus
-            placeholder="••••"
-          />
-
-          {error && (
-            <div className="text-red-500 text-sm text-center">{error}</div>
-          )}
-
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
-            >
-              Ingresar
-            </button>
-            <button
-              type="button"
-              className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
-              onClick={onCancel}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </motion.div>
-  );
-}
-
 function App() {
   // Custom hook para la lógica de alumnos
   const {
@@ -135,8 +64,6 @@ function App() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [errorVisual, setErrorVisual] = useState("");
   const [showAlumnosModal, setShowAlumnosModal] = useState(false);
-  const [showPinModal, setShowPinModal] = useState(false);
-  const [pinAutorizado, setPinAutorizado] = useState(false);
 
   // Filtros para el modal de alumnos
   const [filtroCarrera, setFiltroCarrera] = useState("");
@@ -229,8 +156,6 @@ function App() {
   };
   const handleSalirAdmin = () => {
     // Limpiar todos los estados de autenticación y navegación
-    setShowPinModal(false);
-    setPinAutorizado(false);
     setShowAlumnosModal(false);
 
     // Limpiar filtros del modal de alumnos
@@ -242,7 +167,6 @@ function App() {
 
     // Desautenticar y navegar al inicio
     setIsAdminAuthenticated(false);
-    navigate('/');
   };
 
   if (loading) return <Loader />;
@@ -265,7 +189,7 @@ function App() {
               className="bg-blue-600 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center"
               title="Ver lista de alumnos"
               style={{ transition: 'background 0.2s' }}
-              onClick={() => { setShowPinModal(true); setPinAutorizado(false); }}
+              onClick={() => setShowAlumnosModal(true)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6.75v.75m0 3v.75m0 3v.75m0 3v.75m-3-12h6a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0116.5 21h-9A2.25 2.25 0 015.25 18.75V5.25A2.25 2.25 0 017.5 3h3z" />
@@ -279,25 +203,8 @@ function App() {
       {/* Evento activo minimalista - solo en la página principal */}
       {location.pathname === '/' && <EventoActivoMinimalista eventoActivo={eventoActivo} />}
 
-      {/* Modal de PIN antes de mostrar la lista de alumnos */}
       <AnimatePresence>
-        {showPinModal && (
-          <PinModal
-            onSuccess={() => {
-              setPinAutorizado(true);
-              setShowPinModal(false);
-              setShowAlumnosModal(true);
-            }}
-            onCancel={() => {
-              setShowPinModal(false);
-              setPinAutorizado(false);
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showAlumnosModal && pinAutorizado && (
+        {showAlumnosModal && (
           <motion.div
             className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50"
             initial={{ opacity: 0 }}
@@ -315,7 +222,7 @@ function App() {
               key="modal-content"
             >
               <button
-                onClick={() => { setShowAlumnosModal(false); setPinAutorizado(false); }}
+                onClick={() => setShowAlumnosModal(false)}
                 className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600"
                 title="Cerrar"
               >×</button>
