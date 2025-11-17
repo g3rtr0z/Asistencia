@@ -369,11 +369,27 @@ export const importarAlumnosDesdeExcel = async (file, eventoId) => {
     const worksheet = workbook.Sheets[sheetName];
     const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
+    // Detectar qué columnas existen en el Excel
+    const columnasDisponibles = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
+    
+    // Función para verificar si un valor está vacío
+    const estaVacio = (valor) => {
+      return valor === null || valor === undefined || valor === '' || 
+             (typeof valor === 'string' && valor.trim() === '');
+    };
+
+    // Campos esperados que deben tener valor si están presentes en el Excel
+    const camposEsperados = [
+      "Nombres", "Apellidos", "Nombre Completo", "RUT", "Carrera", "Institución",
+      "asiento", "Asiento", "grupo", "Grupo"
+    ];
+
     let successCount = 0;
     let errorCount = 0;
 
     for (const alumno of jsonData) {
       try {
+        // Validar campos obligatorios
         const nombres = alumno["Nombres"] ?? null;
         const apellidos = alumno["Apellidos"] ?? null;
         let nombreCompleto = alumno["Nombre Completo"] ?? null;
@@ -383,15 +399,44 @@ export const importarAlumnosDesdeExcel = async (file, eventoId) => {
           nombreCompleto = `${nombres} ${apellidos}`;
         }
 
+        // Validar que exista nombre (ya sea completo o compuesto)
         if (!(nombres && apellidos) && !nombreCompleto) {
           errorCount++;
           continue;
         }
 
+        // Validar campos obligatorios
         if (!alumno["RUT"] || !alumno["Carrera"] || !alumno["Institución"]) {
           errorCount++;
           continue;
         }
+
+        // Validar que todas las columnas presentes en el Excel (de los campos esperados) tengan valor
+        // Si una columna existe pero está vacía, se omite la fila
+        let tieneCampoVacio = false;
+        for (const columna of columnasDisponibles) {
+          // Solo validar campos esperados
+          if (camposEsperados.includes(columna)) {
+            // Verificar si la columna tiene un valor vacío
+            if (estaVacio(alumno[columna])) {
+              tieneCampoVacio = true;
+              break;
+            }
+          }
+        }
+
+        if (tieneCampoVacio) {
+          errorCount++;
+          continue;
+        }
+
+        // Obtener valores de asiento y grupo (pueden ser null si no existen en el Excel)
+        const asiento = columnasDisponibles.includes("asiento") || columnasDisponibles.includes("Asiento")
+          ? (alumno["asiento"] ?? alumno["Asiento"] ?? null)
+          : null;
+        const grupo = columnasDisponibles.includes("grupo") || columnasDisponibles.includes("Grupo")
+          ? (alumno["grupo"] ?? alumno["Grupo"] ?? null)
+          : null;
 
         // Guardar el RUT tal como viene (sin puntos ni guión)
         await agregarAlumno({
@@ -401,8 +446,8 @@ export const importarAlumnosDesdeExcel = async (file, eventoId) => {
           rut: String(alumno["RUT"]),
           carrera: alumno["Carrera"],
           institucion: alumno["Institución"],
-          asiento: alumno["asiento"] ?? alumno["Asiento"] ?? null,
-          grupo: alumno["grupo"] ?? alumno["Grupo"] ?? null
+          asiento,
+          grupo
         }, eventoId);
 
         successCount++;

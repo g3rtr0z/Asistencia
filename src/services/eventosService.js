@@ -82,6 +82,9 @@ export const crearEvento = async (evento) => {
       fechaCreacion: new Date(),
       fechaActualizacion: new Date()
     });
+
+    // Activar automáticamente el nuevo evento y desactivar el anterior
+    await activarEvento(docRef.id);
     
     // Retornar el objeto completo del evento creado
     return {
@@ -90,7 +93,7 @@ export const crearEvento = async (evento) => {
       descripcion: evento.descripcion,
       fechaInicio: evento.fechaInicio,
       fechaFin: evento.fechaFin,
-      activo: Boolean(evento.activo),
+      activo: true,
       fechaCreacion: new Date(),
       fechaActualizacion: new Date()
     };
@@ -115,7 +118,7 @@ export const actualizarEvento = async (eventoId, datos) => {
 };
 
 // Activar evento (desactivar otros y activar el seleccionado)
-export const activarEvento = async (eventoId) => {
+export async function activarEvento(eventoId) {
   try {
     // Primero desactivar todos los eventos
     const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
@@ -134,7 +137,7 @@ export const activarEvento = async (eventoId) => {
     console.error('Error al activar evento:', error);
     throw error;
   }
-};
+}
 
 // Eliminar evento
 export const eliminarEvento = async (eventoId) => {

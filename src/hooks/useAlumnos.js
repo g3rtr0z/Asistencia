@@ -4,7 +4,6 @@ import { subscribeToAlumnos, borrarColeccionAlumnos } from '../services/alumnosS
 export default function useAlumnos() {
   const [alumnos, setAlumnos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     let unsubscribe = null;
@@ -12,11 +11,9 @@ export default function useAlumnos() {
     
     const loadData = async () => {
       setLoading(true);
-      setError(null);
       
       // Timeout para detectar si Firebase no responde
       timeoutId = setTimeout(() => {
-        setError('Firebase no responde. Verifica la configuración.');
         setLoading(false);
       }, 10000);
       
@@ -26,7 +23,6 @@ export default function useAlumnos() {
         setLoading(false);
       }, (error) => {
         clearTimeout(timeoutId);
-        setError('Error al conectar con Firebase: ' + error.message);
         setLoading(false);
       });
     };
@@ -43,9 +39,7 @@ export default function useAlumnos() {
   const handleDeleteComplete = useCallback(async (eventoId) => {
     try {
       await borrarColeccionAlumnos(eventoId);
-      console.log('Borrado completado');
     } catch (e) {
-      setError('Error al borrar la colección: ' + e.message);
     }
   }, []);
 

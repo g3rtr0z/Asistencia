@@ -15,14 +15,17 @@ import EstadisticasPanel from './components/alumnos/EstadisticasPanel';
 // Loader
 function Loader() {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-800 mx-auto mb-4"></div>
-        <p className="text-green-800 text-xl">Cargando datos...</p>
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center animate-fadeIn">
+      <div className="text-center flex flex-col items-center gap-4">
+        <div className="h-16 w-16 border-4 border-green-300 border-t-green-700 rounded-full animate-spin" />
+        <p className="text-green-800 text-xl font-medium tracking-wide animate-pulse">
+          Cargando datos...
+        </p>
       </div>
     </div>
   );
 }
+
 
 // Error
 function ErrorMessage({ error }) {
@@ -239,6 +242,7 @@ function App() {
 
     // Desautenticar y navegar al inicio
     setIsAdminAuthenticated(false);
+    navigate('/');
   };
 
   if (loading) return <Loader />;

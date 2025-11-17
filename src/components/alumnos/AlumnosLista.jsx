@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const INSTITUCIONES = [
@@ -45,7 +45,43 @@ const AlumnosLista = ({
   const [ordenCampo, setOrdenCampo] = useState("nombre");
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
-  // Configuración de columnas visibles
+  // Detectar qué columnas tienen datos en los alumnos
+  const columnasConDatos = useMemo(() => {
+    if (alumnos.length === 0) {
+      return {
+        grupo: false,
+        asiento: false,
+        nombres: true,
+        apellidos: true,
+        carrera: true,
+        rut: true,
+        institucion: true,
+        estado: true
+      };
+    }
+
+    // Verificar si algún alumno tiene valor no nulo para cada campo
+    const tieneGrupo = alumnos.some(a => a.grupo != null && a.grupo !== '');
+    const tieneAsiento = alumnos.some(a => a.asiento != null && a.asiento !== '');
+    const tieneNombres = alumnos.some(a => (a.nombres != null && a.nombres !== '') || (a.nombre != null && a.nombre !== ''));
+    const tieneApellidos = alumnos.some(a => a.apellidos != null && a.apellidos !== '');
+    const tieneCarrera = alumnos.some(a => a.carrera != null && a.carrera !== '');
+    const tieneRut = alumnos.some(a => a.rut != null && a.rut !== '');
+    const tieneInstitucion = alumnos.some(a => a.institucion != null && a.institucion !== '');
+
+    return {
+      grupo: tieneGrupo,
+      asiento: tieneAsiento,
+      nombres: tieneNombres,
+      apellidos: tieneApellidos,
+      carrera: tieneCarrera,
+      rut: tieneRut,
+      institucion: tieneInstitucion,
+      estado: true // Estado siempre visible
+    };
+  }, [alumnos]);
+
+  // Configuración de columnas visibles - inicializar basado en datos disponibles
   const [columnasVisibles, setColumnasVisibles] = useState({
     grupo: true,
     asiento: true,
@@ -56,6 +92,27 @@ const AlumnosLista = ({
     institucion: true,
     estado: true
   });
+
+  // Actualizar columnas visibles cuando cambian los datos de alumnos
+  // Ocultar automáticamente columnas que no tienen datos
+  useEffect(() => {
+    setColumnasVisibles(prev => {
+      const nuevas = {};
+      
+      // Para cada columna, verificar si tiene datos
+      Object.keys(columnasConDatos).forEach(columna => {
+        if (!columnasConDatos[columna]) {
+          // Si no tiene datos, ocultarla automáticamente
+          nuevas[columna] = false;
+        } else {
+          // Si tiene datos, mantener el estado actual o mostrarla por defecto
+          nuevas[columna] = prev[columna] !== undefined ? prev[columna] : true;
+        }
+      });
+      
+      return nuevas;
+    });
+  }, [columnasConDatos]);
 
   function handleOrdenarPor(campo) {
     if (ordenCampo === campo) {
@@ -241,19 +298,21 @@ const AlumnosLista = ({
                       </select>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Grupo</label>
-                      <select
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
-                        value={grupo}
-                        onChange={e => setGrupo(e.target.value)}
-                      >
-                        <option value="">Todos</option>
-                        {gruposUnicos.map(gr => (
-                          <option key={gr} value={gr}>{`G${gr}`}</option>
-                        ))}
-                      </select>
-                    </div>
+                    {columnasConDatos.grupo && (
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-slate-700">Grupo</label>
+                        <select
+                          className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                          value={grupo}
+                          onChange={e => setGrupo(e.target.value)}
+                        >
+                          <option value="">Todos</option>
+                          {gruposUnicos.map(gr => (
+                            <option key={gr} value={gr}>{`G${gr}`}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-slate-700">Columnas</label>
