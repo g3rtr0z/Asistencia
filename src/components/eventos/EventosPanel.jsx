@@ -7,12 +7,14 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
   const [showModal, setShowModal] = useState(false);
   const [editingEvento, setEditingEvento] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [filtroTipo, setFiltroTipo] = useState('alumnos'); // 'alumnos', 'trabajadores'
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
     fechaInicio: '',
     fechaFin: '',
-    activo: false
+    activo: false,
+    tipo: 'alumnos'
   });
   const [mensaje, setMensaje] = useState('');
 
@@ -31,13 +33,13 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
         setMensaje('Evento actualizado correctamente');
         setShowModal(false);
         setEditingEvento(null);
-        setFormData({ nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', activo: false });
+        setFormData({ nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', activo: false, tipo: 'alumnos' });
       } else {
         // Crear el evento y cerrar el modal
         await crearEvento(formData);
         setMensaje('Evento creado correctamente');
         setShowModal(false);
-        setFormData({ nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', activo: false });
+        setFormData({ nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', activo: false, tipo: 'alumnos' });
       }
 
       if (onEventoChange) onEventoChange();
@@ -54,7 +56,8 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
       descripcion: evento.descripcion,
       fechaInicio: evento.fechaInicio,
       fechaFin: evento.fechaFin,
-      activo: evento.activo
+      activo: evento.activo,
+      tipo: evento.tipo || 'alumnos'
     });
     setShowModal(true);
   };
@@ -106,7 +109,7 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
     setShowModal(false);
     setShowImportModal(false);
     setEditingEvento(null);
-    setFormData({ nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', activo: false });
+    setFormData({ nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', activo: false, tipo: 'alumnos' });
   };
 
   const formatDate = (dateString) => {
@@ -169,9 +172,48 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
         </motion.div>
       )}
 
+      {/* Botones de filtro por tipo de evento */}
+      <div className="flex justify-center gap-4 mb-6">
+        <motion.button
+          onClick={() => setFiltroTipo('alumnos')}
+          className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 ${
+            filtroTipo === 'alumnos'
+              ? 'bg-green-800 text-white shadow-lg'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          Eventos de Alumnos
+        </motion.button>
+        <motion.button
+          onClick={() => setFiltroTipo('trabajadores')}
+          className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 ${
+            filtroTipo === 'trabajadores'
+              ? 'bg-blue-800 text-white shadow-lg'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          Eventos de Trabajadores
+        </motion.button>
+      </div>
+
       {/* Lista de eventos optimizada para móviles */}
       <div className="grid gap-4 sm:gap-6">
-        {eventos.map((evento) => (
+        {eventos
+          .filter(evento => {
+            const tipoEvento = evento.tipo || 'alumnos';
+            return tipoEvento === filtroTipo;
+          })
+          .map((evento) => (
           <motion.div
             key={evento.id}
             className={`p-4 sm:p-6 rounded-lg sm:rounded-xl border transition-all duration-300 hover:shadow-lg ${evento.activo
@@ -186,6 +228,12 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
               <div className="flex-1 w-full">
                 <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
                   <h3 className="text-lg sm:text-xl font-bold text-slate-800">{evento.nombre}</h3>
+                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${evento.tipo === 'trabajadores'
+                    ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                    : 'bg-green-100 text-green-800 border border-green-200'
+                    }`}>
+                    {evento.tipo === 'trabajadores' ? 'Evento Trabajadores' : 'Evento Alumnos'}
+                  </span>
                 </div>
                 <p className="text-sm sm:text-base text-slate-600 mb-3 sm:mb-4 leading-relaxed">{evento.descripcion}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
@@ -320,6 +368,20 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
                   />
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Tipo de Evento
+                  </label>
+                  <select
+                    value={formData.tipo}
+                    onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm"
+                  >
+                    <option value="alumnos">Alumnos</option>
+                    <option value="trabajadores">Trabajadores Santo Tomás</option>
+                  </select>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -421,6 +483,7 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
           <ImportExcel
             onClose={() => setShowImportModal(false)}
             eventoId={editingEvento?.id}
+            tipoEvento={editingEvento?.tipo || 'alumnos'}
           />
         </motion.div>
       )}

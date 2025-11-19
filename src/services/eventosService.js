@@ -23,6 +23,7 @@ function mapFirestoreEventData(doc) {
     fechaInicio: data.fechaInicio,
     fechaFin: data.fechaFin,
     activo: Boolean(data.activo),
+    tipo: data.tipo || 'alumnos',
     fechaCreacion: data.fechaCreacion,
     fechaActualizacion: data.fechaActualizacion
   };
@@ -79,6 +80,7 @@ export const crearEvento = async (evento) => {
       fechaInicio: evento.fechaInicio,
       fechaFin: evento.fechaFin,
       activo: Boolean(evento.activo),
+      tipo: evento.tipo || 'alumnos',
       fechaCreacion: new Date(),
       fechaActualizacion: new Date()
     });
@@ -94,6 +96,7 @@ export const crearEvento = async (evento) => {
       fechaInicio: evento.fechaInicio,
       fechaFin: evento.fechaFin,
       activo: true,
+      tipo: evento.tipo || 'alumnos',
       fechaCreacion: new Date(),
       fechaActualizacion: new Date()
     };

@@ -10,6 +10,8 @@ import { agregarAlumno, deleteAlumnoPorRut } from '../../services/alumnosService
 import { motion } from 'framer-motion';
 import useEventos from '../../hooks/useEventos';
 import useAlumnosEvento from '../../hooks/useAlumnosEvento';
+import TrabajadoresLista from '../trabajadores/TrabajadoresLista';
+import TrabajadoresResumen from '../trabajadores/TrabajadoresResumen';
 
 function AdminPanel({
   onSalir
@@ -86,6 +88,8 @@ function AdminPanel({
       setMensajeAdmin('Error al eliminar alumno');
     }
   }
+
+  const esEventoTrabajadores = eventoActivo?.tipo === 'trabajadores';
 
   return (
     <div className="min-h-screen w-full flex flex-col relative" id="admin-panel-root">
@@ -222,8 +226,14 @@ function AdminPanel({
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <span className="hidden sm:inline">Alumnos</span>
-                <span className="sm:hidden">Alumnos</span>
+                <span className="hidden sm:inline">
+                  {eventoActivo?.tipo === 'trabajadores' ? 'Trabajadores' : 
+                   eventoActivo?.tipo === 'alumnos' ? 'Alumnos' : 'Participantes'}
+                </span>
+                <span className="sm:hidden">
+                  {eventoActivo?.tipo === 'trabajadores' ? 'Trabaj.' : 
+                   eventoActivo?.tipo === 'alumnos' ? 'Alumnos' : 'Part.'}
+                </span>
               </div>
               {tab === 'alumnos' && (
                 <motion.div
@@ -243,41 +253,60 @@ function AdminPanel({
         {tab === 'alumnos' && (
           <div className="space-y-4 sm:space-y-6">
             {/* Botón para agregar/quitar alumnos */}
-            <div className="flex justify-end">
-              <motion.button
-                onClick={() => setShowAdminModal(true)}
-                className="bg-green-800 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Agregar/Quitar Alumnos
-              </motion.button>
-            </div>
+            {!esEventoTrabajadores && (
+              <div className="flex justify-end">
+                <motion.button
+                  onClick={() => setShowAdminModal(true)}
+                  className="bg-green-800 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Agregar/Quitar Alumnos
+                </motion.button>
+              </div>
+            )}
 
             {eventoActivo ? (
-              <>
-                <EventoInfo eventoActivo={eventoActivo} totalAlumnos={alumnos.length} alumnos={alumnosFiltrados} />
-                <EstadisticasPanel
-                  alumnos={alumnosFiltrados}
-                  soloPresentes={soloPresentes}
-                  setSoloPresentes={setSoloPresentes}
-                  alumnosCompletos={alumnos}
-                />
-                <AlumnosLista
-                  alumnos={alumnosFiltrados}
-                  filtroCarrera={filtroCarrera}
-                  setFiltroCarrera={setFiltroCarrera}
-                  filtroInstitucion={filtroInstitucion}
-                  setFiltroInstitucion={setFiltroInstitucion}
-                  filtroGrupo={filtroGrupo}
-                  setFiltroGrupo={setFiltroGrupo}
-                  soloPresentes={soloPresentes}
-                  setSoloPresentes={setSoloPresentes}
-                />
-              </>
+              esEventoTrabajadores ? (
+                <>
+                  <EventoInfo eventoActivo={eventoActivo} totalAlumnos={alumnos.length} alumnos={alumnos} />
+                  <TrabajadoresResumen 
+                    trabajadores={alumnos} 
+                    soloPresentes={soloPresentes}
+                    setSoloPresentes={setSoloPresentes}
+                    trabajadoresCompletos={alumnos}
+                  />
+                  <TrabajadoresLista
+                    trabajadores={alumnos}
+                    soloPresentes={soloPresentes}
+                    setSoloPresentes={setSoloPresentes}
+                  />
+                </>
+              ) : (
+                <>
+                  <EventoInfo eventoActivo={eventoActivo} totalAlumnos={alumnos.length} alumnos={alumnosFiltrados} />
+                  <EstadisticasPanel
+                    alumnos={alumnosFiltrados}
+                    soloPresentes={soloPresentes}
+                    setSoloPresentes={setSoloPresentes}
+                    alumnosCompletos={alumnos}
+                  />
+                  <AlumnosLista
+                    alumnos={alumnosFiltrados}
+                    filtroCarrera={filtroCarrera}
+                    setFiltroCarrera={setFiltroCarrera}
+                    filtroInstitucion={filtroInstitucion}
+                    setFiltroInstitucion={setFiltroInstitucion}
+                    filtroGrupo={filtroGrupo}
+                    setFiltroGrupo={setFiltroGrupo}
+                    soloPresentes={soloPresentes}
+                    setSoloPresentes={setSoloPresentes}
+                  />
+                </>
+              )
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
                 <div className="flex items-center justify-center gap-3 mb-4">

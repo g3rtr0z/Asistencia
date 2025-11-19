@@ -11,6 +11,8 @@ import AlumnosLista from './components/alumnos/AlumnosLista';
 import AdminButton from './components/admin/AdminButton';
 import EventoActivoMinimalista from './components/eventos/EventoActivoMinimalista';
 import EstadisticasPanel from './components/alumnos/EstadisticasPanel';
+import TrabajadoresLista from './components/trabajadores/TrabajadoresLista';
+import TrabajadoresResumen from './components/trabajadores/TrabajadoresResumen';
 
 // Loader
 function Loader() {
@@ -167,10 +169,13 @@ function App() {
 
     // Desautenticar y navegar al inicio
     setIsAdminAuthenticated(false);
+    navigate('/');
   };
 
   if (loading) return <Loader />;
   if (error) return <ErrorMessage error={error} />;
+
+  const esEventoTrabajadores = eventoActivo?.tipo === 'trabajadores';
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -187,7 +192,7 @@ function App() {
             {/* Icono de información */}
             <button
               className="bg-blue-600 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center"
-              title="Ver lista de alumnos"
+              title="Ver lista de asistentes"
               style={{ transition: 'background 0.2s' }}
               onClick={() => setShowAlumnosModal(true)}
             >
@@ -226,20 +231,46 @@ function App() {
                 className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600"
                 title="Cerrar"
               >×</button>
-              <h2 className="text-xl font-bold mb-4 text-green-800">Lista de Alumnos</h2>
-              {/* Estadísticas arriba de la lista */}
-              <EstadisticasPanel alumnos={alumnosFiltradosModal} soloPresentes={soloPresentes} setSoloPresentes={setSoloPresentes} alumnosCompletos={alumnos} />
-              <AlumnosLista
-                alumnos={alumnos}
-                soloPresentes={soloPresentes}
-                setSoloPresentes={setSoloPresentes}
-                filtroCarrera={filtroCarrera}
-                setFiltroCarrera={setFiltroCarrera}
-                filtroInstitucion={filtroInstitucion}
-                setFiltroInstitucion={setFiltroInstitucion}
-                filtroGrupo={filtroGrupo}
-                setFiltroGrupo={setFiltroGrupo}
-              />
+              <h2 className="text-xl font-bold mb-4 text-green-800">
+                {esEventoTrabajadores ? 'Lista de Trabajadores' : 'Lista de Alumnos'}
+              </h2>
+              {esEventoTrabajadores ? (
+                <>
+                  <TrabajadoresResumen 
+                    trabajadores={alumnos} 
+                    soloPresentes={soloPresentes}
+                    setSoloPresentes={setSoloPresentes}
+                    trabajadoresCompletos={alumnos}
+                  />
+                  <div className="mt-6">
+                    <TrabajadoresLista
+                      trabajadores={alumnos}
+                      soloPresentes={soloPresentes}
+                      setSoloPresentes={setSoloPresentes}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <EstadisticasPanel
+                    alumnos={alumnosFiltradosModal}
+                    soloPresentes={soloPresentes}
+                    setSoloPresentes={setSoloPresentes}
+                    alumnosCompletos={alumnos}
+                  />
+                  <AlumnosLista
+                    alumnos={alumnos}
+                    soloPresentes={soloPresentes}
+                    setSoloPresentes={setSoloPresentes}
+                    filtroCarrera={filtroCarrera}
+                    setFiltroCarrera={setFiltroCarrera}
+                    filtroInstitucion={filtroInstitucion}
+                    setFiltroInstitucion={setFiltroInstitucion}
+                    filtroGrupo={filtroGrupo}
+                    setFiltroGrupo={setFiltroGrupo}
+                  />
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}

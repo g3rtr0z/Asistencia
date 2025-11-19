@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { importarAlumnosDesdeExcel } from '../../services/alumnosService';
 
-function ImportExcel({ onImportComplete, eventoId = null, onClose }) {
+function ImportExcel({ onImportComplete, eventoId = null, tipoEvento = 'alumnos', onClose }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -34,8 +34,8 @@ function ImportExcel({ onImportComplete, eventoId = null, onClose }) {
     setSuccess('');
 
     try {
-      await importarAlumnosDesdeExcel(file, eventoId);
-      setSuccess('Alumnos importados correctamente');
+      await importarAlumnosDesdeExcel(file, eventoId, tipoEvento);
+      setSuccess('Datos importados correctamente');
       setFile(null);
       if (onImportComplete) {
         onImportComplete();

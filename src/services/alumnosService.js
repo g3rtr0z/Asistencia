@@ -304,7 +304,7 @@ export const agregarAlumno = async (alumno, eventoId) => {
       "RUT": alumno.rut,
       "Carrera": alumno.carrera,
       "Institución": alumno.institucion,
-      presente: false,
+      presente: alumno.presente ?? false,
       asiento: alumno.asiento ?? null,
       grupo: alumno.grupo ?? null
     });
@@ -357,7 +357,7 @@ export const borrarAlumnosDeEvento = async (eventoId) => {
   return await borrarColeccionAlumnos(eventoId);
 };
 
-export const importarAlumnosDesdeExcel = async (file, eventoId) => {
+export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'alumnos') => {
   try {
     // Importar XLSX dinámicamente
     const XLSX = await import('xlsx');
@@ -375,7 +375,7 @@ export const importarAlumnosDesdeExcel = async (file, eventoId) => {
              (typeof valor === 'string' && valor.trim() === '');
     };
 
-    const normalizarClave = (clave = '') => 
+    const normalizarClave = (clave = '') =>
       clave
         .toString()
         .trim()
@@ -393,17 +393,31 @@ export const importarAlumnosDesdeExcel = async (file, eventoId) => {
       carrera: normalizarAlias(['carrera', 'programa', 'curso', 'especialidad']),
       institucion: normalizarAlias(['institucion', 'institución', 'sede', 'universidad', 'colegio', 'centro', 'instituto']),
       asiento: normalizarAlias(['asiento', 'nro asiento', 'numero asiento', 'seat']),
-      grupo: normalizarAlias(['grupo', 'grupo nro', 'grupo numero', 'group'])
+      grupo: normalizarAlias(['grupo', 'grupo nro', 'grupo numero', 'group']),
+      estado: normalizarAlias(['estado', 'presente', 'asistencia', 'presente (si,no)'])
     };
 
     const obtenerValorCampo = (fila, alias) => {
-      for (const clave of Object.keys(fila)) {
-        if (alias.includes(clave)) {
+      for (const clave of alias) {
+        if (Object.prototype.hasOwnProperty.call(fila, clave)) {
           return fila[clave];
         }
       }
       return null;
     };
+
+    const parseEstado = (valor) => {
+      if (valor === null || valor === undefined) return null;
+      const texto = valor.toString().trim().toLowerCase();
+      if (!texto) return null;
+      const afirmativos = ['si', 'sí', 'true', '1', 'presente', 'present'];
+      const negativos = ['no', 'false', '0', 'ausente', 'absent'];
+      if (afirmativos.includes(texto)) return true;
+      if (negativos.includes(texto)) return false;
+      return null;
+    };
+
+    const esEventoTrabajadores = tipoEvento === 'trabajadores';
 
     let successCount = 0;
     let errorCount = 0;
@@ -411,11 +425,10 @@ export const importarAlumnosDesdeExcel = async (file, eventoId) => {
     for (const alumno of jsonData) {
       try {
         // Normalizar claves de la fila para permitir cualquier nombre de columna
-        const filaNormalizada = {};
-        Object.entries(alumno).forEach(([clave, valor]) => {
-          const claveNormalizada = normalizarClave(clave);
-          filaNormalizada[claveNormalizada] = valor;
-        });
+        const filaNormalizada = Object.entries(alumno).reduce((acc, [clave, valor]) => {
+          acc[normalizarClave(clave)] = valor;
+          return acc;
+        }, {});
 
         const nombres = obtenerValorCampo(filaNormalizada, aliasCampos.nombres);
         const apellidos = obtenerValorCampo(filaNormalizada, aliasCampos.apellidos);
@@ -437,13 +450,27 @@ export const importarAlumnosDesdeExcel = async (file, eventoId) => {
         const institucion = obtenerValorCampo(filaNormalizada, aliasCampos.institucion);
 
         // Validar campos obligatorios
-        if (estaVacio(rut) || estaVacio(carrera) || estaVacio(institucion)) {
+        if (estaVacio(rut)) {
           errorCount++;
           continue;
         }
 
         const asiento = obtenerValorCampo(filaNormalizada, aliasCampos.asiento);
         const grupo = obtenerValorCampo(filaNormalizada, aliasCampos.grupo);
+        const estado = obtenerValorCampo(filaNormalizada, aliasCampos.estado);
+        const presente = parseEstado(estado);
+
+        const carreraFinal = estaVacio(carrera)
+          ? (esEventoTrabajadores ? 'Colaboradores Santo Tomás' : null)
+          : carrera;
+        const institucionFinal = estaVacio(institucion)
+          ? (esEventoTrabajadores ? 'Santo Tomás' : null)
+          : institucion;
+
+        if (!esEventoTrabajadores && (estaVacio(carreraFinal) || estaVacio(institucionFinal))) {
+          errorCount++;
+          continue;
+        }
 
         // Guardar el RUT tal como viene (sin puntos ni guión)
         await agregarAlumno({
@@ -451,10 +478,11 @@ export const importarAlumnosDesdeExcel = async (file, eventoId) => {
           apellidos,
           nombre: nombreCompleto,
           rut: String(rut),
-          carrera,
-          institucion,
-          asiento,
-          grupo
+          carrera: carreraFinal || 'Sin definir',
+          institucion: institucionFinal || 'Sin definir',
+          asiento: esEventoTrabajadores ? null : asiento,
+          grupo: esEventoTrabajadores ? null : grupo,
+          presente: presente ?? false
         }, eventoId);
 
         successCount++;
