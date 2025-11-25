@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import AlumnosLista from '../alumnos/AlumnosLista';
 import EstadisticasPanel from '../alumnos/EstadisticasPanel';
@@ -18,6 +18,8 @@ function AdminPanel({
 }) {
   const [tab, setTab] = useState('eventos');
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminModalMode, setAdminModalMode] = useState('add');
+  const deleteFormRef = useRef(null);
 
   // Hook para eventos
   const { eventos, eventoActivo, loading: eventosLoading, error: eventosError } = useEventos();
@@ -101,6 +103,12 @@ function AdminPanel({
     }
   }
 
+  useEffect(() => {
+    if (showAdminModal && adminModalMode === 'delete' && deleteFormRef.current) {
+      deleteFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [showAdminModal, adminModalMode]);
+
   return (
     <div className="min-h-screen w-full flex flex-col relative" id="admin-panel-root">
       {/* Header del Panel de Administración */}
@@ -144,77 +152,97 @@ function AdminPanel({
             transition={{ duration: 0.2 }}
           >
             <button onClick={() => setShowAdminModal(false)} className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600">×</button>
-            <h3 className="text-2xl font-bold text-st-verde mb-4">Agregar Alumno</h3>
-            <form className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-6 min-w-0" onSubmit={handleAgregarAlumno}>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-st-verde mb-1">Nombres</label>
-                <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Nombres" value={nuevoAlumno.nombres} onChange={e => setNuevoAlumno(a => ({ ...a, nombres: e.target.value }))} required />
+            <h3 className="text-2xl font-bold text-st-verde mb-4">
+              {adminModalMode === 'delete' ? 'Eliminar Alumno' : 'Agregar Alumno'}
+            </h3>
+            {adminModalMode === 'add' ? (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 shadow-sm w-full">
+                <p className="text-sm text-slate-500 mb-3">
+                  Completa los datos que vas a registrar. Usa el filtro verde para los funcionarios y los campos tradicionales para alumnos.
+                </p>
+                <form className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0" onSubmit={handleAgregarAlumno}>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-st-verde mb-1">Nombres</label>
+                    <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Nombres" value={nuevoAlumno.nombres} onChange={e => setNuevoAlumno(a => ({ ...a, nombres: e.target.value }))} required />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-st-verde mb-1">Apellidos</label>
+                    <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Apellidos" value={nuevoAlumno.apellidos} onChange={e => setNuevoAlumno(a => ({ ...a, apellidos: e.target.value }))} required />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-st-verde mb-1">RUT</label>
+                    <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="RUT" value={nuevoAlumno.rut} onChange={e => setNuevoAlumno(a => ({ ...a, rut: e.target.value }))} required />
+                  </div>
+                  {esEventoTrabajadores ? (
+                    <>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-st-verde mb-1">Departamento</label>
+                        <input
+                          className="border border-st-verde rounded px-3 py-2 text-base"
+                          placeholder="Ej: Recursos Humanos"
+                          value={nuevoAlumno.departamento}
+                          onChange={e => setNuevoAlumno(a => ({ ...a, departamento: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-st-verde mb-1">Vegano</label>
+                        <select
+                          className="border border-st-verde rounded px-3 py-2 text-base"
+                          value={nuevoAlumno.vegano}
+                          onChange={e => setNuevoAlumno(a => ({ ...a, vegano: e.target.value }))}
+                          required
+                        >
+                          <option value="si">Sí</option>
+                          <option value="no">No</option>
+                        </select>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-st-verde mb-1">Carrera</label>
+                        <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Carrera" value={nuevoAlumno.carrera} onChange={e => setNuevoAlumno(a => ({ ...a, carrera: e.target.value }))} required />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-st-verde mb-1">Institución</label>
+                        <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Institución" value={nuevoAlumno.institucion} onChange={e => setNuevoAlumno(a => ({ ...a, institucion: e.target.value }))} required />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-st-verde mb-1">Asiento</label>
+                        <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Asiento" value={nuevoAlumno.asiento} onChange={e => setNuevoAlumno(a => ({ ...a, asiento: e.target.value }))} />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-st-verde mb-1">Grupo</label>
+                        <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Grupo" value={nuevoAlumno.grupo} onChange={e => setNuevoAlumno(a => ({ ...a, grupo: e.target.value }))} />
+                      </div>
+                    </>
+                  )}
+                  <div className="flex flex-col justify-end">
+                    <button type="submit" className="bg-st-verde text-white px-6 py-2 rounded font-semibold w-full shadow hover:bg-st-verdeClaro transition">Agregar</button>
+                  </div>
+                </form>
               </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-st-verde mb-1">Apellidos</label>
-                <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Apellidos" value={nuevoAlumno.apellidos} onChange={e => setNuevoAlumno(a => ({ ...a, apellidos: e.target.value }))} required />
+            ) : (
+              <div className="bg-white border border-red-200 rounded-2xl p-5 shadow-sm w-full">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-red-700">Eliminar Alumno</h3>
+                  <span className="text-xs text-red-500 uppercase tracking-widest">Solo RUT</span>
+                </div>
+                <p className="text-xs text-slate-500 mb-3">
+                  Ingresa el RUT completo para quitar el registro del evento activo. Esta acción no se puede deshacer fácilmente.
+                </p>
+                <form ref={deleteFormRef} className="flex flex-col sm:flex-row gap-4 w-full items-end min-w-0" onSubmit={handleEliminarAlumno}>
+                  <div className="flex-1 flex flex-col">
+                    <label className="text-sm font-medium text-red-600 mb-1">RUT del alumno</label>
+                    <input className="border border-red-400 rounded px-3 py-2 text-base" placeholder="RUT del alumno" value={rutEliminar} onChange={e => setRutEliminar(e.target.value)} required />
+                  </div>
+                  <button type="submit" className="bg-red-600 text-white px-5 py-2 rounded font-semibold shadow hover:bg-red-700 transition">
+                    Eliminar
+                  </button>
+                </form>
               </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-st-verde mb-1">RUT</label>
-                <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="RUT" value={nuevoAlumno.rut} onChange={e => setNuevoAlumno(a => ({ ...a, rut: e.target.value }))} required />
-              </div>
-              {esEventoTrabajadores ? (
-                <>
-                  <div className="flex flex-col">
-                    <label className="text-sm font-medium text-st-verde mb-1">Departamento</label>
-                    <input
-                      className="border border-st-verde rounded px-3 py-2 text-base"
-                      placeholder="Ej: Recursos Humanos"
-                      value={nuevoAlumno.departamento}
-                      onChange={e => setNuevoAlumno(a => ({ ...a, departamento: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-sm font-medium text-st-verde mb-1">Vegano</label>
-                    <select
-                      className="border border-st-verde rounded px-3 py-2 text-base"
-                      value={nuevoAlumno.vegano}
-                      onChange={e => setNuevoAlumno(a => ({ ...a, vegano: e.target.value }))}
-                      required
-                    >
-                      <option value="si">Sí</option>
-                      <option value="no">No</option>
-                    </select>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex flex-col">
-                    <label className="text-sm font-medium text-st-verde mb-1">Carrera</label>
-                    <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Carrera" value={nuevoAlumno.carrera} onChange={e => setNuevoAlumno(a => ({ ...a, carrera: e.target.value }))} required />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-sm font-medium text-st-verde mb-1">Institución</label>
-                    <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Institución" value={nuevoAlumno.institucion} onChange={e => setNuevoAlumno(a => ({ ...a, institucion: e.target.value }))} required />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-sm font-medium text-st-verde mb-1">Asiento</label>
-                    <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Asiento" value={nuevoAlumno.asiento} onChange={e => setNuevoAlumno(a => ({ ...a, asiento: e.target.value }))} />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-sm font-medium text-st-verde mb-1">Grupo</label>
-                    <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Grupo" value={nuevoAlumno.grupo} onChange={e => setNuevoAlumno(a => ({ ...a, grupo: e.target.value }))} />
-                  </div>
-                </>
-              )}
-              <div className="flex flex-col justify-end">
-                <button type="submit" className="bg-st-verde text-white px-6 py-2 rounded font-bold w-full shadow hover:bg-st-verdeClaro transition">Agregar</button>
-              </div>
-            </form>
-            <h3 className="text-2xl font-bold text-red-700 mb-4 mt-2">Eliminar Alumno</h3>
-            <form className="flex flex-col sm:flex-row gap-4 w-full items-end min-w-0" onSubmit={handleEliminarAlumno}>
-              <div className="flex-1 flex flex-col">
-                <label className="text-sm font-medium text-red-700 mb-1">RUT del alumno</label>
-                <input className="border border-red-400 rounded px-3 py-2 text-base" placeholder="RUT del alumno" value={rutEliminar} onChange={e => setRutEliminar(e.target.value)} required />
-              </div>
-              <button type="submit" className="bg-red-600 text-white px-6 py-2 rounded font-bold shadow hover:bg-red-700 transition">Eliminar</button>
-            </form>
+            )}
             {mensajeAdmin && <div className="mt-4 text-st-verde font-medium text-center">{mensajeAdmin}</div>}
           </motion.div>
         </motion.div>
@@ -291,23 +319,6 @@ function AdminPanel({
       <div className="flex-1 w-full max-w-6xl mx-auto px-2 sm:px-6 md:px-10 py-4 sm:py-6">
         {tab === 'alumnos' && (
           <div className="space-y-4 sm:space-y-6">
-            {/* Botón para agregar/quitar alumnos */}
-            {!esEventoTrabajadores && (
-              <div className="flex justify-end">
-                <motion.button
-                  onClick={() => setShowAdminModal(true)}
-                  className="bg-green-800 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Agregar/Quitar Alumnos
-                </motion.button>
-              </div>
-            )}
-
             {eventoActivo ? (
               esEventoTrabajadores ? (
                 <>
@@ -343,6 +354,14 @@ function AdminPanel({
                     setFiltroGrupo={setFiltroGrupo}
                     soloPresentes={soloPresentes}
                     setSoloPresentes={setSoloPresentes}
+                    onAgregarAlumnos={() => {
+                      setAdminModalMode('add');
+                      setShowAdminModal(true);
+                    }}
+                    onEliminarAlumnos={() => {
+                      setAdminModalMode('delete');
+                      setShowAdminModal(true);
+                    }}
                   />
                 </>
               )

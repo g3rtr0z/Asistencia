@@ -24,7 +24,9 @@ const AlumnosLista = ({
   filtroRUT,
   setFiltroRUT,
   setFiltroGrupo,
-  filtroGrupo
+  filtroGrupo,
+  onAgregarAlumnos,
+  onEliminarAlumnos
 }) => {
   // Si no vienen por props, usar estado local (para compatibilidad con admin)
   const [localCarrera, setLocalCarrera] = useState("");
@@ -207,178 +209,204 @@ const AlumnosLista = ({
 
   return (
     <div className="flex flex-col items-center w-full">
-
-      {/* Filtros Desplegables */}
-      <motion.div
-        className="mb-6 w-full max-w-7xl"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-          {/* Header del filtro */}
-          <motion.button
-            onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
-            className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
-            whileHover={{ backgroundColor: '#f8fafc' }}
+      <div className="mb-6 w-full flex justify-center">
+        <div className="w-full max-w-6xl flex items-stretch gap-4">
+          <motion.div
+            className="w-full"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-800 to-emerald-800 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-slate-800">Filtros de Búsqueda</h3>
-              <span className="text-sm text-slate-500">
-                ({alumnosFiltrados.length} de {alumnos.length} alumnos)
-              </span>
-            </div>
-            <motion.div
-              animate={{ rotate: filtrosAbiertos ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </motion.div>
-          </motion.button>
-
-          {/* Contenido desplegable */}
-          <AnimatePresence>
-            {filtrosAbiertos && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="overflow-hidden"
+            <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+              <motion.button
+                onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                whileHover={{ backgroundColor: '#f8fafc' }}
               >
-                <div className="p-4 border-t border-slate-200">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-3">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">RUT</label>
-                      <input
-                        type="text"
-                        placeholder="Buscar RUT..."
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
-                        value={rut}
-                        onChange={e => setRUT(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Carrera</label>
-                      <select
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
-                        value={carrera}
-                        onChange={e => setCarrera(e.target.value)}
-                      >
-                        <option value="">Todas</option>
-                        {Object.entries(carrerasPorInstitucion).map(([institucion, carreras]) => (
-                          <optgroup key={institucion} label={getInstitucionLabel(institucion)}>
-                            {carreras.map(carrera => (
-                              <option key={carrera} value={carrera}>{carrera}</option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Institución</label>
-                      <select
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
-                        value={institucion}
-                        onChange={e => setInstitucion(e.target.value)}
-                      >
-                        <option value="">Todas</option>
-                        {opcionesInstituciones.map(inst => (
-                          <option key={inst} value={inst}>{getInstitucionLabel(inst)}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {columnasConDatos.grupo && (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-slate-700">N° de Lista</label>
-                        <select
-                          className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
-                          value={grupo}
-                          onChange={e => setGrupo(e.target.value)}
-                        >
-                          <option value="">Todos</option>
-                          {gruposUnicos.map(gr => (
-                            <option key={gr} value={gr}>{`G${gr}`}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Columnas</label>
-                      <select
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
-                        value=""
-                        onChange={(e) => {
-                          if (e.target.value === "mostrar-todas") {
-                            mostrarTodasLasColumnas();
-                          } else if (e.target.value) {
-                            toggleColumna(e.target.value);
-                          }
-                          e.target.value = ""; // Reset select
-                        }}
-                      >
-                        <option value="">Configurar...</option>
-                        {Object.entries({
-                          estado: "Estado",
-                          grupo: "N° de Lista",
-                          asiento: "Asiento",
-                          nombres: "Nombres",
-                          apellidos: "Apellidos",
-                          carrera: "Carrera",
-                          rut: "RUT",
-                          institucion: "Institución"
-                        }).map(([key, label]) => (
-                          <option key={key} value={key}>
-                            {columnasVisibles[key] ? "❌" : "✅"} {label}
-                          </option>
-                        ))}
-                        <option value="mostrar-todas">🔄 Todas</option>
-                      </select>
-                      <div className="text-xs text-slate-500">
-                        {Object.values(columnasVisibles).filter(Boolean).length}/{Object.keys(columnasVisibles).length}
-                      </div>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-green-800 to-emerald-800 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                    </svg>
                   </div>
-
-                  <div className="flex justify-end">
-                    <motion.button
-                      onClick={() => {
-                        setCarrera("");
-                        setInstitucion("");
-                        setRUT("");
-                        setGrupo("")
-                        if (setSoloPresentes) setSoloPresentes("");
-                        mostrarTodasLasColumnas(); // Resetear columnas también
-                      }}
-                      className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg border border-slate-300 text-sm hover:bg-slate-200 transition-all duration-200 flex items-center gap-2"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      Limpiar Filtros
-                    </motion.button>
+                  <div className="flex flex-col">
+                    <h3 className="text-lg font-semibold text-slate-800">Filtros de Búsqueda</h3>
+                    <span className="text-sm text-slate-500">
+                      ({alumnosFiltrados.length} de {alumnos.length} alumnos)
+                    </span>
                   </div>
                 </div>
-              </motion.div>
+                <motion.div
+                  animate={{ rotate: filtrosAbiertos ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </motion.div>
+              </motion.button>
+
+              <AnimatePresence>
+                {filtrosAbiertos && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-3 border-t border-slate-200">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-2">
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-slate-700">RUT</label>
+                          <input
+                            type="text"
+                            placeholder="Buscar RUT..."
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                            value={rut}
+                            onChange={e => setRUT(e.target.value)}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-slate-700">Carrera</label>
+                          <select
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                            value={carrera}
+                            onChange={e => setCarrera(e.target.value)}
+                          >
+                            <option value="">Todas</option>
+                            {Object.entries(carrerasPorInstitucion).map(([institucion, carreras]) => (
+                              <optgroup key={institucion} label={getInstitucionLabel(institucion)}>
+                                {carreras.map(carrera => (
+                                  <option key={carrera} value={carrera}>{carrera}</option>
+                                ))}
+                              </optgroup>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-slate-700">Institución</label>
+                          <select
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                            value={institucion}
+                            onChange={e => setInstitucion(e.target.value)}
+                          >
+                            <option value="">Todas</option>
+                            {opcionesInstituciones.map(inst => (
+                              <option key={inst} value={inst}>{getInstitucionLabel(inst)}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {columnasConDatos.grupo && (
+                          <div className="space-y-2">
+                            <label className="block text-sm font-medium text-slate-700">N° de Lista</label>
+                            <select
+                              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                              value={grupo}
+                              onChange={e => setGrupo(e.target.value)}
+                            >
+                              <option value="">Todos</option>
+                              {gruposUnicos.map(gr => (
+                                <option key={gr} value={gr}>{`G${gr}`}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-slate-700">Columnas</label>
+                          <select
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                            value=""
+                            onChange={(e) => {
+                              if (e.target.value === "mostrar-todas") {
+                                mostrarTodasLasColumnas();
+                              } else if (e.target.value) {
+                                toggleColumna(e.target.value);
+                              }
+                              e.target.value = ""; // Reset select
+                            }}
+                          >
+                            <option value="">Configurar...</option>
+                            {Object.entries({
+                              estado: "Estado",
+                              grupo: "N° de Lista",
+                              asiento: "Asiento",
+                              nombres: "Nombres",
+                              apellidos: "Apellidos",
+                              carrera: "Carrera",
+                              rut: "RUT",
+                              institucion: "Institución"
+                            }).map(([key, label]) => (
+                              <option key={key} value={key}>
+                                {columnasVisibles[key] ? "❌" : "✅"} {label}
+                              </option>
+                            ))}
+                            <option value="mostrar-todas">🔄 Todas</option>
+                          </select>
+                          <div className="text-xs text-slate-500">
+                            {Object.values(columnasVisibles).filter(Boolean).length}/{Object.keys(columnasVisibles).length}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <motion.button
+                          onClick={() => {
+                            setCarrera("");
+                            setInstitucion("");
+                            setRUT("");
+                            setGrupo("");
+                            if (setSoloPresentes) setSoloPresentes("");
+                            mostrarTodasLasColumnas(); // Resetear columnas también
+                          }}
+                          className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg border border-slate-300 text-sm hover:bg-slate-200 transition-all duration-200 flex items-center gap-2"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          Limpiar Filtros
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+          <div className="flex gap-2 items-center">
+            {onAgregarAlumnos && (
+              <motion.button
+                onClick={onAgregarAlumnos}
+                className="w-10 h-10 rounded-full bg-gradient-to-br from-green-800 to-emerald-800 text-white shadow-lg shadow-emerald-400/30 text-xl font-bold border-2 border-white flex items-center justify-center transition-colors duration-200 hover:shadow-emerald-500/20"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Agregar alumnos"
+                title="Agregar alumnos"
+              >
+                +
+              </motion.button>
             )}
-          </AnimatePresence>
+            {onEliminarAlumnos && (
+              <motion.button
+                onClick={onEliminarAlumnos}
+                className="w-10 h-10 rounded-full bg-gradient-to-br from-red-700 to-red-600 text-white shadow-lg shadow-red-300/40 text-xl font-bold border-2 border-white flex items-center justify-center transition-colors duration-200 hover:shadow-red-500/20 hover:from-red-700"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Eliminar alumnos"
+                title="Eliminar alumnos"
+              >
+                -
+              </motion.button>
+            )}
+          </div>
         </div>
-      </motion.div>
-
-
+      </div>
 
       {/* Tabla Simplificada */}
       <div className="w-full flex justify-center">
