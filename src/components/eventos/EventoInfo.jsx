@@ -66,7 +66,7 @@ function EventoInfo({ eventoActivo, totalAlumnos, alumnos }) {
 
           {alumnos && alumnos.length > 0 && (
             <motion.button
-              onClick={() => exportarAExcel(alumnos, eventoActivo.nombre)}
+              onClick={() => exportarAExcel(alumnos, eventoActivo.nombre, eventoActivo.tipo)}
               className="px-3 py-1 bg-green-800 text-white text-xs rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

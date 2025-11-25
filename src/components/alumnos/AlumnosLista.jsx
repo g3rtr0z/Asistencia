@@ -300,7 +300,7 @@ const AlumnosLista = ({
 
                     {columnasConDatos.grupo && (
                       <div className="space-y-2">
-                        <label className="block text-sm font-medium text-slate-700">Grupo</label>
+                        <label className="block text-sm font-medium text-slate-700">N° de Lista</label>
                         <select
                           className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
                           value={grupo}
@@ -331,7 +331,7 @@ const AlumnosLista = ({
                         <option value="">Configurar...</option>
                         {Object.entries({
                           estado: "Estado",
-                          grupo: "Grupo",
+                          grupo: "N° de Lista",
                           asiento: "Asiento",
                           nombres: "Nombres",
                           apellidos: "Apellidos",
@@ -396,7 +396,7 @@ const AlumnosLista = ({
                     <th className="py-4 px-4 text-center font-semibold w-28">Estado</th>
                   )}
                   {columnasVisibles.grupo && (
-                    <th className="py-4 px-4 text-left font-semibold w-20">Grupo</th>
+                    <th className="py-4 px-4 text-left font-semibold w-32 whitespace-nowrap">N° de Lista</th>
                   )}
                   {columnasVisibles.asiento && (
                     <th className="py-4 px-4 text-left font-semibold w-24">Asiento</th>
@@ -477,7 +477,7 @@ const AlumnosLista = ({
                         </td>
                       )}
                       {columnasVisibles.grupo && (
-                        <td className="py-4 px-4 font-semibold text-slate-700 text-center w-20">
+                        <td className="py-4 px-4 font-semibold text-slate-700 text-center w-32 whitespace-nowrap">
                           <span className="bg-slate-200 text-slate-700 px-2 py-1 rounded-full text-xs font-bold">
                             {alumno.grupo ?? '-'}
                           </span>

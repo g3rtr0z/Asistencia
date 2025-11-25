@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import Logo from '../../assets/logo3.png';
-import { buscarAlumnoPorRut } from '../../services/alumnosService';
+import { buscarAlumnoPorRutEnEvento } from '../../services/alumnosService';
 import { Button, Input, Card } from './index';
 
 const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
@@ -30,7 +30,13 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
     setLoading(true);
     setResult(null);
     try {
-      const alumno = await buscarAlumnoPorRut(rut.trim());
+      if (!eventoActivo?.id) {
+        setErrorVisual('No hay un evento activo disponible.');
+        setLoading(false);
+        return;
+      }
+
+      const alumno = await buscarAlumnoPorRutEnEvento(rut.trim(), eventoActivo.id);
       if (alumno && alumno.presente) {
         setErrorVisual('Su RUT ya se encuentra registrado');
         setLoading(false);
@@ -51,6 +57,27 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
     if (e.key === 'Enter') {
       handleSubmit(e);
     }
+  };
+
+  const esEventoFuncionarios = eventoActivo?.tipo === 'trabajadores';
+
+  const InfoRow = ({ label, value, border = true }) => {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+    return (
+      <div className={`flex justify-between items-center py-2 gap-x-6 ${border ? 'border-b border-gray-100' : ''}`}>
+        <span className="text-gray-600 font-medium">{label}:</span>
+        <span className="text-gray-800 font-semibold text-right">{value}</span>
+      </div>
+    );
+  };
+
+  const getVeganoTexto = (valor) => {
+    if (valor === null || valor === undefined || valor === '') return 'No';
+    if (typeof valor === 'boolean') return valor ? 'Sí' : 'No';
+    const texto = valor.toString().trim().toLowerCase();
+    return ['si', 'sí', 'yes', 'true', '1'].includes(texto) ? 'Sí' : 'No';
   };
 
   return (
@@ -115,38 +142,35 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
               </h2>
             </div>
             <div className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b border-gray-100 gap-x-6">
-                <span className="text-gray-600 font-medium">RUT:</span>
-                <span className="text-gray-800">{result.rut}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100 gap-x-6">
-                <span className="text-gray-600 font-medium">Nombre:</span>
-                <span className="text-gray-800 font-semibold">
-                  {result.data.nombre}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100 gap-x-6">
-                <span className="text-gray-600 font-medium">Asiento:</span>
-                <span className="text-gray-800 font-semibold">
-                  {result.data.asiento ?? '-'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100 gap-x-6">
-                <span className="text-gray-600 font-medium">Grupo:</span>
-                <span className="text-gray-800 font-semibold">
-                  {result.data.grupo ?? '-'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100 gap-x-6">
-                <span className="text-gray-600 font-medium">Carrera:</span>
-                <span className="text-gray-800">{result.data.carrera}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 gap-x-6">
-                <span className="text-gray-600 font-medium">Institución:</span>
-                <span className="text-gray-800 font-semibold">
-                  {result.data.institucion}
-                </span>
-              </div>
+              {(() => {
+                if (esEventoFuncionarios) {
+                  const nombres = result.data.nombres ?? result.data.nombre ?? '';
+                  const apellidos = result.data.apellidos ?? (result.data.nombre ? result.data.nombre.split(' ').slice(1).join(' ') : '');
+                  const departamento = result.data.departamento ?? 'Sin departamento';
+                  const vegano = getVeganoTexto(result.data.vegano);
+                  return (
+                    <>
+                      <InfoRow label="RUT" value={result.rut} />
+                      <InfoRow label="Nombres" value={nombres} />
+                      <InfoRow label="Apellidos" value={apellidos || 'Sin apellidos'} />
+                      <InfoRow label="Departamento" value={departamento} />
+                      <InfoRow label="Vegano" value={vegano} border={false} />
+                    </>
+                  );
+                }
+
+                const nombreMostrar = result.data.nombre ?? `${result.data.nombres ?? ''} ${result.data.apellidos ?? ''}`.trim();
+                return (
+                  <>
+                    <InfoRow label="RUT" value={result.rut} />
+                    <InfoRow label="Nombre" value={nombreMostrar} />
+                    <InfoRow label="Asiento" value={result.data.asiento} />
+                    <InfoRow label="N° de Lista" value={result.data.grupo} />
+                    <InfoRow label="Carrera" value={result.data.carrera} />
+                    <InfoRow label="Institución" value={result.data.institucion} border={false} />
+                  </>
+                );
+              })()}
             </div>
           </Card>
         )}

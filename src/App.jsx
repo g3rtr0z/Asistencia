@@ -232,7 +232,7 @@ function App() {
                 title="Cerrar"
               >×</button>
               <h2 className="text-xl font-bold mb-4 text-green-800">
-                {esEventoTrabajadores ? 'Lista de Trabajadores' : 'Lista de Alumnos'}
+                {esEventoTrabajadores ? 'Lista de Funcionarios' : 'Lista de Alumnos'}
               </h2>
               {esEventoTrabajadores ? (
                 <>

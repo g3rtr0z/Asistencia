@@ -1,6 +1,7 @@
 import {
   collection,
   getDocs,
+  getDoc,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -10,6 +11,18 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { db } from '../connection/firebase.js';
+
+const parseBooleanField = (valor) => {
+  if (typeof valor === 'boolean') return valor;
+  if (valor === null || valor === undefined) return null;
+  const texto = valor.toString().trim().toLowerCase();
+  if (!texto) return null;
+  const afirmativos = ['si', 'sí', 'yes', 'true', '1'];
+  const negativos = ['no', 'false', '0'];
+  if (afirmativos.includes(texto)) return true;
+  if (negativos.includes(texto)) return false;
+  return null;
+};
 
 // Función helper para mapear datos de Firestore
 function mapFirestoreData(doc) {
@@ -22,9 +35,13 @@ function mapFirestoreData(doc) {
     rut: data["RUT"],
     carrera: data["Carrera"],
     institucion: data["Institución"],
+    departamento: data["Departamento"] ?? null,
+    vegano: parseBooleanField(data["Vegano"]),
     presente: Boolean(data.presente),
     asiento: data["asiento"] ?? null,
-    grupo: data["grupo"] ?? null
+    grupo: data["grupo"] ?? null,
+    fechaRegistro: data.fechaRegistro ?? null,
+    ultimaActualizacion: data.ultimaActualizacion ?? null
   };
 }
 
@@ -304,6 +321,8 @@ export const agregarAlumno = async (alumno, eventoId) => {
       "RUT": alumno.rut,
       "Carrera": alumno.carrera,
       "Institución": alumno.institucion,
+      "Departamento": alumno.departamento ?? null,
+      "Vegano": parseBooleanField(alumno.vegano),
       presente: alumno.presente ?? false,
       asiento: alumno.asiento ?? null,
       grupo: alumno.grupo ?? null
@@ -319,10 +338,20 @@ export const agregarAlumno = async (alumno, eventoId) => {
 export const actualizarPresencia = async (alumnoId, presente, eventoId) => {
   try {
     const alumnoRef = doc(db, `eventos/${eventoId}/alumnos`, alumnoId);
-    await updateDoc(alumnoRef, {
+    const alumnoDoc = await getDoc(alumnoRef);
+    const alumnoData = alumnoDoc.data();
+    
+    const updateData = {
       presente: Boolean(presente),
       ultimaActualizacion: new Date()
-    });
+    };
+    
+    // Si se marca como presente y no tiene fechaRegistro, guardarla
+    if (presente && !alumnoData?.fechaRegistro) {
+      updateData.fechaRegistro = new Date();
+    }
+    
+    await updateDoc(alumnoRef, updateData);
   } catch (error) {
     console.error('Error al actualizar presencia:', error);
     throw error;
@@ -393,8 +422,10 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
       carrera: normalizarAlias(['carrera', 'programa', 'curso', 'especialidad']),
       institucion: normalizarAlias(['institucion', 'institución', 'sede', 'universidad', 'colegio', 'centro', 'instituto']),
       asiento: normalizarAlias(['asiento', 'nro asiento', 'numero asiento', 'seat']),
-      grupo: normalizarAlias(['grupo', 'grupo nro', 'grupo numero', 'group']),
-      estado: normalizarAlias(['estado', 'presente', 'asistencia', 'presente (si,no)'])
+      grupo: normalizarAlias(['grupo', 'grupo nro', 'grupo numero', 'group', 'n° de lista', 'n de lista', 'numero de lista', 'nro de lista', 'numero lista', 'nro lista', 'lista']),
+      estado: normalizarAlias(['estado', 'presente', 'asistencia', 'presente (si,no)']),
+      departamento: normalizarAlias(['departamento', 'área', 'area', 'unidad', 'dependencia']),
+      vegano: normalizarAlias(['vegano', 'opcion vegana', 'es vegano', 'vegano (si,no)'])
     };
 
     const obtenerValorCampo = (fila, alias) => {
@@ -403,17 +434,6 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
           return fila[clave];
         }
       }
-      return null;
-    };
-
-    const parseEstado = (valor) => {
-      if (valor === null || valor === undefined) return null;
-      const texto = valor.toString().trim().toLowerCase();
-      if (!texto) return null;
-      const afirmativos = ['si', 'sí', 'true', '1', 'presente', 'present'];
-      const negativos = ['no', 'false', '0', 'ausente', 'absent'];
-      if (afirmativos.includes(texto)) return true;
-      if (negativos.includes(texto)) return false;
       return null;
     };
 
@@ -458,7 +478,10 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
         const asiento = obtenerValorCampo(filaNormalizada, aliasCampos.asiento);
         const grupo = obtenerValorCampo(filaNormalizada, aliasCampos.grupo);
         const estado = obtenerValorCampo(filaNormalizada, aliasCampos.estado);
-        const presente = parseEstado(estado);
+        const presente = parseBooleanField(estado);
+        const departamento = obtenerValorCampo(filaNormalizada, aliasCampos.departamento);
+        const veganoValor = obtenerValorCampo(filaNormalizada, aliasCampos.vegano);
+        const vegano = parseBooleanField(veganoValor);
 
         const carreraFinal = estaVacio(carrera)
           ? (esEventoTrabajadores ? 'Colaboradores Santo Tomás' : null)
@@ -472,6 +495,17 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
           continue;
         }
 
+        if (esEventoTrabajadores) {
+          if (estaVacio(departamento)) {
+            errorCount++;
+            continue;
+          }
+          if (vegano === null) {
+            errorCount++;
+            continue;
+          }
+        }
+
         // Guardar el RUT tal como viene (sin puntos ni guión)
         await agregarAlumno({
           nombres,
@@ -482,7 +516,9 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
           institucion: institucionFinal || 'Sin definir',
           asiento: esEventoTrabajadores ? null : asiento,
           grupo: esEventoTrabajadores ? null : grupo,
-          presente: presente ?? false
+          presente: presente ?? false,
+          departamento: esEventoTrabajadores ? departamento : null,
+          vegano: esEventoTrabajadores ? vegano : null
         }, eventoId);
 
         successCount++;

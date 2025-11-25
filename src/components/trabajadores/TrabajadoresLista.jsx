@@ -20,9 +20,11 @@ const TrabajadoresLista = ({
   // Configuración de columnas visibles
   const [columnasVisibles, setColumnasVisibles] = useState({
     estado: true,
+    rut: true,
     nombres: true,
     apellidos: true,
-    rut: true
+    departamento: true,
+    vegano: true
   });
 
   function handleOrdenarPor(campo) {
@@ -44,9 +46,11 @@ const TrabajadoresLista = ({
   function mostrarTodasLasColumnas() {
     setColumnasVisibles({
       estado: true,
+      rut: true,
       nombres: true,
       apellidos: true,
-      rut: true
+      departamento: true,
+      vegano: true
     });
   }
 
@@ -104,7 +108,7 @@ const TrabajadoresLista = ({
               </div>
               <h3 className="text-lg font-semibold text-slate-800">Filtros de Búsqueda</h3>
               <span className="text-sm text-slate-500">
-                ({trabajadoresFiltrados.length} de {trabajadores.length} trabajadores)
+                ({trabajadoresFiltrados.length} de {trabajadores.length} funcionarios)
               </span>
             </div>
             <motion.div
@@ -170,9 +174,11 @@ const TrabajadoresLista = ({
                         <option value="">Configurar...</option>
                         {Object.entries({
                           estado: "Estado",
+                          rut: "RUT",
                           nombres: "Nombres",
                           apellidos: "Apellidos",
-                          rut: "RUT"
+                          departamento: "Departamento",
+                          vegano: "Vegano"
                         }).map(([key, label]) => (
                           <option key={key} value={key}>
                             {columnasVisibles[key] ? "❌" : "✅"} {label}
@@ -225,6 +231,9 @@ const TrabajadoresLista = ({
                   {columnasVisibles.estado && (
                     <th className="py-4 px-4 text-center font-semibold w-28">Estado</th>
                   )}
+                  {columnasVisibles.rut && (
+                    <th className="py-4 px-4 text-left font-semibold w-32">RUT</th>
+                  )}
                   {columnasVisibles.nombres && (
                     <th
                       className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors w-40"
@@ -255,8 +264,11 @@ const TrabajadoresLista = ({
                       </div>
                     </th>
                   )}
-                  {columnasVisibles.rut && (
-                    <th className="py-4 px-4 text-left font-semibold w-32">RUT</th>
+                  {columnasVisibles.departamento && (
+                    <th className="py-4 px-4 text-left font-semibold w-48">Departamento</th>
+                  )}
+                  {columnasVisibles.vegano && (
+                    <th className="py-4 px-4 text-center font-semibold w-28">Vegano</th>
                   )}
                 </tr>
               </thead>
@@ -268,7 +280,7 @@ const TrabajadoresLista = ({
                         <svg className="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        <div className="text-slate-500 font-medium">No hay trabajadores para mostrar</div>
+                        <div className="text-slate-500 font-medium">No hay funcionarios para mostrar</div>
                         <div className="text-slate-400 text-sm">Intenta ajustar los filtros de búsqueda</div>
                       </div>
                     </td>
@@ -294,6 +306,9 @@ const TrabajadoresLista = ({
                           )}
                         </td>
                       )}
+                      {columnasVisibles.rut && (
+                        <td className="py-4 px-4 font-mono text-slate-700 w-32">{trabajador.rut}</td>
+                      )}
                       {columnasVisibles.nombres && (
                         <td className="py-4 px-4 text-slate-800 font-medium w-40">
                           <div className="truncate" title={trabajador.nombres ?? trabajador.nombre ?? '-'}>
@@ -308,8 +323,19 @@ const TrabajadoresLista = ({
                           </div>
                         </td>
                       )}
-                      {columnasVisibles.rut && (
-                        <td className="py-4 px-4 font-mono text-slate-700 w-32">{trabajador.rut}</td>
+                      {columnasVisibles.departamento && (
+                        <td className="py-4 px-4 text-slate-700 w-48">
+                          {trabajador.departamento ?? 'Sin departamento'}
+                        </td>
+                      )}
+                      {columnasVisibles.vegano && (
+                        <td className="py-4 px-4 text-center w-28">
+                          <span className={`inline-flex items-center justify-center px-3 py-1 text-xs font-semibold rounded-full ${
+                            trabajador.vegano ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-700 border border-slate-200'
+                          }`}>
+                            {trabajador.vegano ? 'Sí' : 'No'}
+                          </span>
+                        </td>
                       )}
                     </tr>
                   ))

@@ -36,7 +36,9 @@ function AdminPanel({
     carrera: '',
     institucion: '',
     asiento: '',
-    grupo: ''
+    grupo: '',
+    departamento: '',
+    vegano: 'no'
   });
   const [rutEliminar, setRutEliminar] = useState('');
   const [mensajeAdmin, setMensajeAdmin] = useState('');
@@ -58,21 +60,31 @@ function AdminPanel({
     return cumpleCarrera && cumpleInstitucion && cumpleGrupo && cumplePresente;
   });
 
+  const esEventoTrabajadores = eventoActivo?.tipo === 'trabajadores';
+
   async function handleAgregarAlumno(e) {
     e.preventDefault();
     try {
-      await agregarAlumno({
+      const payload = {
         nombres: nuevoAlumno.nombres,
         apellidos: nuevoAlumno.apellidos,
         nombre: `${nuevoAlumno.nombres} ${nuevoAlumno.apellidos}`.trim(),
-        rut: nuevoAlumno.rut,
-        carrera: nuevoAlumno.carrera,
-        institucion: nuevoAlumno.institucion,
-        asiento: nuevoAlumno.asiento,
-        grupo: nuevoAlumno.grupo
-      }, eventoActivo?.id); // Pasar el eventoId
+        rut: nuevoAlumno.rut
+      };
+
+      if (esEventoTrabajadores) {
+        payload.departamento = nuevoAlumno.departamento;
+        payload.vegano = nuevoAlumno.vegano;
+      } else {
+        payload.carrera = nuevoAlumno.carrera;
+        payload.institucion = nuevoAlumno.institucion;
+        payload.asiento = nuevoAlumno.asiento;
+        payload.grupo = nuevoAlumno.grupo;
+      }
+
+      await agregarAlumno(payload, eventoActivo?.id); // Pasar el eventoId
       setMensajeAdmin('Alumno agregado correctamente');
-      setNuevoAlumno({ nombres: '', apellidos: '', rut: '', carrera: '', institucion: '', asiento: '', grupo: '' });
+      setNuevoAlumno({ nombres: '', apellidos: '', rut: '', carrera: '', institucion: '', asiento: '', grupo: '', departamento: '', vegano: 'no' });
     } catch (err) {
       setMensajeAdmin('Error al agregar alumno');
     }
@@ -88,8 +100,6 @@ function AdminPanel({
       setMensajeAdmin('Error al eliminar alumno');
     }
   }
-
-  const esEventoTrabajadores = eventoActivo?.tipo === 'trabajadores';
 
   return (
     <div className="min-h-screen w-full flex flex-col relative" id="admin-panel-root">
@@ -148,22 +158,51 @@ function AdminPanel({
                 <label className="text-sm font-medium text-st-verde mb-1">RUT</label>
                 <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="RUT" value={nuevoAlumno.rut} onChange={e => setNuevoAlumno(a => ({ ...a, rut: e.target.value }))} required />
               </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-st-verde mb-1">Carrera</label>
-                <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Carrera" value={nuevoAlumno.carrera} onChange={e => setNuevoAlumno(a => ({ ...a, carrera: e.target.value }))} required />
-              </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-st-verde mb-1">Institución</label>
-                <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Institución" value={nuevoAlumno.institucion} onChange={e => setNuevoAlumno(a => ({ ...a, institucion: e.target.value }))} required />
-              </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-st-verde mb-1">Asiento</label>
-                <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Asiento" value={nuevoAlumno.asiento} onChange={e => setNuevoAlumno(a => ({ ...a, asiento: e.target.value }))} />
-              </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-st-verde mb-1">Grupo</label>
-                <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Grupo" value={nuevoAlumno.grupo} onChange={e => setNuevoAlumno(a => ({ ...a, grupo: e.target.value }))} />
-              </div>
+              {esEventoTrabajadores ? (
+                <>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-st-verde mb-1">Departamento</label>
+                    <input
+                      className="border border-st-verde rounded px-3 py-2 text-base"
+                      placeholder="Ej: Recursos Humanos"
+                      value={nuevoAlumno.departamento}
+                      onChange={e => setNuevoAlumno(a => ({ ...a, departamento: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-st-verde mb-1">Vegano</label>
+                    <select
+                      className="border border-st-verde rounded px-3 py-2 text-base"
+                      value={nuevoAlumno.vegano}
+                      onChange={e => setNuevoAlumno(a => ({ ...a, vegano: e.target.value }))}
+                      required
+                    >
+                      <option value="si">Sí</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-st-verde mb-1">Carrera</label>
+                    <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Carrera" value={nuevoAlumno.carrera} onChange={e => setNuevoAlumno(a => ({ ...a, carrera: e.target.value }))} required />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-st-verde mb-1">Institución</label>
+                    <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Institución" value={nuevoAlumno.institucion} onChange={e => setNuevoAlumno(a => ({ ...a, institucion: e.target.value }))} required />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-st-verde mb-1">Asiento</label>
+                    <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Asiento" value={nuevoAlumno.asiento} onChange={e => setNuevoAlumno(a => ({ ...a, asiento: e.target.value }))} />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-st-verde mb-1">Grupo</label>
+                    <input className="border border-st-verde rounded px-3 py-2 text-base" placeholder="Grupo" value={nuevoAlumno.grupo} onChange={e => setNuevoAlumno(a => ({ ...a, grupo: e.target.value }))} />
+                  </div>
+                </>
+              )}
               <div className="flex flex-col justify-end">
                 <button type="submit" className="bg-st-verde text-white px-6 py-2 rounded font-bold w-full shadow hover:bg-st-verdeClaro transition">Agregar</button>
               </div>
@@ -227,11 +266,11 @@ function AdminPanel({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 <span className="hidden sm:inline">
-                  {eventoActivo?.tipo === 'trabajadores' ? 'Trabajadores' : 
+                  {eventoActivo?.tipo === 'trabajadores' ? 'Funcionarios' : 
                    eventoActivo?.tipo === 'alumnos' ? 'Alumnos' : 'Participantes'}
                 </span>
                 <span className="sm:hidden">
-                  {eventoActivo?.tipo === 'trabajadores' ? 'Trabaj.' : 
+                  {eventoActivo?.tipo === 'trabajadores' ? 'Funcion.' : 
                    eventoActivo?.tipo === 'alumnos' ? 'Alumnos' : 'Part.'}
                 </span>
               </div>

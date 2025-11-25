@@ -1,46 +1,104 @@
 import * as XLSX from 'xlsx';
 
-export const exportarAExcel = (alumnos, nombreEvento = 'Evento') => {
+// Función helper para formatear fecha de Firestore
+const formatearFecha = (fecha) => {
+  if (!fecha) return '';
+  
   try {
+    // Si es un Timestamp de Firestore, convertir a Date
+    const fechaDate = fecha.toDate ? fecha.toDate() : new Date(fecha);
+    
+    // Formatear como DD/MM/YYYY HH:MM:SS
+    const dia = String(fechaDate.getDate()).padStart(2, '0');
+    const mes = String(fechaDate.getMonth() + 1).padStart(2, '0');
+    const año = fechaDate.getFullYear();
+    const horas = String(fechaDate.getHours()).padStart(2, '0');
+    const minutos = String(fechaDate.getMinutes()).padStart(2, '0');
+    const segundos = String(fechaDate.getSeconds()).padStart(2, '0');
+    
+    return `${dia}/${mes}/${año} ${horas}:${minutos}:${segundos}`;
+  } catch (error) {
+    console.error('Error al formatear fecha:', error);
+    return '';
+  }
+};
+
+const formatearVegano = (valor) => {
+  if (typeof valor === 'boolean') {
+    return valor ? 'Sí' : 'No';
+  }
+  if (valor === null || valor === undefined) {
+    return 'No';
+  }
+  const texto = valor.toString().trim().toLowerCase();
+  if (!texto) return 'No';
+  const afirmativos = ['si', 'sí', 'yes', 'true', '1'];
+  return afirmativos.includes(texto) ? 'Sí' : 'No';
+};
+
+export const exportarAExcel = (alumnos, nombreEvento = 'Evento', tipoEvento = 'alumnos') => {
+  try {
+    const esFuncionarios = tipoEvento === 'trabajadores';
+
     // Preparar los datos para exportar
-    const datosParaExportar = alumnos.map(alumno => ({
-      'RUT': alumno.rut || '',
-      'Nombres': alumno.nombres || '',
-      'Apellidos': alumno.apellidos || '',
-      'Nombre Completo': alumno.nombre || '',
-      'Carrera': alumno.carrera || '',
-      'Institución': alumno.institucion || '',
-      'Asiento': alumno.asiento || '',
-      'Grupo': alumno.grupo || '',
-      'Presente': alumno.presente ? 'Sí' : 'No',
-      'Fecha de Registro': alumno.fechaRegistro ? new Date(alumno.fechaRegistro.toDate()).toLocaleString('es-ES') : ''
-    }));
+    const datosParaExportar = esFuncionarios
+      ? alumnos.map(alumno => ({
+          'RUT': alumno.rut || '',
+          'Nombres': alumno.nombres || '',
+          'Apellidos': alumno.apellidos || '',
+          'Departamento': alumno.departamento || '',
+          'Vegano (Sí/No)': formatearVegano(alumno.vegano),
+          'Presente': alumno.presente ? 'Sí' : 'No',
+          'Fecha y Hora de Registro': formatearFecha(alumno.fechaRegistro) || formatearFecha(alumno.ultimaActualizacion) || ''
+        }))
+      : alumnos.map(alumno => ({
+          'RUT': alumno.rut || '',
+          'Nombres': alumno.nombres || '',
+          'Apellidos': alumno.apellidos || '',
+          'Nombre Completo': alumno.nombre || '',
+          'Carrera': alumno.carrera || '',
+          'Institución': alumno.institucion || '',
+          'Asiento': alumno.asiento || '',
+          'N° de Lista': alumno.grupo || '',
+          'Presente': alumno.presente ? 'Sí' : 'No',
+          'Fecha y Hora de Registro': formatearFecha(alumno.fechaRegistro) || formatearFecha(alumno.ultimaActualizacion) || ''
+        }));
 
     // Crear el workbook
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(datosParaExportar);
 
     // Ajustar el ancho de las columnas
-    const columnWidths = [
-      { wch: 15 }, // RUT
-      { wch: 20 }, // Nombres
-      { wch: 20 }, // Apellidos
-      { wch: 30 }, // Nombre Completo
-      { wch: 25 }, // Carrera
-      { wch: 20 }, // Institución
-      { wch: 10 }, // Asiento
-      { wch: 10 }, // Grupo
-      { wch: 10 }, // Presente
-      { wch: 20 }  // Fecha de Registro
-    ];
+    const columnWidths = esFuncionarios
+      ? [
+          { wch: 15 }, // RUT
+          { wch: 20 }, // Nombres
+          { wch: 20 }, // Apellidos
+          { wch: 25 }, // Departamento
+          { wch: 15 }, // Vegano
+          { wch: 10 }, // Presente
+          { wch: 25 }  // Fecha y Hora de Registro
+        ]
+      : [
+          { wch: 15 }, // RUT
+          { wch: 20 }, // Nombres
+          { wch: 20 }, // Apellidos
+          { wch: 30 }, // Nombre Completo
+          { wch: 25 }, // Carrera
+          { wch: 20 }, // Institución
+          { wch: 10 }, // Asiento
+          { wch: 12 }, // N° de Lista
+          { wch: 10 }, // Presente
+          { wch: 25 }  // Fecha y Hora de Registro
+        ];
     worksheet['!cols'] = columnWidths;
 
     // Agregar la hoja al workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Alumnos');
+    XLSX.utils.book_append_sheet(workbook, worksheet, esFuncionarios ? 'Funcionarios' : 'Alumnos');
 
     // Generar el nombre del archivo con el nombre del evento
     const fecha = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const nombreArchivo = `${nombreEvento}_Alumnos_${fecha}.xlsx`;
+    const nombreArchivo = `${nombreEvento}_${esFuncionarios ? 'Funcionarios' : 'Alumnos'}_${fecha}.xlsx`;
 
     // Exportar el archivo
     XLSX.writeFile(workbook, nombreArchivo);
