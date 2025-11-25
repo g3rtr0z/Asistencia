@@ -27,6 +27,13 @@ const parseBooleanField = (valor) => {
 // Función helper para mapear datos de Firestore
 function mapFirestoreData(doc) {
   const data = doc.data();
+  const asisteValor =
+    data["Asiste"] ??
+    data.asiste ??
+    data["Asiste (Pre confirmación)"] ??
+    data["Asiste (Si/No)"] ??
+    data["Asiste (Si o No)"] ??
+    data["Confirmación Asistencia"];
   return {
     id: doc.id,
     nombres: data["Nombres"] ?? null,
@@ -38,6 +45,7 @@ function mapFirestoreData(doc) {
     departamento: data["Departamento"] ?? null,
     vegano: parseBooleanField(data["Vegano"]),
     presente: Boolean(data.presente),
+    asiste: parseBooleanField(asisteValor) ?? false,
     asiento: data["asiento"] ?? null,
     grupo: data["grupo"] ?? null,
     fechaRegistro: data.fechaRegistro ?? null,
@@ -323,6 +331,7 @@ export const agregarAlumno = async (alumno, eventoId) => {
       "Institución": alumno.institucion,
       "Departamento": alumno.departamento ?? null,
       "Vegano": parseBooleanField(alumno.vegano),
+      asiste: parseBooleanField(alumno.asiste) ?? false,
       presente: alumno.presente ?? false,
       asiento: alumno.asiento ?? null,
       grupo: alumno.grupo ?? null
@@ -388,15 +397,73 @@ export const borrarAlumnosDeEvento = async (eventoId) => {
 
 export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'alumnos') => {
   try {
+    // Validar que el archivo existe y es válido
+    if (!file) {
+      throw new Error('No se ha seleccionado ningún archivo');
+    }
+
+    // Verificar el tamaño del archivo (máximo 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      throw new Error('El archivo es demasiado grande. El tamaño máximo permitido es 10MB');
+    }
+
+    // Verificar que sea un archivo Excel
+    const allowedTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+      'application/vnd.ms-excel', // .xls
+      'application/vnd.ms-excel.sheet.macroEnabled.12', // .xlsm
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('El archivo debe ser un archivo Excel válido (.xlsx, .xls o .xlsm)');
+    }
+
     // Importar XLSX dinámicamente
     const XLSX = await import('xlsx');
 
-    // Leer el archivo
-    const data = await file.arrayBuffer();
-    const workbook = XLSX.read(data, { type: 'array' });
+    // Leer el archivo con mejor manejo de errores
+    let data;
+    try {
+      data = await file.arrayBuffer();
+    } catch (error) {
+      console.error('Error al leer el archivo:', error);
+      throw new Error('No se pudo leer el archivo. Verifique que el archivo no esté corrupto y que tenga permisos de lectura');
+    }
+
+    // Verificar que el buffer no esté vacío
+    if (!data || data.byteLength === 0) {
+      throw new Error('El archivo está vacío o corrupto');
+    }
+
+    // Intentar leer el workbook
+    let workbook;
+    try {
+      workbook = XLSX.read(data, { type: 'array' });
+    } catch (error) {
+      console.error('Error al procesar el archivo Excel:', error);
+      throw new Error('El archivo no es un archivo Excel válido o está corrupto');
+    }
+
+    // Verificar que tenga al menos una hoja
+    if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+      throw new Error('El archivo Excel no contiene ninguna hoja de trabajo');
+    }
+
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
+
+    // Verificar que la hoja tenga datos
+    if (!worksheet) {
+      throw new Error('La hoja de trabajo está vacía');
+    }
+
     const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+    // Verificar que haya al menos una fila de datos
+    if (!jsonData || jsonData.length === 0) {
+      throw new Error('El archivo Excel no contiene datos. Asegúrese de que la primera hoja tenga al menos una fila con datos');
+    }
 
     // Función para verificar si un valor está vacío
     const estaVacio = (valor) => {
@@ -424,8 +491,25 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
       asiento: normalizarAlias(['asiento', 'nro asiento', 'numero asiento', 'seat']),
       grupo: normalizarAlias(['grupo', 'grupo nro', 'grupo numero', 'group', 'n° de lista', 'n de lista', 'numero de lista', 'nro de lista', 'numero lista', 'nro lista', 'lista']),
       estado: normalizarAlias(['estado', 'presente', 'asistencia', 'presente (si,no)']),
-      departamento: normalizarAlias(['departamento', 'área', 'area', 'unidad', 'dependencia']),
-      vegano: normalizarAlias(['vegano', 'opcion vegana', 'es vegano', 'vegano (si,no)'])
+      asiste: normalizarAlias([
+        'asiste',
+        'asiste (si,no)',
+        'asiste (si/no)',
+        'asiste (sí/no)',
+        'asiste (si o no)',
+        'asiste (sí o no)',
+        'confirmación',
+        'confirmacion',
+        'preconfirmacion',
+        'pre confirmacion',
+        'pre-confirmacion',
+        'confirmacion asistencia',
+        'confirmación asistencia',
+        'confirma asistencia',
+        'pre asistencia'
+      ]),
+      departamento: normalizarAlias(['departamento', 'área', 'area', 'unidad', 'dependencia', 'departamento/area', 'area/departamento']),
+      vegano: normalizarAlias(['vegano', 'opcion vegana', 'es vegano', 'vegano (si,no)', 'vegano (si/no)', 'vegano (sí/no)', 'opcionvegana', 'preferencia alimentaria'])
     };
 
     const obtenerValorCampo = (fila, alias) => {
@@ -461,20 +545,22 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
 
         // Validar que exista nombre (ya sea completo o compuesto)
         if ((estaVacio(nombres) || estaVacio(apellidos)) && estaVacio(nombreCompleto)) {
+          console.log('Error: Fila sin nombre válido:', alumno);
           errorCount++;
           continue;
         }
 
         const rut = obtenerValorCampo(filaNormalizada, aliasCampos.rut);
-        const carrera = obtenerValorCampo(filaNormalizada, aliasCampos.carrera);
-        const institucion = obtenerValorCampo(filaNormalizada, aliasCampos.institucion);
 
         // Validar campos obligatorios
         if (estaVacio(rut)) {
+          console.log('Error: Fila sin RUT válido:', alumno);
           errorCount++;
           continue;
         }
 
+        const carrera = obtenerValorCampo(filaNormalizada, aliasCampos.carrera);
+        const institucion = obtenerValorCampo(filaNormalizada, aliasCampos.institucion);
         const asiento = obtenerValorCampo(filaNormalizada, aliasCampos.asiento);
         const grupo = obtenerValorCampo(filaNormalizada, aliasCampos.grupo);
         const estado = obtenerValorCampo(filaNormalizada, aliasCampos.estado);
@@ -482,6 +568,13 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
         const departamento = obtenerValorCampo(filaNormalizada, aliasCampos.departamento);
         const veganoValor = obtenerValorCampo(filaNormalizada, aliasCampos.vegano);
         const vegano = parseBooleanField(veganoValor);
+        const asisteValor = obtenerValorCampo(filaNormalizada, aliasCampos.asiste);
+        const asiste = parseBooleanField(asisteValor);
+
+        // Para eventos de trabajadores, permitir usar "Institucion" como "departamento"
+        const departamentoFinal = esEventoTrabajadores
+          ? (departamento || institucion)  // Usar departamento si existe, sino usar institucion
+          : departamento;
 
         const carreraFinal = estaVacio(carrera)
           ? (esEventoTrabajadores ? 'Colaboradores Santo Tomás' : null)
@@ -491,19 +584,21 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
           : institucion;
 
         if (!esEventoTrabajadores && (estaVacio(carreraFinal) || estaVacio(institucionFinal))) {
+          console.log('Error: Fila sin carrera o institución (evento alumnos):', alumno);
           errorCount++;
           continue;
         }
 
+        // Para vegano, si no está presente o es inválido, asignar false por defecto
+        const veganoFinal = esEventoTrabajadores ? (vegano !== null ? vegano : false) : null;
+
         if (esEventoTrabajadores) {
-          if (estaVacio(departamento)) {
+          if (estaVacio(departamentoFinal)) {
+            console.log('Error: Fila sin departamento/institución (evento trabajadores):', alumno, 'departamento:', departamento, 'institucion:', institucion);
             errorCount++;
             continue;
           }
-          if (vegano === null) {
-            errorCount++;
-            continue;
-          }
+          console.log('Vegano procesado:', veganoValor, '->', veganoFinal);
         }
 
         // Guardar el RUT tal como viene (sin puntos ni guión)
@@ -517,8 +612,9 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
           asiento: esEventoTrabajadores ? null : asiento,
           grupo: esEventoTrabajadores ? null : grupo,
           presente: presente ?? false,
-          departamento: esEventoTrabajadores ? departamento : null,
-          vegano: esEventoTrabajadores ? vegano : null
+          departamento: esEventoTrabajadores ? departamentoFinal : null,
+          vegano: esEventoTrabajadores ? veganoFinal : null,
+          asiste: asiste ?? false
         }, eventoId);
 
         successCount++;

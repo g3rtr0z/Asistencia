@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Logo from '../../assets/logo3.png';
 import { buscarAlumnoPorRutEnEvento } from '../../services/alumnosService';
 import { Button, Input, Card } from './index';
@@ -8,6 +8,19 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { data: alumno, rut: string }
   const rutInputRef = useRef(null);
+
+  // Auto-ocultar la asistencia realizada después de 30 segundos
+  useEffect(() => {
+    if (result) {
+      const timer = setTimeout(() => {
+        setResult(null);
+        // También limpiar el campo RUT para nueva búsqueda
+        setRut('');
+      }, 30000); // 30 segundos
+
+      return () => clearTimeout(timer);
+    }
+  }, [result]);
 
   const formatRut = (value) => {
     let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
@@ -146,15 +159,17 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
                 if (esEventoFuncionarios) {
                   const nombres = result.data.nombres ?? result.data.nombre ?? '';
                   const apellidos = result.data.apellidos ?? (result.data.nombre ? result.data.nombre.split(' ').slice(1).join(' ') : '');
-                  const departamento = result.data.departamento ?? 'Sin departamento';
+                  const departamento = result.data.departamento ?? 'Sin institución';
                   const vegano = getVeganoTexto(result.data.vegano);
+                  const confirmacion = result.data.asiste ? '✅ Confirmó asistencia previa' : '❌ No confirmó asistencia previa';
                   return (
                     <>
                       <InfoRow label="RUT" value={result.rut} />
                       <InfoRow label="Nombres" value={nombres} />
                       <InfoRow label="Apellidos" value={apellidos || 'Sin apellidos'} />
-                      <InfoRow label="Departamento" value={departamento} />
-                      <InfoRow label="Vegano" value={vegano} border={false} />
+                      <InfoRow label="Institución" value={departamento} />
+                      <InfoRow label="Vegano" value={vegano} />
+                      <InfoRow label="Confirmación" value={confirmacion} border={false} />
                     </>
                   );
                 }

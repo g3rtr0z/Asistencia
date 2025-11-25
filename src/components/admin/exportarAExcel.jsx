@@ -36,22 +36,48 @@ const formatearVegano = (valor) => {
   return afirmativos.includes(texto) ? 'Sí' : 'No';
 };
 
-export const exportarAExcel = (alumnos, nombreEvento = 'Evento', tipoEvento = 'alumnos') => {
+const formatearSiNo = (valor) => {
+  return valor ? 'Sí' : 'No';
+};
+
+export const exportarAExcel = (alumnos, nombreEvento = 'Evento', tipoEvento = 'alumnos', filtroEstado = '') => {
   try {
     const esFuncionarios = tipoEvento === 'trabajadores';
 
+    // Aplicar filtro de estado si existe
+    let alumnosFiltrados = alumnos;
+    if (filtroEstado) {
+      switch (filtroEstado) {
+        case 'presentes':
+          alumnosFiltrados = alumnos.filter(a => a.presente);
+          break;
+        case 'ausentes':
+          alumnosFiltrados = alumnos.filter(a => !a.presente);
+          break;
+        case 'confirmados':
+          alumnosFiltrados = alumnos.filter(a => a.asiste);
+          break;
+        case 'pendientes':
+          alumnosFiltrados = alumnos.filter(a => !a.asiste);
+          break;
+        default:
+          alumnosFiltrados = alumnos;
+      }
+    }
+
     // Preparar los datos para exportar
     const datosParaExportar = esFuncionarios
-      ? alumnos.map(alumno => ({
+      ? alumnosFiltrados.map(alumno => ({
+          'Asiste (Pre confirmación)': formatearSiNo(alumno.asiste),
+          'Presente': alumno.presente ? 'Sí' : 'No',
           'RUT': alumno.rut || '',
           'Nombres': alumno.nombres || '',
           'Apellidos': alumno.apellidos || '',
-          'Departamento': alumno.departamento || '',
-          'Vegano (Sí/No)': formatearVegano(alumno.vegano),
-          'Presente': alumno.presente ? 'Sí' : 'No',
+        'Institución': alumno.departamento || '',
+        'Vegano (Sí/No)': formatearVegano(alumno.vegano),
           'Fecha y Hora de Registro': formatearFecha(alumno.fechaRegistro) || formatearFecha(alumno.ultimaActualizacion) || ''
         }))
-      : alumnos.map(alumno => ({
+      : alumnosFiltrados.map(alumno => ({
           'RUT': alumno.rut || '',
           'Nombres': alumno.nombres || '',
           'Apellidos': alumno.apellidos || '',
@@ -71,12 +97,13 @@ export const exportarAExcel = (alumnos, nombreEvento = 'Evento', tipoEvento = 'a
     // Ajustar el ancho de las columnas
     const columnWidths = esFuncionarios
       ? [
+          { wch: 20 }, // Asiste (Pre confirmación)
+          { wch: 10 }, // Presente
           { wch: 15 }, // RUT
           { wch: 20 }, // Nombres
           { wch: 20 }, // Apellidos
-          { wch: 25 }, // Departamento
+          { wch: 25 }, // Institución
           { wch: 15 }, // Vegano
-          { wch: 10 }, // Presente
           { wch: 25 }  // Fecha y Hora de Registro
         ]
       : [

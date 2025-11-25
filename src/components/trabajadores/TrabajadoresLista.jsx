@@ -10,6 +10,11 @@ const TrabajadoresLista = ({
 }) => {
   // Si no vienen por props, usar estado local
   const [localRUT, setLocalRUT] = useState("");
+  const [localNombres, setLocalNombres] = useState("");
+  const [localApellidos, setLocalApellidos] = useState("");
+  const [localInstitucion, setLocalInstitucion] = useState("");
+  const [localVegano, setLocalVegano] = useState("");
+
   const rut = filtroRUT !== undefined ? filtroRUT : localRUT;
   const setRUT = setFiltroRUT || setLocalRUT;
 
@@ -24,7 +29,8 @@ const TrabajadoresLista = ({
     nombres: true,
     apellidos: true,
     departamento: true,
-    vegano: true
+    vegano: true,
+    asiste: true
   });
 
   function handleOrdenarPor(campo) {
@@ -50,20 +56,53 @@ const TrabajadoresLista = ({
       nombres: true,
       apellidos: true,
       departamento: true,
-      vegano: true
+      vegano: true,
+      asiste: true
     });
   }
+
+  // Obtener instituciones únicas para el dropdown
+  const institucionesUnicas = useMemo(() => {
+    const instituciones = trabajadores
+      .map(t => t.departamento)
+      .filter(Boolean)
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .sort();
+    return instituciones;
+  }, [trabajadores]);
 
   // Filtrado
   const trabajadoresFiltrados = useMemo(() => {
     return trabajadores.filter(trabajador => {
-      const cumplePresente = !soloPresentes ||
-        (soloPresentes === "presentes" ? trabajador.presente : !trabajador.presente);
-      const cumpleRut = !rut || trabajador.rut.startsWith(rut);
+      let cumpleFiltro = true;
 
-      return cumplePresente && cumpleRut;
+      // Filtro por estado de asistencia
+      if (soloPresentes === "presentes") {
+        cumpleFiltro = trabajador.presente;
+      } else if (soloPresentes === "ausentes") {
+        cumpleFiltro = !trabajador.presente;
+      } else if (soloPresentes === "confirmados") {
+        cumpleFiltro = trabajador.asiste;
+      } else if (soloPresentes === "pendientes") {
+        cumpleFiltro = !trabajador.asiste;
+      }
+
+      // Filtros de texto (case insensitive)
+      const cumpleRut = !rut || trabajador.rut.toLowerCase().includes(rut.toLowerCase());
+      const cumpleNombres = !localNombres || (trabajador.nombres ?? trabajador.nombre ?? '').toLowerCase().includes(localNombres.toLowerCase());
+      const cumpleApellidos = !localApellidos || (trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '') ?? '').toLowerCase().includes(localApellidos.toLowerCase());
+      const cumpleInstitucion = !localInstitucion || trabajador.departamento === localInstitucion;
+
+      // Filtro por vegano
+      let cumpleVegano = true;
+      if (localVegano) {
+        const veganoValue = trabajador.vegano ? 'si' : 'no';
+        cumpleVegano = veganoValue.includes(localVegano.toLowerCase());
+      }
+
+      return cumpleFiltro && cumpleRut && cumpleNombres && cumpleApellidos && cumpleInstitucion && cumpleVegano;
     });
-  }, [trabajadores, soloPresentes, rut]);
+  }, [trabajadores, soloPresentes, rut, localNombres, localApellidos, localInstitucion, localVegano]);
 
   const trabajadoresOrdenados = useMemo(() => {
     return [...trabajadoresFiltrados].sort((a, b) => {
@@ -132,7 +171,7 @@ const TrabajadoresLista = ({
                 className="overflow-hidden"
               >
                 <div className="p-4 border-t border-slate-200">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-3">
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-slate-700">RUT</label>
                       <input
@@ -144,16 +183,55 @@ const TrabajadoresLista = ({
                       />
                     </div>
 
+
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Estado</label>
+                      <label className="block text-sm font-medium text-slate-700">Nombres</label>
+                      <input
+                        type="text"
+                        placeholder="Buscar nombres..."
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                        value={localNombres}
+                        onChange={e => setLocalNombres(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-slate-700">Apellidos</label>
+                      <input
+                        type="text"
+                        placeholder="Buscar apellidos..."
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                        value={localApellidos}
+                        onChange={e => setLocalApellidos(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-slate-700">Institución</label>
                       <select
                         className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
-                        value={soloPresentes || ""}
-                        onChange={e => setSoloPresentes && setSoloPresentes(e.target.value)}
+                        value={localInstitucion}
+                        onChange={e => setLocalInstitucion(e.target.value)}
+                      >
+                        <option value="">Todas</option>
+                        {institucionesUnicas.map(institucion => (
+                          <option key={institucion} value={institucion}>
+                            {institucion}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-slate-700">Vegano</label>
+                      <select
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
+                        value={localVegano}
+                        onChange={e => setLocalVegano(e.target.value)}
                       >
                         <option value="">Todos</option>
-                        <option value="presentes">Presentes</option>
-                        <option value="ausentes">Ausentes</option>
+                        <option value="si">Sí</option>
+                        <option value="no">No</option>
                       </select>
                     </div>
 
@@ -177,7 +255,8 @@ const TrabajadoresLista = ({
                           rut: "RUT",
                           nombres: "Nombres",
                           apellidos: "Apellidos",
-                          departamento: "Departamento",
+                          departamento: "Institución",
+                          asiste: "Confirmación",
                           vegano: "Vegano"
                         }).map(([key, label]) => (
                           <option key={key} value={key}>
@@ -196,6 +275,10 @@ const TrabajadoresLista = ({
                     <motion.button
                       onClick={() => {
                         setRUT("");
+                        setLocalNombres("");
+                        setLocalApellidos("");
+                        setLocalInstitucion("");
+                        setLocalVegano("");
                         if (setSoloPresentes) setSoloPresentes("");
                         mostrarTodasLasColumnas();
                       }}
@@ -225,18 +308,36 @@ const TrabajadoresLista = ({
           transition={{ duration: 0.3, delay: 0.1 }}
         >
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm table-auto">
               <thead className="bg-gradient-to-r from-green-800 to-emerald-600 text-white sticky top-0 z-10">
+                {/* Indicadores de estado de asistencia */}
+                <tr className="bg-gradient-to-r from-green-900 to-emerald-700">
+                  <th colSpan={Object.values(columnasVisibles).filter(Boolean).length} className="py-2 px-4 text-left text-sm font-medium">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span>Confirman asistencia</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                        <span>Pendientes</span>
+                      </div>
+                    </div>
+                  </th>
+                </tr>
                 <tr>
+                  {columnasVisibles.asiste && (
+                    <th className="py-4 px-4 text-center font-semibold min-w-24">Confirmación</th>
+                  )}
                   {columnasVisibles.estado && (
-                    <th className="py-4 px-4 text-center font-semibold w-28">Estado</th>
+                    <th className="py-4 px-4 text-center font-semibold min-w-28">Estado</th>
                   )}
                   {columnasVisibles.rut && (
-                    <th className="py-4 px-4 text-left font-semibold w-32">RUT</th>
+                    <th className="py-4 px-4 text-left font-semibold min-w-32">RUT</th>
                   )}
                   {columnasVisibles.nombres && (
                     <th
-                      className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors w-40"
+                      className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors min-w-36 flex-1"
                       onClick={() => handleOrdenarPor("nombre")}
                     >
                       <div className="flex items-center gap-2">
@@ -251,7 +352,7 @@ const TrabajadoresLista = ({
                   )}
                   {columnasVisibles.apellidos && (
                     <th
-                      className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors w-40"
+                      className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors min-w-36 flex-1"
                       onClick={() => handleOrdenarPor("apellidos")}
                     >
                       <div className="flex items-center gap-2">
@@ -265,34 +366,63 @@ const TrabajadoresLista = ({
                     </th>
                   )}
                   {columnasVisibles.departamento && (
-                    <th className="py-4 px-4 text-left font-semibold w-48">Departamento</th>
+                    <th className="py-4 px-4 text-left font-semibold min-w-32 max-w-48">Institución</th>
                   )}
                   {columnasVisibles.vegano && (
-                    <th className="py-4 px-4 text-center font-semibold w-28">Vegano</th>
+                    <th className="py-4 px-4 text-center font-semibold min-w-28">Vegano</th>
                   )}
                 </tr>
               </thead>
               <tbody>
                 {trabajadoresOrdenados.length === 0 ? (
                   <tr>
-                    <td colSpan={Object.values(columnasVisibles).filter(Boolean).length} className="py-12 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <svg className="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        <div className="text-slate-500 font-medium">No hay funcionarios para mostrar</div>
-                        <div className="text-slate-400 text-sm">Intenta ajustar los filtros de búsqueda</div>
-                      </div>
+                    <td colSpan={Object.values(columnasVisibles).filter(Boolean).length} className="py-16 text-center">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex flex-col items-center gap-4"
+                      >
+                        <div className="relative">
+                          <svg className="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
+                            <span className="text-xs text-white">?</span>
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-slate-500 font-semibold text-lg mb-1">Sin funcionarios encontrados</div>
+                          <div className="text-slate-400 text-sm max-w-md">
+                            No hay funcionarios que coincidan con los filtros aplicados.
+                            <br />
+                            <span className="text-green-600 font-medium">Prueba ajustando los filtros de búsqueda.</span>
+                          </div>
+                        </div>
+                      </motion.div>
                     </td>
                   </tr>
                 ) : (
                   trabajadoresOrdenados.map((trabajador, idx) => (
-                    <tr
+                    <motion.tr
                       key={trabajador.rut}
-                      className={`${idx % 2 === 0 ? 'bg-slate-50' : 'bg-white'} hover:bg-green-50 transition-all duration-200 border-b border-slate-100`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: idx * 0.02 }}
+                      className={`${idx % 2 === 0 ? 'bg-slate-50' : 'bg-white'} hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 border-b border-slate-100 group ${trabajador.asiste ? 'border-l-4 border-l-green-400' : 'border-l-4 border-l-gray-300'}`}
                     >
+                      {columnasVisibles.asiste && (
+                        <td className="py-4 px-4 text-center min-w-24">
+                          <div
+                            className={`w-3 h-3 rounded-full mx-auto cursor-help transition-transform duration-200 hover:scale-110 ${
+                              trabajador.asiste ? 'bg-green-500 shadow-green-200 shadow-md' : 'bg-gray-300 hover:bg-gray-400'
+                            }`}
+                            title={`${trabajador.asiste ? '✅ Confirma asistencia previa' : '❌ No confirma asistencia previa'}`}
+                          ></div>
+                        </td>
+                      )}
                       {columnasVisibles.estado && (
-                        <td className="py-4 px-4 text-center w-28">
+                        <td className="py-4 px-4 text-center min-w-28">
                           {trabajador.presente ? (
                             <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
                               <div className="w-2 h-2 bg-green-800 rounded-full"></div>
@@ -307,29 +437,29 @@ const TrabajadoresLista = ({
                         </td>
                       )}
                       {columnasVisibles.rut && (
-                        <td className="py-4 px-4 font-mono text-slate-700 w-32">{trabajador.rut}</td>
+                        <td className="py-4 px-4 font-mono text-slate-700 min-w-32">{trabajador.rut}</td>
                       )}
                       {columnasVisibles.nombres && (
-                        <td className="py-4 px-4 text-slate-800 font-medium w-40">
+                        <td className="py-4 px-4 text-slate-800 font-medium min-w-36 flex-1">
                           <div className="truncate" title={trabajador.nombres ?? trabajador.nombre ?? '-'}>
                             {trabajador.nombres ?? trabajador.nombre ?? '-'}
                           </div>
                         </td>
                       )}
                       {columnasVisibles.apellidos && (
-                        <td className="py-4 px-4 text-slate-800 font-medium w-40">
+                        <td className="py-4 px-4 text-slate-800 font-medium min-w-36 flex-1">
                           <div className="truncate" title={trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}>
                             {trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}
                           </div>
                         </td>
                       )}
                       {columnasVisibles.departamento && (
-                        <td className="py-4 px-4 text-slate-700 w-48">
-                          {trabajador.departamento ?? 'Sin departamento'}
+                        <td className="py-4 px-4 text-slate-700 min-w-32 max-w-48">
+                          {trabajador.departamento ?? 'Sin institución'}
                         </td>
                       )}
                       {columnasVisibles.vegano && (
-                        <td className="py-4 px-4 text-center w-28">
+                        <td className="py-4 px-4 text-center min-w-28">
                           <span className={`inline-flex items-center justify-center px-3 py-1 text-xs font-semibold rounded-full ${
                             trabajador.vegano ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-700 border border-slate-200'
                           }`}>
@@ -337,7 +467,7 @@ const TrabajadoresLista = ({
                           </span>
                         </td>
                       )}
-                    </tr>
+                    </motion.tr>
                   ))
                 )}
               </tbody>

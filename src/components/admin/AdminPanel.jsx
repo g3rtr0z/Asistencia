@@ -323,11 +323,12 @@ function AdminPanel({
               esEventoTrabajadores ? (
                 <>
                   <EventoInfo eventoActivo={eventoActivo} totalAlumnos={alumnos.length} alumnos={alumnos} />
-                  <TrabajadoresResumen 
-                    trabajadores={alumnos} 
+                  <TrabajadoresResumen
+                    trabajadores={alumnos}
                     soloPresentes={soloPresentes}
                     setSoloPresentes={setSoloPresentes}
                     trabajadoresCompletos={alumnos}
+                    eventoActivo={eventoActivo}
                   />
                   <TrabajadoresLista
                     trabajadores={alumnos}

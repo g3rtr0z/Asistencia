@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { exportarAExcel } from '../admin/exportarAExcel';
 
-function TrabajadoresResumen({ trabajadores, soloPresentes, setSoloPresentes, trabajadoresCompletos }) {
+function TrabajadoresResumen({ trabajadores, soloPresentes, setSoloPresentes, trabajadoresCompletos, eventoActivo }) {
   // Las estadísticas siempre se calculan con TODOS los trabajadores (trabajadoresCompletos)
   // para que los números no cambien al filtrar por estado
   // El prop 'trabajadores' se usa solo para determinar el estado activo de los botones
@@ -12,6 +13,18 @@ function TrabajadoresResumen({ trabajadores, soloPresentes, setSoloPresentes, tr
   const ausentes = datosParaEstadisticas.filter(t => !t.presente).length;
   const porcentaje = total > 0 ? Math.round((presentes / total) * 100) : 0;
 
+  // Estadísticas de confirmación
+  const confirmados = datosParaEstadisticas.filter(t => t.asiste).length;
+  const pendientesConfirmacion = datosParaEstadisticas.filter(t => !t.asiste).length;
+  const porcentajeConfirmacion = total > 0 ? Math.round((confirmados / total) * 100) : 0;
+
+  // Función para exportar con filtro
+  const handleExportarFiltrado = (filtro) => {
+    if (eventoActivo && trabajadoresCompletos) {
+      exportarAExcel(trabajadoresCompletos, eventoActivo.nombre, eventoActivo.tipo, filtro);
+    }
+  };
+
   return (
     <motion.div
       className="bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-sm"
@@ -20,57 +33,152 @@ function TrabajadoresResumen({ trabajadores, soloPresentes, setSoloPresentes, tr
       transition={{ duration: 0.3 }}
     >
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-        <h3 className="text-lg font-semibold text-slate-800">Estadísticas de Asistencia</h3>
+        <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
+        <h3 className="text-lg font-semibold text-slate-800">Estadísticas de Asistencia y Confirmación</h3>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <motion.button
-          onClick={() => setSoloPresentes && setSoloPresentes("")}
-          className={`p-3 rounded-lg border transition-all duration-200 ${soloPresentes === ""
-            ? "bg-blue-50 border-blue-300 ring-2 ring-blue-200"
-            : "bg-slate-50 border-slate-200 hover:bg-slate-100"
-            }`}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <div className="text-center">
-            <div className="text-sm text-slate-600 mb-1">Total</div>
-            <div className="text-2xl font-bold text-slate-800">{total}</div>
-          </div>
-        </motion.button>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 items-stretch">
+        <div className="relative">
+          <motion.button
+            onClick={() => setSoloPresentes && setSoloPresentes("")}
+            className={`p-3 rounded-lg border transition-all duration-200 w-full min-h-20 flex flex-col justify-center ${soloPresentes === ""
+              ? "bg-blue-50 border-blue-300 ring-2 ring-blue-200"
+              : "bg-slate-50 border-slate-200 hover:bg-slate-100"
+              }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className="text-center">
+              <div className="text-sm text-slate-600 mb-1">Total</div>
+              <div className="text-2xl font-bold text-slate-800">{total}</div>
+            </div>
+          </motion.button>
+          <motion.button
+            onClick={() => handleExportarFiltrado("")}
+            className="absolute -top-1 -right-1 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-700 transition-colors shadow-md"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="Exportar todos a Excel"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </motion.button>
+        </div>
 
-        <motion.button
-          onClick={() => setSoloPresentes && setSoloPresentes("presentes")}
-          className={`p-3 rounded-lg border transition-all duration-200 ${soloPresentes === "presentes"
-            ? "bg-green-50 border-green-300 ring-2 ring-green-200"
-            : "bg-slate-50 border-slate-200 hover:bg-slate-100"
-            }`}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <div className="text-center">
-            <div className="text-sm text-slate-600 mb-1">Presentes</div>
-            <div className="text-2xl font-bold text-green-600">{presentes}</div>
-          </div>
-        </motion.button>
+        <div className="relative">
+          <motion.button
+            onClick={() => setSoloPresentes && setSoloPresentes("presentes")}
+            className={`p-3 rounded-lg border transition-all duration-200 w-full min-h-20 flex flex-col justify-center ${soloPresentes === "presentes"
+              ? "bg-green-50 border-green-300 ring-2 ring-green-200"
+              : "bg-slate-50 border-slate-200 hover:bg-slate-100"
+              }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className="text-center">
+              <div className="text-sm text-slate-600 mb-1">Presentes</div>
+              <div className="text-2xl font-bold text-green-600">{presentes}</div>
+            </div>
+          </motion.button>
+          <motion.button
+            onClick={() => handleExportarFiltrado("presentes")}
+            className="absolute -top-1 -right-1 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-green-700 transition-colors shadow-md"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="Exportar presentes a Excel"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </motion.button>
+        </div>
 
-        <motion.button
-          onClick={() => setSoloPresentes && setSoloPresentes("ausentes")}
-          className={`p-3 rounded-lg border transition-all duration-200 ${soloPresentes === "ausentes"
-            ? "bg-red-50 border-red-300 ring-2 ring-red-200"
-            : "bg-slate-50 border-slate-200 hover:bg-slate-100"
-            }`}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <div className="text-center">
-            <div className="text-sm text-slate-600 mb-1">Ausentes</div>
-            <div className="text-2xl font-bold text-red-600">{ausentes}</div>
-          </div>
-        </motion.button>
+        <div className="relative">
+          <motion.button
+            onClick={() => setSoloPresentes && setSoloPresentes("ausentes")}
+            className={`p-3 rounded-lg border transition-all duration-200 w-full min-h-20 flex flex-col justify-center ${soloPresentes === "ausentes"
+              ? "bg-red-50 border-red-300 ring-2 ring-red-200"
+              : "bg-slate-50 border-slate-200 hover:bg-slate-100"
+              }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className="text-center">
+              <div className="text-sm text-slate-600 mb-1">Ausentes</div>
+              <div className="text-2xl font-bold text-red-600">{ausentes}</div>
+            </div>
+          </motion.button>
+          <motion.button
+            onClick={() => handleExportarFiltrado("ausentes")}
+            className="absolute -top-1 -right-1 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-700 transition-colors shadow-md"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="Exportar ausentes a Excel"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </motion.button>
+        </div>
 
-        <div className="p-3 rounded-lg border bg-slate-50 border-slate-200">
+        <div className="relative">
+          <motion.button
+            onClick={() => setSoloPresentes && setSoloPresentes("confirmados")}
+            className={`p-3 rounded-lg border transition-all duration-200 w-full min-h-20 flex flex-col justify-center ${soloPresentes === "confirmados"
+              ? "bg-indigo-50 border-indigo-300 ring-2 ring-indigo-200"
+              : "bg-slate-50 border-slate-200 hover:bg-slate-100"
+              }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className="text-center">
+              <div className="text-sm text-slate-600 mb-1">Confirmados</div>
+              <div className="text-2xl font-bold text-indigo-600">{confirmados}</div>
+            </div>
+          </motion.button>
+          <motion.button
+            onClick={() => handleExportarFiltrado("confirmados")}
+            className="absolute -top-1 -right-1 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-indigo-700 transition-colors shadow-md"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="Exportar confirmados a Excel"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </motion.button>
+        </div>
+
+        <div className="relative">
+          <motion.button
+            onClick={() => setSoloPresentes && setSoloPresentes("pendientes")}
+            className={`p-3 rounded-lg border transition-all duration-200 w-full min-h-20 flex flex-col justify-center ${soloPresentes === "pendientes"
+              ? "bg-orange-50 border-orange-300 ring-2 ring-orange-200"
+              : "bg-slate-50 border-slate-200 hover:bg-slate-100"
+              }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className="text-center">
+              <div className="text-sm text-slate-600 mb-1">Pendientes</div>
+              <div className="text-2xl font-bold text-orange-600">{pendientesConfirmacion}</div>
+            </div>
+          </motion.button>
+          <motion.button
+            onClick={() => handleExportarFiltrado("pendientes")}
+            className="absolute -top-1 -right-1 w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-orange-700 transition-colors shadow-md"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="Exportar pendientes a Excel"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </motion.button>
+        </div>
+
+        <div className="p-3 rounded-lg border bg-slate-50 border-slate-200 min-h-20 flex flex-col justify-center">
           <div className="text-center">
             <div className="text-sm text-slate-600 mb-1">Porcentaje</div>
             <div className="text-2xl font-bold text-slate-800">{porcentaje}%</div>

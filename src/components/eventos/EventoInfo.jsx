@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { exportarAExcel } from '../admin/exportarAExcel';
 
 function EventoInfo({ eventoActivo, totalAlumnos, alumnos }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -64,19 +63,6 @@ function EventoInfo({ eventoActivo, totalAlumnos, alumnos }) {
             {getStatusText()}
           </span>
 
-          {alumnos && alumnos.length > 0 && (
-            <motion.button
-              onClick={() => exportarAExcel(alumnos, eventoActivo.nombre, eventoActivo.tipo)}
-              className="px-3 py-1 bg-green-800 text-white text-xs rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Excel
-            </motion.button>
-          )}
         </div>
       </div>
 

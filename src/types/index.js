@@ -9,6 +9,7 @@
  * @property {string} [grupo] - Grupo del alumno (opcional)
  * @property {string} [asiento] - Asiento asignado (opcional)
  * @property {boolean} presente - Estado de asistencia
+ * @property {boolean} asiste - Confirmación previa de asistencia
  * @property {Date} createdAt - Fecha de creación
  * @property {Date} updatedAt - Fecha de última actualización
  */

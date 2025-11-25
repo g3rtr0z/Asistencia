@@ -236,11 +236,12 @@ function App() {
               </h2>
               {esEventoTrabajadores ? (
                 <>
-                  <TrabajadoresResumen 
-                    trabajadores={alumnos} 
+                  <TrabajadoresResumen
+                    trabajadores={alumnos}
                     soloPresentes={soloPresentes}
                     setSoloPresentes={setSoloPresentes}
                     trabajadoresCompletos={alumnos}
+                    eventoActivo={eventoActivo}
                   />
                   <div className="mt-6">
                     <TrabajadoresLista
@@ -333,12 +334,15 @@ function App() {
                     setErrorVisual={setErrorVisual}
                     eventoActivo={eventoActivo}
                   />
-                  <div className="text-center text-gray-500 text-xs sm:text-sm mt-2 mb-2">
-                    <p>Versión 1.0</p>
-                  </div>
-                  <div className="text-center text-gray-500 text-xs sm:text-sm">
-                    <p>Departamento de Informática -  Santo Tomas Temuco 2025</p>
-                    <p>Todos los derechos reservados &copy;</p>
+                  <div className="text-center text-gray-500 text-[11px] sm:text-xs mt-2 border-t border-gray-200 pt-3 space-y-1">
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <span className="mx-1">Departamento de Informática - Santo Tomas Temuco</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 flex-wrap text-gray-600">
+                      <span className="mx-1">© 2025 Todos los derechos reservados</span>
+                      <span className="mx-1 hidden sm:inline">•</span>
+                      <span className="mx-1 font-medium">Powered by Gerson Valdebenito</span>
+                    </div>
                   </div>
                 </motion.div>
               } />
