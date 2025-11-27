@@ -125,9 +125,9 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full px-2 sm:px-0">
       {/* Header Optimizado para móviles */}
-      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-800 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
             <svg className="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,10 +139,10 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
             <p className="text-xs sm:text-sm text-slate-500">Crea y administra tus eventos</p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
           <motion.button
             onClick={() => setFiltroTipo('alumnos')}
-            className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 text-sm sm:text-base ${
+            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm md:text-base ${
               filtroTipo === 'alumnos'
                 ? 'bg-green-800 text-white shadow-lg'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -150,14 +150,15 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
-            Alumnos
+            <span className="hidden sm:inline">Alumnos</span>
+            <span className="sm:hidden">Alum.</span>
           </motion.button>
           <motion.button
             onClick={() => setFiltroTipo('trabajadores')}
-            className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 text-sm sm:text-base ${
+            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm md:text-base ${
               filtroTipo === 'trabajadores'
                 ? 'bg-blue-800 text-white shadow-lg'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -165,15 +166,16 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            Funcionarios
+            <span className="hidden sm:inline">Funcionarios</span>
+            <span className="sm:hidden">Func.</span>
           </motion.button>
         </div>
         <motion.button
           onClick={() => setShowModal(true)}
-          className="w-full sm:w-auto bg-gradient-to-r from-green-800 to-emerald-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 flex items-center justify-center gap-2 font-semibold shadow-lg hover:shadow-xl text-sm sm:text-base"
+          className="w-full sm:w-auto bg-gradient-to-r from-green-800 to-emerald-600 text-white px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 flex items-center justify-center gap-2 font-semibold shadow-lg hover:shadow-xl text-xs sm:text-sm md:text-base"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -205,7 +207,7 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
       )}
 
       {/* Lista de eventos optimizada para móviles */}
-      <div className="grid gap-4 sm:gap-6">
+      <div className="grid gap-3 sm:gap-4 md:gap-6">
         {eventos
           .filter(evento => {
             const tipoEvento = evento.tipo || 'alumnos';
@@ -214,7 +216,7 @@ function EventosPanel({ eventos, eventoActivo, onEventoChange }) {
         .map((evento) => (
         <motion.div
           key={evento.id}
-          className={`p-4 sm:p-6 rounded-lg sm:rounded-xl border shadow-sm transition-all duration-300 hover:shadow-md ${
+          className={`p-3 sm:p-4 md:p-6 rounded-lg sm:rounded-xl border shadow-sm transition-all duration-300 hover:shadow-md ${
             evento.activo
               ? 'border-green-500 bg-white'
               : 'border-slate-200 bg-white'

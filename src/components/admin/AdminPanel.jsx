@@ -123,13 +123,13 @@ function AdminPanel({
   return (
     <div className="min-h-screen w-full flex flex-col relative" id="admin-panel-root">
       {/* Header del Panel de Administración */}
-      <div className="lg p-6 mb-2">
-        <div className="max-w-[1060px] mx-auto">
+      <div className="lg p-3 sm:p-4 md:p-6 mb-2">
+        <div className="max-w-full sm:max-w-4xl md:max-w-5xl mx-auto px-2 sm:px-4 md:px-6">
           <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Panel de Administración</h1>
-                <p className="text-sm text-slate-500">Gestiona eventos, alumnos y configuraciones</p>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 truncate">Panel de Administración</h1>
+                <p className="text-xs sm:text-sm text-slate-500 truncate">Gestiona eventos, alumnos y configuraciones</p>
               </div>
             </div>
 
@@ -172,7 +172,7 @@ function AdminPanel({
           transition={{ duration: 0.2 }}
         >
           <motion.div
-            className="bg-white rounded-2xl shadow-2xl p-8 sm:p-8 w-full max-w-xl max-w-full flex flex-col items-center relative overflow-auto max-h-[70vh]"
+            className="bg-white rounded-2xl shadow-2xl p-8 sm:p-8 w-full max-w-xl flex flex-col items-center relative"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -335,7 +335,7 @@ function AdminPanel({
 
       {/* Tabs Optimizadas para móviles */}
       <div className="relative bg-white border-b border-slate-200">
-        <div className="flex max-w-6xl mx-auto px-2 sm:px-6 md:px-10">
+        <div className="flex max-w-full sm:max-w-4xl md:max-w-5xl mx-auto px-2 sm:px-4 md:px-6">
           <div className="flex relative w-full">
             <motion.button
               onClick={() => setTab('eventos')}
@@ -401,7 +401,7 @@ function AdminPanel({
       </div>
 
       {/* Contenido de pestañas */}
-      <div className="flex-1 w-full max-w-6xl mx-auto px-2 sm:px-6 md:px-10 py-4 sm:py-6">
+      <div className="flex-1 w-full max-w-full sm:max-w-4xl md:max-w-5xl mx-auto px-2 sm:px-4 md:px-6 py-4 sm:py-6">
             {tab === 'alumnos' && (
               <div className="space-y-4 sm:space-y-6">
                 {eventoActivo ? (
@@ -429,6 +429,7 @@ function AdminPanel({
                         soloPresentes={soloPresentes}
                         setSoloPresentes={setSoloPresentes}
                         alumnosCompletos={alumnos}
+                        eventoActivo={eventoActivo}
                       />
                       <AlumnosLista
                         alumnos={alumnosFiltrados}

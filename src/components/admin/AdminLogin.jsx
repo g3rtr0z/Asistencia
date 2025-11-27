@@ -25,14 +25,14 @@ function AdminLogin({ onAuth, onSalir }) {
 
   return (
     <div className="min-h-screen w-full bg-white flex items-center justify-center">
-      <div className="w-full max-w-md mx-auto px-4">
+      <div className="w-full max-w-xs sm:max-w-sm mx-auto ">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
           {/* Card de login */}
-          <div className="bg-white border border-slate-200 rounded-lg p-10 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-lg p-6 sm:p-8 md:p-10 shadow-sm">
             {/* Header */}
             <div className="flex items-center gap-2 mb-6">
               <div className="w-3 h-3 bg-green-800 rounded-full"></div>

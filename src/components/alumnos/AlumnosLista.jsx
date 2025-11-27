@@ -229,7 +229,7 @@ const AlumnosLista = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
                     </svg>
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-row items-center gap-2 flex-wrap">
                     <h3 className="text-lg font-semibold text-slate-800">Filtros de Búsqueda</h3>
                     <span className="text-sm text-slate-500">
                       ({alumnosFiltrados.length} de {alumnos.length} alumnos)
@@ -379,32 +379,6 @@ const AlumnosLista = ({
               </AnimatePresence>
             </div>
           </motion.div>
-          <div className="flex flex-wrap justify-end gap-2">
-            {onAgregarAlumnos && (
-              <motion.button
-                onClick={onAgregarAlumnos}
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-green-800 to-emerald-800 text-white shadow-lg shadow-emerald-400/30 text-xl font-bold border-2 border-white flex items-center justify-center transition-colors duration-200 hover:shadow-emerald-500/20"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Agregar alumnos"
-                title="Agregar alumnos"
-              >
-                +
-              </motion.button>
-            )}
-            {onEliminarAlumnos && (
-              <motion.button
-                onClick={onEliminarAlumnos}
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-red-700 to-red-600 text-white shadow-lg shadow-red-300/40 text-xl font-bold border-2 border-white flex items-center justify-center transition-colors duration-200 hover:shadow-red-500/20 hover:from-red-700"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Eliminar alumnos"
-                title="Eliminar alumnos"
-              >
-                -
-              </motion.button>
-            )}
-          </div>
         </div>
       </div>
 

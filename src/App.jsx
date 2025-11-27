@@ -75,11 +75,15 @@ function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [filtroGrupo, setFiltroGrupo] = useState("");
   
+  // Controlar el scroll según la ruta y modales
   React.useEffect(() => {
-    const shouldHideScroll = location.pathname === '/admin' || showAlumnosModal;
-    document.body.style.overflow = shouldHideScroll ? 'hidden' : 'auto';
+    if (location.pathname === '/admin' || showAlumnosModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
     };
   }, [location.pathname, showAlumnosModal]);
 
@@ -193,7 +197,7 @@ function App() {
     if (location.pathname === '/admin') {
       return "min-h-screen bg-white flex flex-col items-center justify-center";
     }
-    return "min-h-screen bg-white flex flex-col";
+    return "bg-white flex flex-col";
   };
 
   return (
@@ -238,7 +242,7 @@ function App() {
             key="modal-bg"
           >
             <motion.div
-              className="bg-white rounded-xl shadow-2xl p-8 max-w-7xl w-full relative max-h-[95vh] overflow-auto"
+              className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 md:p-8 max-w-6xl w-full relative max-h-[95vh] overflow-auto"
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
@@ -277,6 +281,7 @@ function App() {
                     soloPresentes={soloPresentes}
                     setSoloPresentes={setSoloPresentes}
                     alumnosCompletos={alumnos}
+                    eventoActivo={eventoActivo}
                   />
                   <AlumnosLista
                     alumnos={alumnos}
@@ -334,8 +339,18 @@ function App() {
         )}
       </AnimatePresence>
 
-      <main className={`flex-1 flex flex-col w-full ${location.pathname === '/panel' ? '' : location.pathname === '/admin' ? 'items-center justify-center min-h-screen' : 'items-center justify-center min-h-screen'} ${location.pathname === '/panel' ? '' : 'px-2 py-4'}`}>
-        <div className={`w-full flex flex-col ${location.pathname === '/panel' ? '' : 'items-center justify-center'}`}>
+      <main className={`flex-1 flex flex-col w-full ${
+        location.pathname === '/panel' 
+          ? '' 
+          : location.pathname === '/admin' 
+            ? 'items-center justify-center min-h-screen' 
+            : 'px-2 py-4'
+      }`}>
+        <div className={`w-full flex flex-col ${
+          location.pathname === '/panel' 
+            ? '' 
+            : 'items-center justify-center'
+        }`}>
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={
@@ -345,7 +360,7 @@ function App() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="w-full flex flex-col items-center justify-center"
+                  className="w-full min-h-screen flex flex-col items-center justify-center"
                 >
                   <Inicio
                     className="w-full"
