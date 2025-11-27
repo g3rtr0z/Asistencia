@@ -127,7 +127,7 @@ const TrabajadoresLista = ({
 
       {/* Filtros Desplegables */}
       <motion.div
-        className="mb-6 w-full max-w-7xl"
+        className="mb-6 w-full max-w-full sm:max-w-4xl md:max-w-5xl mx-auto"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -302,7 +302,7 @@ const TrabajadoresLista = ({
       {/* Tabla Simplificada */}
       <div className="w-full flex justify-center">
         <motion.div
-          className="w-full overflow-hidden rounded-xl shadow-lg border border-slate-200 bg-white"
+          className="w-full max-w-full sm:max-w-4xl md:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-lg border border-slate-200 bg-white"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}

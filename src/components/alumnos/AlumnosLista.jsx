@@ -210,7 +210,7 @@ const AlumnosLista = ({
   return (
     <div className="flex flex-col items-center w-full">
       <div className="mb-6 w-full flex justify-center">
-        <div className="w-full max-w-6xl flex flex-col gap-4">
+        <div className="w-full max-w-full sm:max-w-4xl md:max-w-5xl mx-auto flex flex-col gap-4">
           <motion.div
             className="w-full"
             initial={{ opacity: 0, y: -20 }}
@@ -385,7 +385,7 @@ const AlumnosLista = ({
       {/* Tabla Simplificada */}
       <div className="w-full flex justify-center">
         <motion.div
-          className="w-full max-w-6xl overflow-hidden rounded-xl shadow-lg border border-slate-200 bg-white"
+          className="w-full max-w-full sm:max-w-4xl md:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-lg border border-slate-200 bg-white"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}

@@ -34,6 +34,7 @@ body {
   background-color: #F5F5F5;
   color: #222222;
   font-family: 'Roboto', sans-serif;
+  scrollbar-gutter: stable;
 }
 
 .bg-st-verde { background-color: #006341 !important; }

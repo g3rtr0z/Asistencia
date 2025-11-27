@@ -21,7 +21,7 @@ function EstadisticasPanel({ alumnos, soloPresentes, setSoloPresentes, alumnosCo
 
   return (
     <motion.div
-      className="bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-sm mx-auto w-full max-w-6xl"
+      className="bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-sm mx-auto w-full max-w-full sm:max-w-4xl md:max-w-5xl"
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}

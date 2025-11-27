@@ -121,9 +121,9 @@ function AdminPanel({
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col relative" id="admin-panel-root">
+    <div className="min-h-screen w-full flex flex-col relative overflow-y-auto" id="admin-panel-root" style={{ scrollbarGutter: 'stable' }}>
       {/* Header del Panel de Administración */}
-      <div className="lg p-3 sm:p-4 md:p-6 mb-2">
+      <div className="lg p-3 sm:p-2 md:p-8 mb-1">
         <div className="max-w-full sm:max-w-4xl md:max-w-5xl mx-auto px-2 sm:px-4 md:px-6">
           <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
