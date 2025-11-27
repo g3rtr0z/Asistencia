@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { actualizarPresencia } from './services/alumnosService';
 import useAlumnosEvento from './hooks/useAlumnosEvento';
 import useEventos from './hooks/useEventos';
-import { Inicio } from './components/ui';
+import { Inicio, Footer } from './components/ui';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminPanel from './components/admin/AdminPanel';
 import AlumnosLista from './components/alumnos/AlumnosLista';
@@ -74,6 +74,14 @@ function App() {
   const [soloPresentes, setSoloPresentes] = useState("");
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [filtroGrupo, setFiltroGrupo] = useState("");
+  
+  React.useEffect(() => {
+    const shouldHideScroll = location.pathname === '/admin' || showAlumnosModal;
+    document.body.style.overflow = shouldHideScroll ? 'hidden' : 'auto';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [location.pathname, showAlumnosModal]);
 
   // Filtrado para la vista de admin (memorizado)
   const alumnosFiltrados = useMemo(() => {
@@ -315,7 +323,7 @@ function App() {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 flex flex-col items-center justify-center w-full px-2 py-4">
+      <main className="flex-1 min-h-screen flex flex-col items-center justify-center w-full px-2 py-4">
         <div className="w-full flex flex-col items-center justify-center">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
@@ -334,16 +342,6 @@ function App() {
                     setErrorVisual={setErrorVisual}
                     eventoActivo={eventoActivo}
                   />
-                  <div className="text-center text-gray-500 text-[11px] sm:text-xs mt-2 border-t border-gray-200 pt-3 space-y-1">
-                    <div className="flex items-center justify-center gap-2 flex-wrap">
-                      <span className="mx-1">Departamento de Informática - Santo Tomas Temuco</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2 flex-wrap text-gray-600">
-                      <span className="mx-1">© 2025 Todos los derechos reservados</span>
-                      <span className="mx-1 hidden sm:inline">•</span>
-                      <span className="mx-1 font-medium">Powered by Gerson Valdebenito</span>
-                    </div>
-                  </div>
                 </motion.div>
               } />
               <Route path="/admin" element={
@@ -380,6 +378,7 @@ function App() {
           </AnimatePresence>
         </div>
       </main>
+      {!location.pathname.startsWith('/admin') && location.pathname !== '/panel' && <Footer />}
     </div>
   );
 }

@@ -19,6 +19,7 @@ function AdminPanel({
   const [tab, setTab] = useState('eventos');
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminModalMode, setAdminModalMode] = useState('add');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const deleteFormRef = useRef(null);
 
   // Hook para eventos
@@ -109,12 +110,22 @@ function AdminPanel({
     }
   }, [showAdminModal, adminModalMode]);
 
+  const abrirModalAgregar = () => {
+    setAdminModalMode('add');
+    setShowAdminModal(true);
+  };
+
+  const abrirModalEliminar = () => {
+    setAdminModalMode('delete');
+    setShowAdminModal(true);
+  };
+
   return (
     <div className="min-h-screen w-full flex flex-col relative" id="admin-panel-root">
       {/* Header del Panel de Administración */}
       <div className="lg p-6 mb-2">
         <div className="max-w-[1060px] mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
             <div className="flex items-center gap-3">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Panel de Administración</h1>
@@ -122,15 +133,31 @@ function AdminPanel({
               </div>
             </div>
 
-            {/* Botón Salir */}
+            <div className="flex gap-2 items-center">
+              {/* Botón del panel lateral */}
+              <motion.button
+                onClick={() => setSidebarOpen(true)}
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                aria-label="Abrir panel lateral"
+                title="Panel lateral"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h10" />
+                </svg>
+              </motion.button>
+
+              {/* Botón Salir */}
             <motion.button
               onClick={onSalir}
-              className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50 transition-colors"
+              className="w-full sm:w-auto flex justify-center px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50 transition-colors"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               Salir
             </motion.button>
+            </div>
           </div>
         </div>
       </div>
@@ -248,6 +275,64 @@ function AdminPanel({
         </motion.div>
       )}
 
+      {/* Panel lateral flotante */}
+      <>
+        <div
+          className={`fixed inset-0 bg-black/40 z-40 transition-opacity ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+        <aside
+          className={`fixed inset-y-0 right-0 z-50 w-full max-w-sm transform bg-white shadow-2xl transition-transform ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        >
+          <div className="flex flex-col h-full p-6 gap-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Panel lateral</p>
+                <h3 className="text-xl font-bold text-slate-900">Administrador</h3>
+              </div>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="rounded-full bg-slate-100 p-2 text-slate-500 hover:text-slate-700 transition"
+                aria-label="Cerrar panel lateral"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-2 text-sm text-slate-500">
+              <p className="text-slate-700 font-semibold">{eventoActivo?.nombre ?? 'Sin evento activo'}</p>
+              <p><span className="font-semibold text-slate-900">{alumnos.length}</span> participantes registrados</p>
+              <p className="text-xs uppercase tracking-wider text-slate-400">Tipo: {eventoActivo?.tipo === 'trabajadores' ? 'Funcionarios' : 'Alumnos'}</p>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  abrirModalAgregar();
+                  setSidebarOpen(false);
+                }}
+                className="w-full rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-500/20"
+              >
+                Agregar registro
+              </button>
+              <button
+                onClick={() => {
+                  abrirModalEliminar();
+                  setSidebarOpen(false);
+                }}
+                className="w-full rounded-lg border border-red-500 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-500/20"
+              >
+                Eliminar registro
+              </button>
+            </div>
+            <div className="text-xs text-slate-400">
+              Utiliza este panel para mantener a la vista las acciones más frecuentes mientras navegas en el panel administrativo.
+            </div>
+          </div>
+        </aside>
+      </>
+
       {/* Tabs Optimizadas para móviles */}
       <div className="relative bg-white border-b border-slate-200">
         <div className="flex max-w-6xl mx-auto px-2 sm:px-6 md:px-10">
@@ -317,56 +402,50 @@ function AdminPanel({
 
       {/* Contenido de pestañas */}
       <div className="flex-1 w-full max-w-6xl mx-auto px-2 sm:px-6 md:px-10 py-4 sm:py-6">
-        {tab === 'alumnos' && (
-          <div className="space-y-4 sm:space-y-6">
-            {eventoActivo ? (
-              esEventoTrabajadores ? (
-                <>
-                  <EventoInfo eventoActivo={eventoActivo} totalAlumnos={alumnos.length} alumnos={alumnos} />
-                  <TrabajadoresResumen
-                    trabajadores={alumnos}
-                    soloPresentes={soloPresentes}
-                    setSoloPresentes={setSoloPresentes}
-                    trabajadoresCompletos={alumnos}
-                    eventoActivo={eventoActivo}
-                  />
-                  <TrabajadoresLista
-                    trabajadores={alumnos}
-                    soloPresentes={soloPresentes}
-                    setSoloPresentes={setSoloPresentes}
-                  />
-                </>
-              ) : (
-                <>
-                  <EventoInfo eventoActivo={eventoActivo} totalAlumnos={alumnos.length} alumnos={alumnosFiltrados} />
-                  <EstadisticasPanel
-                    alumnos={alumnosFiltrados}
-                    soloPresentes={soloPresentes}
-                    setSoloPresentes={setSoloPresentes}
-                    alumnosCompletos={alumnos}
-                  />
-                  <AlumnosLista
-                    alumnos={alumnosFiltrados}
-                    filtroCarrera={filtroCarrera}
-                    setFiltroCarrera={setFiltroCarrera}
-                    filtroInstitucion={filtroInstitucion}
-                    setFiltroInstitucion={setFiltroInstitucion}
-                    filtroGrupo={filtroGrupo}
-                    setFiltroGrupo={setFiltroGrupo}
-                    soloPresentes={soloPresentes}
-                    setSoloPresentes={setSoloPresentes}
-                    onAgregarAlumnos={() => {
-                      setAdminModalMode('add');
-                      setShowAdminModal(true);
-                    }}
-                    onEliminarAlumnos={() => {
-                      setAdminModalMode('delete');
-                      setShowAdminModal(true);
-                    }}
-                  />
-                </>
-              )
-            ) : (
+            {tab === 'alumnos' && (
+              <div className="space-y-4 sm:space-y-6">
+                {eventoActivo ? (
+                  esEventoTrabajadores ? (
+                    <div className="space-y-4">
+                      <EventoInfo eventoActivo={eventoActivo} totalAlumnos={alumnos.length} alumnos={alumnos} />
+                      <TrabajadoresResumen
+                        trabajadores={alumnos}
+                        soloPresentes={soloPresentes}
+                        setSoloPresentes={setSoloPresentes}
+                        trabajadoresCompletos={alumnos}
+                        eventoActivo={eventoActivo}
+                      />
+                      <TrabajadoresLista
+                        trabajadores={alumnos}
+                        soloPresentes={soloPresentes}
+                        setSoloPresentes={setSoloPresentes}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <EventoInfo eventoActivo={eventoActivo} totalAlumnos={alumnos.length} alumnos={alumnosFiltrados} />
+                      <EstadisticasPanel
+                        alumnos={alumnosFiltrados}
+                        soloPresentes={soloPresentes}
+                        setSoloPresentes={setSoloPresentes}
+                        alumnosCompletos={alumnos}
+                      />
+                      <AlumnosLista
+                        alumnos={alumnosFiltrados}
+                        filtroCarrera={filtroCarrera}
+                        setFiltroCarrera={setFiltroCarrera}
+                        filtroInstitucion={filtroInstitucion}
+                        setFiltroInstitucion={setFiltroInstitucion}
+                        filtroGrupo={filtroGrupo}
+                        setFiltroGrupo={setFiltroGrupo}
+                        soloPresentes={soloPresentes}
+                        setSoloPresentes={setSoloPresentes}
+                        onAgregarAlumnos={abrirModalAgregar}
+                        onEliminarAlumnos={abrirModalEliminar}
+                      />
+                    </>
+                  )
+                ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
                 <div className="flex items-center justify-center gap-3 mb-4">
                   <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

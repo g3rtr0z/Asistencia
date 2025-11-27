@@ -14,7 +14,7 @@ function EstadisticasPanel({ alumnos, soloPresentes, setSoloPresentes, alumnosCo
 
   return (
     <motion.div
-      className="bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-sm"
+      className="bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-sm mx-auto w-full max-w-6xl"
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -24,7 +24,7 @@ function EstadisticasPanel({ alumnos, soloPresentes, setSoloPresentes, alumnosCo
         <h3 className="text-lg font-semibold text-slate-800">Estadísticas de Asistencia</h3>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <motion.button
           onClick={() => setSoloPresentes && setSoloPresentes("")}
           className={`p-3 rounded-lg border transition-all duration-200 ${soloPresentes === ""
