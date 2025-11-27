@@ -30,11 +30,30 @@
   animation: fade-in-scale 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Ocultar scrollbar en toda la aplicación pero mantener funcionalidad de scroll */
+* {
+  -ms-overflow-style: none;  /* IE y Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+*::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari y Opera */
+}
+
 body {
   background-color: #F5F5F5;
   color: #222222;
   font-family: 'Roboto', sans-serif;
-  scrollbar-gutter: stable;
+}
+
+/* Clase específica para elementos que necesiten ocultar scrollbar */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 .bg-st-verde { background-color: #006341 !important; }
