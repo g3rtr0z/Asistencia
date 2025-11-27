@@ -197,7 +197,7 @@ function App() {
     if (location.pathname === '/admin') {
       return "min-h-screen bg-white flex flex-col items-center justify-center";
     }
-    return "bg-white flex flex-col";
+    return "min-h-screen bg-white flex flex-col";
   };
 
   return (
@@ -344,7 +344,7 @@ function App() {
           ? '' 
           : location.pathname === '/admin' 
             ? 'items-center justify-center min-h-screen' 
-            : 'px-2 py-4'
+            : 'min-h-screen flex items-center justify-center px-2'
       }`}>
         <div className={`w-full flex flex-col ${
           location.pathname === '/panel' 
@@ -360,7 +360,7 @@ function App() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="w-full min-h-screen flex flex-col items-center justify-center"
+                  className="w-full flex flex-col items-center justify-center"
                 >
                   <Inicio
                     className="w-full"
