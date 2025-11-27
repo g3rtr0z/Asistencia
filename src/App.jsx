@@ -185,8 +185,19 @@ function App() {
 
   const esEventoTrabajadores = eventoActivo?.tipo === 'trabajadores';
 
+  // Determinar clases del contenedor según la ruta
+  const getContainerClasses = () => {
+    if (location.pathname === '/panel') {
+      return "bg-white flex flex-col";
+    }
+    if (location.pathname === '/admin') {
+      return "min-h-screen bg-white flex flex-col items-center justify-center";
+    }
+    return "min-h-screen bg-white flex flex-col";
+  };
+
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className={getContainerClasses()}>
       <AnimatePresence mode="wait">
         {location.pathname === '/' && (
           <motion.div
@@ -323,8 +334,8 @@ function App() {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 min-h-screen flex flex-col items-center justify-center w-full px-2 py-4">
-        <div className="w-full flex flex-col items-center justify-center">
+      <main className={`flex-1 flex flex-col w-full ${location.pathname === '/panel' ? '' : location.pathname === '/admin' ? 'items-center justify-center min-h-screen' : 'items-center justify-center min-h-screen'} ${location.pathname === '/panel' ? '' : 'px-2 py-4'}`}>
+        <div className={`w-full flex flex-col ${location.pathname === '/panel' ? '' : 'items-center justify-center'}`}>
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={
