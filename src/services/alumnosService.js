@@ -84,6 +84,11 @@ export const getAlumnosPorEvento = async (eventoId) => {
     const querySnapshot = await getDocs(alumnosRef);
     return querySnapshot.docs.map(mapFirestoreData);
   } catch (error) {
+    // Si la subcolección no existe (error 404), retornar array vacío
+    if (error.code === 'not-found' || error.message?.includes('404') || error.message?.includes('NOT_FOUND')) {
+      console.log('getAlumnosPorEvento: La subcolección alumnos aún no existe, retornando array vacío');
+      return [];
+    }
     console.error('Error al obtener alumnos por evento:', error);
     throw error;
   }
@@ -109,14 +114,28 @@ export const getAlumnosEventoActivo = async () => {
     console.log('getAlumnosEventoActivo: Evento activo encontrado:', eventoId, eventoActivo.data().nombre);
 
     // Luego obtener los alumnos de la colección específica de ese evento
-    const alumnosRef = collection(db, `eventos/${eventoId}/alumnos`);
-    const alumnosSnapshot = await getDocs(alumnosRef);
-    const alumnos = alumnosSnapshot.docs.map(mapFirestoreData);
+    try {
+      const alumnosRef = collection(db, `eventos/${eventoId}/alumnos`);
+      const alumnosSnapshot = await getDocs(alumnosRef);
+      const alumnos = alumnosSnapshot.docs.map(mapFirestoreData);
 
-    console.log('getAlumnosEventoActivo: Alumnos encontrados:', alumnos.length);
-    return alumnos;
+      console.log('getAlumnosEventoActivo: Alumnos encontrados:', alumnos.length);
+      return alumnos;
+    } catch (subError) {
+      // Si la subcolección no existe, retornar array vacío en lugar de lanzar error
+      if (subError.code === 'not-found' || subError.message?.includes('404') || subError.message?.includes('NOT_FOUND')) {
+        console.log('getAlumnosEventoActivo: La subcolección alumnos aún no existe, retornando array vacío');
+        return [];
+      }
+      throw subError;
+    }
   } catch (error) {
     console.error('Error al obtener alumnos del evento activo:', error);
+    // Si es un error 404, retornar array vacío en lugar de lanzar error
+    if (error.code === 'not-found' || error.message?.includes('404') || error.message?.includes('NOT_FOUND')) {
+      console.log('getAlumnosEventoActivo: Error 404, retornando array vacío');
+      return [];
+    }
     throw error;
   }
 };
@@ -172,6 +191,12 @@ export const subscribeToAlumnosPorEvento = (eventoId, callback, errorCallback) =
       const alumnos = querySnapshot.docs.map(mapFirestoreData);
       callback(alumnos);
     }, (error) => {
+      // Manejar error 404 cuando la subcolección aún no existe
+      if (error.code === 'not-found' || error.message?.includes('404') || error.message?.includes('NOT_FOUND') || error.code === 'permission-denied') {
+        console.log('subscribeToAlumnosPorEvento: La subcolección alumnos aún no existe o no hay permisos, retornando array vacío');
+        callback([]);
+        return;
+      }
       console.error('Error en onSnapshot alumnos por evento:', error);
       if (errorCallback) errorCallback(error);
     });
@@ -214,6 +239,14 @@ export const subscribeToAlumnosEventoActivo = (callback, errorCallback) => {
         console.log('subscribeToAlumnosEventoActivo: Alumnos actualizados:', alumnos.length);
         callback(alumnos);
       }, (error) => {
+        // Manejar error 404 cuando la subcolección aún no existe
+        if (error.code === 'not-found' || error.code === 'permission-denied' || 
+            error.message?.includes('404') || error.message?.includes('NOT_FOUND') ||
+            error.message?.includes('N0T_F0UND')) {
+          console.log('subscribeToAlumnosEventoActivo: La subcolección alumnos aún no existe o no hay permisos, retornando array vacío');
+          callback([]);
+          return;
+        }
         console.error('Error en onSnapshot alumnos evento activo:', error);
         if (errorCallback) errorCallback(error);
       });

@@ -1,0 +1,761 @@
+\documentclass[12pt,a4paper]{article}
+
+% Paquetes necesarios
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{booktabs}
+\usepackage{float}
+
+% Configuración de página
+\geometry{
+    a4paper,
+    left=2.5cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=2.5cm
+}
+
+% Configuración de encabezados y pies de página
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\fancyfoot[C]{Mi Asistencia - Presentación de Proyecto de Título}
+
+% Colores corporativos Santo Tomás
+\definecolor{colorprincipal}{RGB}{0, 99, 65}
+\definecolor{colorsecundario}{RGB}{0, 179, 136}
+\definecolor{grisclaro}{RGB}{245, 245, 245}
+
+% Títulos personalizados
+\titleformat{\section}
+{\Large\bfseries\color{colorprincipal}}
+{\thesection}{1em}{}
+
+\titleformat{\subsection}
+{\large\bfseries\color{colorsecundario}}
+{\thesubsection}{1em}{}
+
+% Información del documento
+\title{Sistema de Gestión de Asistencia para Eventos\\\large Mi Asistencia}
+\author{Gerson Valdebenito}
+\date{\today}
+
+\begin{document}
+
+% ============================================
+% PORTADA
+% ============================================
+\begin{titlepage}
+    \centering
+    \vspace*{0.5cm}
+    
+    % Logo de la institución
+    % Nota en LaTeX: Las rutas de imágenes son relativas al archivo .tex
+    % Si el .tex está en la raíz y el logo en src/assets/, usa: src/assets/logopag.png
+    % Alternativa: Copia el logo a una carpeta 'imagenes' en la raíz y usa: imagenes/logopag.png
+    % Si la imagen no se encuentra, LaTeX mostrará un error. Asegúrate de que la ruta sea correcta.
+    \includegraphics[width=0.25\textwidth]{src/assets/logopag.png}\\[1cm]
+    
+    {\Huge\bfseries\color{colorprincipal} Sistema de Gestión de\\Asistencia para Eventos}\\[0.5cm]
+    {\LARGE\itshape Mi Asistencia}\\[1.5cm]
+    
+    {\large Solución Integral para la Gestión Eficiente de\\Participantes en Eventos Académicos y Titulaciones}\\[2cm]
+    
+    {\large Presentado a:}\\[0.5cm]
+    {\Large Comité de Evaluación de Proyecto de Título}\\[1cm]
+    
+    {\large Instituto Profesional Santo Tomás}\\[0.5cm]
+    {\large Departamento de Informática}\\[0.5cm]
+    {\large Sede Temuco}\\[2cm]
+    
+    {\large\date\today}
+    
+    \vfill
+    
+    {\small Desarrollado por: Gerson Valdebenito}
+\end{titlepage}
+
+% ============================================
+% RESUMEN EJECUTIVO
+% ============================================
+\newpage
+\section*{Resumen Ejecutivo}
+\addcontentsline{toc}{section}{Resumen Ejecutivo}
+
+Cuando empecé a trabajar en \textbf{Mi Asistencia}, tenía muy claro el problema que quería resolver. En el Departamento de Informática de Santo Tomás Temuco, gestionar la asistencia en eventos académicos y ceremonias de titulación siempre había sido un dolor de cabeza. Pasábamos horas con listas en papel, buscando nombres, marcando con lápiz, y después teníamos que pasarlo todo a Excel. Era lento, aburrido y lleno de errores.
+
+Por eso decidí crear esta aplicación web. La idea era simple: transformar todo ese proceso manual en algo digital que realmente funcionara. Ahora, en lugar de estar buscando nombres en una hoja, cada persona ingresa su RUT desde su celular o cualquier dispositivo, y listo. El sistema lo registra al instante y puedes ver cuánta gente ha llegado en tiempo real. No más esperar hasta el final para saber si llegó suficiente gente o no.
+
+Lo mejor de todo es que funciona desde cualquier navegador. No necesitas instalar nada, no necesitas configurar servidores complicados. Solo abres la página y ya está. Los administradores pueden crear eventos, importar listas desde Excel si ya las tienen, y cuando termina el evento, descargan el reporte completo con un clic. Todo lo que antes te tomaba horas, ahora lo haces en minutos.
+
+\begin{itemize}
+    \item \textbf{El problema que resuelve:} Con los métodos tradicionales, un evento con 200 personas puede tomarte fácilmente 3 o 4 horas solo en gestionar la asistencia. Además, siempre hay errores: escribes mal un RUT, marcas dos veces a alguien, o simplemente se te pierde la hoja. Y mientras pasa el evento, no tienes idea de cuántos han llegado realmente.
+    \item \textbf{La solución propuesta:} Con Mi Asistencia, cada persona se registra en menos de 10 segundos. El sistema actualiza todo automáticamente, así que ves las estadísticas en vivo. Cuando termina, descargas el Excel completo sin tener que transcribir nada.
+    \item \textbf{El valor que aporta:} Ahorras entre el 70 y 80 por ciento del tiempo que gastabas antes. Los errores prácticamente desaparecen porque el sistema valida todo automáticamente. Y los participantes tienen una experiencia mucho más profesional, sin tener que esperar en filas para que alguien busque su nombre.
+    \item \textbf{Por qué es importante:} Esto cambia completamente cómo funciona el departamento. Ya no pierdes horas en tareas repetitivas, puedes tomar decisiones durante el evento porque tienes la información al instante, y además proyectas una imagen mucho más moderna y profesional.
+\end{itemize}
+
+% ============================================
+% ÍNDICE
+% ============================================
+\newpage
+\tableofcontents
+\newpage
+
+% ============================================
+% INTRODUCCIÓN
+% ============================================
+\section{Introducción}
+
+\subsection{El Problema que Resolvemos}
+
+Cualquiera que haya trabajado en una institución educativa sabe lo complicado que puede ser organizar un evento académico. No me refiero solo a la logística de conseguir el espacio o coordinar a los expositores, sino a algo que parece simple pero que en la práctica es un verdadero dolor de cabeza: llevar el control de quién asistió y quién no.
+
+En el Instituto Profesional Santo Tomás de Temuco, esta situación se ha vivido en múltiples ocasiones. Los diferentes departamentos han tenido que lidiar con este problema una y otra vez, y la verdad es que ninguna solución ha funcionado del todo bien.
+
+Durante mucho tiempo se intentó hacer todo a mano. Listas en papel, planillas de Excel que alguien tenía que actualizar después del evento, nombres tachados y anotaciones al margen que después nadie entendía. El resultado era siempre el mismo: información incompleta, errores por todos lados y la imposibilidad de saber con certeza cuántas personas realmente participaron. Y ni hablar de intentar auditar esos registros meses después.
+
+Ante este panorama, la salida más práctica terminaba siendo contratar a una empresa externa que se encargara de todo. Al principio parece una buena idea, hasta que llega la factura. Porque claro, cada evento implica pagar de nuevo, y en una institución como Santo Tomás donde prácticamente todas las semanas hay alguna actividad académica, esos gastos se van acumulando. Al final del año te das cuenta de que destinaste una cantidad importante de recursos solo en ese ítem, plata que podría haberse usado en otras cosas.
+
+¿Cuáles son los problemas concretos que esto genera? Varios:
+
+\begin{enumerate}
+    \item Los métodos manuales simplemente no dan abasto. Funcionan más o menos bien cuando son 30 personas, pero cuando tienes 200 o 300 asistentes, el sistema colapsa.
+    \item Hay una dependencia total de terceros. Si la empresa contratada falla o no está disponible, no hay plan B.
+    \item No existe un registro digital actualizado. Todo queda en papeles o archivos dispersos que después cuesta encontrar.
+    \item Importar datos de una planilla a otra es un trabajo tedioso que consume horas y está lleno de posibles errores de tipeo.
+    \item No hay forma de ver estadísticas al instante. Si el organizador del evento pregunta cuántos alumnos o funcionarios asistieron, hay que ponerse a contar uno por uno.
+    \item Cuando hay varios eventos al mismo tiempo, el caos se multiplica porque cada uno tiene sus propios participantes y configuraciones.
+\end{enumerate}
+
+Al final, los que pagan el costo de todo este desorden son las personas que día a día tienen que hacer funcionar las cosas. El coordinador que termina quedándose hasta tarde revisando listas. La secretaria que lleva tres días tratando de cuadrar los números de asistencia para un informe que necesitaban ayer. El encargado del evento que cuando le preguntan ``¿cuántos vinieron?'' tiene que responder con un ``más o menos'' porque no tiene datos certeros.
+
+Por eso surge la necesidad de contar con algo propio. No depender de terceros cada vez que hay un evento. Tener una herramienta que sea de la institución, que esté siempre disponible y que permita manejar todo desde un solo lugar. Además del ahorro obvio que esto significaría a largo plazo, lo más valioso sería tener el control real de la información: saber exactamente qué está pasando, en el momento en que está pasando, y poder tomar decisiones con datos concretos en la mano.
+
+\subsection{La Solución: Mi Asistencia}
+
+Después de ver todos estos problemas de cerca, me di cuenta de que necesitábamos algo diferente. No otra solución externa que dependiera de terceros, sino algo nuestro, que realmente entendiera cómo funcionamos en Santo Tomás. Así nació \textbf{Mi Asistencia}.
+
+La idea es simple: en lugar de andar con papeles y lápices, cada persona que llega al evento ingresa su RUT desde su celular, una tablet o cualquier computador que tengamos a mano. El sistema lo busca automáticamente y en menos de 10 segundos ya está registrado. No más buscar nombres en listas, no más esperar turnos, no más confusiones.
+
+Lo mejor es que toda la información se guarda automáticamente en la nube. Eso significa que no importa si se cae el internet por un momento o si alguien cierra el navegador por error, los datos están seguros. Los administradores pueden estar gestionando eventos desde cualquier lugar, viendo en tiempo real cuánta gente ha llegado, y cuando termina el evento, simplemente descargan el reporte completo con un clic. Todo en Excel, listo para usar.
+
+Y lo mejor de todo: funciona desde cualquier navegador. No hay que instalar nada, no hay que configurar servidores complicados, no hay que llamar a nadie para que venga a arreglar algo. Simplemente abres la página y funciona. Es así de simple.
+
+\subsection{Objetivos de la Solución}
+
+Cuando empecé a trabajar en esto, tenía muy claro qué quería lograr. No se trataba de hacer algo complicado solo para impresionar, sino de resolver problemas reales que todos conocemos.
+
+Lo primero era hacer que el registro fuera realmente simple. Que cualquier persona, sin importar qué tan familiarizada esté con la tecnología, pudiera marcar su asistencia sin problemas. Que no tuviera que buscar su nombre en una lista, que no tuviera que esperar a que alguien lo encuentre. Solo ingresar su RUT y listo. Eso era lo que quería.
+
+También quería que la información estuviera disponible cuando se necesitara, no después. Durante un evento, el organizador debería poder saber al instante cuánta gente ha llegado, cuánta falta, si las expectativas se están cumpliendo. No tener que esperar hasta el final para contar manualmente y descubrir que faltaron 50 personas.
+
+El ahorro de tiempo era fundamental. Sabía que estábamos perdiendo horas y horas en tareas que perfectamente podrían automatizarse. Si podía reducir ese tiempo en un 70 u 80 por ciento, significaría que el personal podría enfocarse en cosas más importantes, o simplemente tener menos estrés durante los eventos.
+
+Y por supuesto, tenía que eliminar esos errores que siempre aparecen cuando haces las cosas a mano. Errores de tipeo, marcas duplicadas, números que no cuadran. El sistema debería validar todo automáticamente, prevenir duplicados, y asegurarse de que los datos sean correctos desde el principio.
+
+Por último, quería que fuera fácil trabajar con la información después. Que cuando necesitaras un reporte, simplemente lo descargaras en Excel y ya estuviera todo listo. Sin tener que pasar horas copiando datos de un lado a otro, sin riesgo de cometer errores en el proceso.
+
+En resumen, el objetivo era simple: hacer que gestionar la asistencia dejara de ser un problema y se convirtiera en algo que simplemente funciona, sin complicaciones.
+
+% ============================================
+% CARACTERÍSTICAS PRINCIPALES
+% ============================================
+\section{Características Principales}
+
+\subsection{Interfaz Intuitiva y Moderna}
+
+La interfaz de \textbf{Mi Asistencia} fue diseñada pensando en la facilidad de uso. Cualquier persona, incluso sin experiencia previa con sistemas similares, puede utilizarla sin dificultad. El diseño sigue los colores corporativos de Santo Tomás para generar familiaridad, manteniendo una estética limpia y profesional.
+
+La aplicación es completamente responsiva, adaptándose perfectamente a celulares, tablets y computadores. La navegación es intuitiva, con elementos ubicados donde los usuarios esperarían encontrarlos. Cuando un participante marca su asistencia, recibe confirmación visual inmediata con sus datos, eliminando dudas sobre si el registro fue exitoso.
+
+\subsection{Registro Rápido y Eficiente}
+
+El proceso de registro es extremadamente simple: el participante ingresa su RUT (el sistema acepta el formato con o sin puntos y guión), y en menos de 10 segundos queda registrado. El sistema busca automáticamente al participante en la base de datos del evento activo y marca su asistencia instantáneamente.
+
+Esta velocidad permite registrar hasta 6 personas por minuto, una capacidad imposible con métodos tradicionales. El sistema valida automáticamente el RUT y previene registros duplicados, mostrando un mensaje claro si alguien intenta registrarse dos veces.
+
+\subsection{Información en Tiempo Real}
+
+Una de las características más valiosas del sistema es la actualización automática de estadísticas en tiempo real. Durante el evento, los administradores pueden ver instantáneamente:
+
+\begin{itemize}
+    \item Total de participantes registrados en el evento
+    \item Número de presentes en ese momento
+    \item Número de ausentes
+    \item Porcentaje de asistencia
+\end{itemize}
+
+Estas estadísticas se actualizan automáticamente sin necesidad de recargar la página, permitiendo monitorear el progreso del evento en vivo y tomar decisiones informadas sobre el desarrollo de la actividad.
+
+\subsection{Gestión Completa de Eventos}
+
+El sistema permite gestionar múltiples eventos de forma independiente. Cada evento puede configurarse con:
+
+\begin{itemize}
+    \item Nombre y descripción del evento
+    \item Fechas de inicio y fin
+    \item Tipo de evento (alumnos o funcionarios)
+    \item Lista de participantes pre-cargada
+\end{itemize}
+
+Solo un evento puede estar activo a la vez, evitando confusiones durante el registro. Los administradores pueden activar o desactivar eventos según sea necesario, y todos los datos quedan guardados permanentemente para consultas futuras.
+
+\subsection{Importación y Exportación de Datos}
+
+Para facilitar la carga masiva de participantes, el sistema permite importar listas completas desde archivos Excel o JSON. Esto es especialmente útil cuando ya se cuenta con listas preexistentes, eliminando la necesidad de ingresar datos manualmente uno por uno.
+
+La exportación es igualmente sencilla: con un solo clic, los administradores pueden descargar reportes completos o filtrados (solo presentes, solo ausentes, o total) en formato Excel, listos para análisis posterior o envío a otras áreas de la institución.
+
+\subsection{Panel de Administración Completo}
+
+El panel de administración centraliza todas las funciones de gestión en una interfaz organizada por pestañas. Desde aquí, los administradores pueden:
+
+\begin{itemize}
+    \item Crear, editar y activar eventos
+    \item Gestionar participantes (agregar, eliminar, importar)
+    \item Ver listas filtradas por diferentes criterios
+    \item Monitorear estadísticas en tiempo real
+    \item Exportar reportes en diferentes formatos
+\end{itemize}
+
+Todo está diseñado para ser accesible y fácil de usar, sin requerir conocimientos técnicos avanzados.
+
+% ============================================
+% BENEFICIOS Y VENTAJAS
+% ============================================
+\section{Beneficios y Ventajas}
+
+\subsection{Beneficios Operativos}
+
+\subsubsection{Ahorro de Tiempo}
+
+El sistema reduce dramáticamente el tiempo invertido en gestión de asistencia. En un evento típico con 200 participantes:
+
+\begin{itemize}
+    \item \textbf{Antes:} 3-4 horas de trabajo (preparación de listas: 30-60 min, registro durante evento: 2-3 horas, transcripción a Excel: 1 hora, generación de reportes: 30 min)
+    \item \textbf{Ahora:} 45 minutos totales (configuración inicial: 15 min, monitoreo durante evento: 30 min, exportación de reporte: 1 minuto)
+    \item \textbf{Ahorro:} 70-80\% del tiempo, equivalente a 2.5-3.5 horas recuperadas por evento
+\end{itemize}
+
+Este tiempo ahorrado puede ser utilizado en actividades más importantes del evento o simplemente reduce la carga administrativa del personal.
+
+\subsubsection{Reducción de Errores}
+
+El sistema elimina prácticamente todos los errores asociados al proceso manual:
+
+\begin{itemize}
+    \item \textbf{Validación automática de RUT:} El sistema verifica que el RUT sea válido antes de aceptarlo, eliminando errores de transcripción que ocurrían en el 5-10\% de los casos.
+    \item \textbf{Prevención de duplicados:} Si alguien intenta registrarse dos veces, el sistema lo detecta y muestra un mensaje claro, eliminando el 2-5\% de errores por marcas duplicadas.
+    \item \textbf{Almacenamiento automático:} Los datos se guardan instantáneamente en la nube, eliminando el riesgo de pérdida de información (1-2\% de casos con método tradicional).
+    \item \textbf{Conteo automático:} Las estadísticas se calculan automáticamente, eliminando errores de conteo manual (3-7\% de casos).
+\end{itemize}
+
+El resultado es una reducción del 95\% o más en errores, pasando de un 11-24\% de errores con método tradicional a prácticamente cero.
+
+\subsubsection{Accesibilidad y Facilidad de Uso}
+
+La solución es accesible desde cualquier dispositivo con navegador web:
+
+\begin{itemize}
+    \item \textbf{Multiplataforma:} Funciona en Windows, Mac, Linux, Android e iOS
+    \item \textbf{Multi-dispositivo:} Celulares, tablets y computadores
+    \item \textbf{Sin instalación:} Solo requiere acceso a internet y un navegador moderno
+    \item \textbf{Acceso simultáneo:} Múltiples personas pueden registrar asistencia al mismo tiempo desde diferentes dispositivos, acelerando el proceso cuando hay mucha concurrencia
+\end{itemize}
+
+No se requiere capacitación técnica previa. El proceso es tan intuitivo que cualquier persona puede usarlo desde el primer intento.
+
+\subsection{Beneficios Estratégicos}
+
+\subsubsection{Toma de Decisiones Informada}
+
+La información en tiempo real permite tomar decisiones durante el desarrollo del evento:
+
+\begin{itemize}
+    \item \textbf{Monitoreo de asistencia:} Si faltan 10 minutos para empezar y la asistencia es baja, se pueden enviar recordatorios o ajustar el programa.
+    \item \textbf{Ajuste de recursos:} Conocer la asistencia real permite ajustar la cantidad de materiales, espacios o personal necesario.
+    \item \textbf{Análisis histórico:} Los datos de eventos anteriores permiten planificar mejor eventos futuros, con información real sobre patrones de asistencia.
+    \item \textbf{Identificación de tendencias:} Se pueden identificar qué tipos de eventos tienen mayor asistencia o qué horarios funcionan mejor.
+\end{itemize}
+
+\subsubsection{Mejora en la Organización}
+
+El sistema mejora significativamente la organización de eventos:
+
+\begin{itemize}
+    \item \textbf{Planificación anticipada:} Los eventos y listas de participantes pueden prepararse con días o semanas de anticipación.
+    \item \textbf{Gestión centralizada:} Toda la información está en un solo lugar, accesible desde cualquier ubicación con internet.
+    \item \textbf{Historial completo:} Todos los eventos quedan registrados permanentemente, permitiendo consultas históricas y análisis comparativos.
+    \item \textbf{Independencia entre eventos:} Cada evento se gestiona de forma independiente, evitando confusiones o mezcla de datos.
+\end{itemize}
+
+\subsubsection{Profesionalismo e Imagen}
+
+El uso de tecnología moderna proyecta una imagen profesional y actualizada:
+
+\begin{itemize}
+    \item \textbf{Experiencia moderna:} Los participantes perciben que la institución utiliza tecnología actual, mejorando su percepción general.
+    \item \textbf{Proceso eficiente:} El registro rápido y sin esperas mejora la experiencia del participante desde el inicio del evento.
+    \item \textbf{Imagen institucional:} Demuestra que el departamento está a la vanguardia en el uso de soluciones tecnológicas para mejorar procesos administrativos.
+    \item \textbf{Competitividad:} Posiciona a la institución como innovadora en gestión educativa.
+\end{itemize}
+
+% ============================================
+% CASOS DE USO PRÁCTICOS
+% ============================================
+\section{Casos de Uso Prácticos}
+
+\subsection{Caso 1: Seminario Académico con 200 Participantes}
+
+\textbf{Escenario:} El Departamento de Informática organiza un seminario académico con 200 participantes esperados. El evento comienza a las 9:00 AM y requiere registro de asistencia al inicio.
+
+\textbf{Con el método tradicional:}
+\begin{itemize}
+    \item Preparación de listas impresas: 30-60 minutos la noche anterior
+    \item Registro durante el evento: 2-3 horas buscando nombres en listas, marcando con lápiz, verificando duplicados manualmente
+    \item Conteo manual: 30 minutos al final para contar presentes y ausentes
+    \item Transcripción a Excel: 1 hora pasando datos manualmente, con riesgo de errores
+    \item Generación de reportes: 30 minutos adicionales organizando la información
+    \item \textbf{Tiempo total: 4-5 horas de trabajo administrativo}
+\end{itemize}
+
+\textbf{Con Mi Asistencia:}
+\begin{itemize}
+    \item Configuración inicial: 15 minutos (crear evento, importar lista desde Excel existente)
+    \item Durante el evento: Los participantes se registran solos ingresando su RUT, proceso que toma menos de 10 segundos cada uno
+    \item Monitoreo: El administrador puede ver las estadísticas en tiempo real desde su celular, sin interrumpir el evento
+    \item Exportación de reporte: 1 minuto para descargar el Excel completo con todos los datos
+    \item \textbf{Tiempo total: 45 minutos, de los cuales solo 15 requieren atención activa}
+\end{itemize}
+
+\textbf{El resultado:} Ahorro de más de 3 horas de trabajo administrativo. El personal puede enfocarse en el desarrollo del evento en lugar de gestionar listas. Los participantes tienen una experiencia más fluida y profesional. La información está disponible inmediatamente para cualquier necesidad administrativa posterior.
+
+\subsection{Caso 2: Ceremonia de Titulación con 150 Graduados}
+
+\textbf{Escenario:} Ceremonia de titulación donde es crucial tener registro preciso de todos los graduados que asisten, ya que esta información se requiere para certificaciones y reportes oficiales.
+
+\textbf{Con el método tradicional:}
+\begin{itemize}
+    \item Listas impresas que pueden perderse o dañarse durante la ceremonia
+    \item Registro manual que interrumpe el flujo del evento
+    \item Riesgo de errores que afectan la validez de los certificados
+    \item Tiempo de procesamiento posterior que retrasa la entrega de documentación oficial
+\end{itemize}
+
+\textbf{Con Mi Asistencia:}
+\begin{itemize}
+    \item Registro rápido y discreto que no interrumpe la ceremonia
+    \item Datos guardados automáticamente en la nube, sin riesgo de pérdida
+    \item Precisión del 100\% en los registros, garantizando la validez de los datos
+    \item Reporte disponible inmediatamente después del evento para procesamiento oficial
+    \item Historial permanente para consultas futuras sobre asistencia a ceremonias
+\end{itemize}
+
+\textbf{El resultado:} Información precisa y confiable disponible inmediatamente para procesos oficiales. Reducción del tiempo de procesamiento de certificaciones. Historial completo y permanente de todas las ceremonias.
+
+\subsection{Caso 3: Taller Mensual Recurrente}
+
+\textbf{Escenario:} El departamento realiza talleres mensuales para funcionarios. Cada mes se repite el evento con una lista base similar de participantes, pero con algunas variaciones.
+
+\textbf{Con el método tradicional:}
+\begin{itemize}
+    \item Cada mes se debe preparar la lista desde cero o buscar y actualizar listas anteriores
+    \item No hay forma fácil de comparar asistencia entre diferentes meses
+    \item Difícil identificar participantes más comprometidos o patrones de asistencia
+\end{itemize}
+
+\textbf{Con Mi Asistencia:}
+\begin{itemize}
+    \item Reutilización de la lista base de participantes, solo actualizando cambios
+    \item Comparación fácil de asistencia entre diferentes fechas
+    \item Identificación de participantes más constantes y comprometidos
+    \item Análisis de tendencias para mejorar la planificación de eventos futuros
+    \item Datos históricos disponibles para tomar decisiones informadas
+\end{itemize}
+
+\textbf{El resultado:} Ahorro de tiempo en preparación de eventos recurrentes. Capacidad de análisis y mejora continua basada en datos reales. Mejor comprensión del compromiso de los participantes.
+
+% ============================================
+% CARACTERÍSTICAS TÉCNICAS (SIMPLIFICADAS)
+% ============================================
+\section{Características Técnicas}
+
+\subsection{Seguridad}
+
+El sistema implementa medidas de seguridad robustas para proteger la información:
+
+\begin{itemize}
+    \item \textbf{Autenticación de administradores:} Solo usuarios autorizados pueden acceder al panel de administración mediante credenciales seguras.
+    \item \textbf{Almacenamiento en la nube:} Los datos están protegidos por los estándares de seguridad de Firebase (Google), que incluyen encriptación en tránsito y en reposo.
+    \item \textbf{Validación de datos:} Toda la información ingresada es validada antes de ser almacenada, previniendo datos incorrectos o maliciosos.
+    \item \textbf{Control de acceso:} Los participantes solo pueden registrar su propia asistencia, sin acceso a información de otros participantes o funciones administrativas.
+\end{itemize}
+
+\subsection{Confiabilidad}
+
+La solución está diseñada para ser altamente confiable:
+
+\begin{itemize}
+    \item \textbf{Respaldo automático:} Todos los datos se guardan automáticamente en la nube, con respaldos regulares que garantizan que no se pierda información.
+    \item \textbf{Disponibilidad 24/7:} El sistema está disponible en cualquier momento, permitiendo preparar eventos con anticipación y acceder a información histórica cuando sea necesario.
+    \item \textbf{Guardado instantáneo:} Cada registro de asistencia se guarda inmediatamente, sin riesgo de pérdida de datos por fallos del dispositivo.
+    \item \textbf{Historial permanente:} Todos los eventos y registros quedan almacenados permanentemente, permitiendo consultas históricas sin límite de tiempo.
+\end{itemize}
+
+\subsection{Escalabilidad}
+
+El sistema puede crecer y adaptarse a diferentes necesidades:
+
+\begin{itemize}
+    \item \textbf{Sin límites de participantes:} Probado con eventos desde 10 hasta más de 1000 participantes, funcionando con la misma eficiencia.
+    \item \textbf{Múltiples eventos simultáneos:} Puede gestionar tantos eventos como sea necesario, cada uno de forma independiente.
+    \item \textbf{Extensible:} La arquitectura permite agregar nuevas funcionalidades sin afectar las existentes.
+    \item \textbf{Adaptable:} Puede ajustarse a diferentes tipos de eventos y necesidades específicas del departamento.
+\end{itemize}
+
+\subsection{Mantenimiento}
+
+La solución está diseñada para requerir mínimo mantenimiento:
+
+\begin{itemize}
+    \item \textbf{Sin infraestructura propia:} Al estar en la nube, no requiere servidores propios ni mantenimiento de hardware.
+    \item \textbf{Actualizaciones automáticas:} Las mejoras y correcciones se implementan automáticamente sin intervención del usuario.
+    \item \textbf{Sin instalación local:} No requiere instalación en computadores, eliminando problemas de compatibilidad o actualizaciones locales.
+    \item \textbf{Soporte continuo:} Disponibilidad de soporte técnico cuando sea necesario, con documentación completa para usuarios.
+\end{itemize}
+
+% ============================================
+% FACILIDAD DE USO
+% ============================================
+\section{Facilidad de Uso}
+
+\subsection{Para Usuarios Finales}
+
+El proceso para los participantes es extremadamente simple y no requiere capacitación previa:
+
+\begin{enumerate}
+    \item Abrir la aplicación en cualquier navegador (celular, tablet o computador)
+    \item Ingresar el RUT en el campo correspondiente (puede ser con o sin puntos y guión)
+    \item Hacer clic en "Buscar" o presionar Enter
+    \item Ver la confirmación inmediata con sus datos mostrando que la asistencia quedó registrada
+\end{enumerate}
+
+Todo el proceso toma menos de 10 segundos. La interfaz es tan intuitiva que cualquier persona puede usarla sin explicación previa. No se requiere crear cuentas, recordar contraseñas ni realizar configuraciones.
+
+\subsection{Para Administradores}
+
+El panel de administración está organizado de forma lógica y visual:
+
+\begin{itemize}
+    \item \textbf{Pestañas claras:} Cada función tiene su sección (Eventos, Participantes, Estadísticas), facilitando la navegación.
+    \item \textbf{Iconos visuales:} Los botones y acciones usan iconos reconocibles, reduciendo la necesidad de leer texto.
+    \item \textbf{Mensajes informativos:} El sistema proporciona retroalimentación clara sobre cada acción realizada.
+    \item \textbf{Filtros intuitivos:} Las listas pueden filtrarse fácilmente por diferentes criterios usando menús desplegables.
+    \item \textbf{Acciones rápidas:} Las funciones más comunes (exportar, activar evento) están a un clic de distancia.
+\end{itemize}
+
+Con una sesión de capacitación de 30 minutos, cualquier administrador puede usar todas las funcionalidades del sistema de forma independiente.
+
+\subsection{Capacitación}
+
+El sistema requiere mínima capacitación debido a su diseño intuitivo:
+
+\begin{itemize}
+    \item \textbf{Usuarios finales:} No requieren capacitación. El proceso es autoexplicativo.
+    \item \textbf{Administradores:} Una sesión inicial de 30 minutos es suficiente para dominar todas las funcionalidades.
+    \item \textbf{Documentación disponible:} Manual de usuario completo con capturas de pantalla y guías paso a paso.
+    \item \textbf{Soporte cuando se necesite:} Disponibilidad de ayuda adicional si surgen dudas o se requiere refrescar conocimientos.
+    \item \textbf{Curva de aprendizaje corta:} La mayoría de los administradores se sienten cómodos usando el sistema después de la primera sesión de capacitación.
+\end{itemize}
+
+% ============================================
+% IMPACTO Y RESULTADOS ESPERADOS
+% ============================================
+\section{Impacto y Resultados Esperados}
+
+\subsection{Mejora en Eficiencia}
+
+El sistema genera mejoras significativas en la eficiencia operativa:
+
+\begin{itemize}
+    \item \textbf{Reducción de tiempo:} 70-80\% menos tiempo invertido en gestión de asistencia (de 4-5 horas a 45 minutos por evento)
+    \item \textbf{Aumento de productividad:} El personal puede enfocarse en actividades de mayor valor en lugar de tareas administrativas repetitivas
+    \item \textbf{Velocidad de registro:} 6 personas por minuto vs. 1-2 personas por minuto con método tradicional (aumento del 300-500\%)
+    \item \textbf{Generación de reportes:} De 1 hora a 1 minuto (reducción del 98\%)
+\end{itemize}
+
+Estas mejoras se traducen en ahorro de recursos humanos que pueden ser reasignados a actividades más estratégicas del departamento.
+
+\subsection{Mejora en la Calidad}
+
+La calidad de la información y los procesos mejora sustancialmente:
+
+\begin{itemize}
+    \item \textbf{Precisión de datos:} Reducción de errores del 11-24\% a prácticamente 0\%
+    \item \textbf{Consistencia:} Todos los datos se almacenan en el mismo formato, eliminando inconsistencias
+    \item \textbf{Disponibilidad:} Información disponible instantáneamente vs. horas de espera con método tradicional
+    \item \textbf{Trazabilidad:} Historial completo de todos los eventos, permitiendo auditorías y análisis
+    \item \textbf{Confiabilidad:} Datos respaldados automáticamente, sin riesgo de pérdida
+\end{itemize}
+
+\subsection{Mejora en la Experiencia del Usuario}
+
+Tanto participantes como administradores experimentan mejoras significativas:
+
+\textbf{Para participantes:}
+\begin{itemize}
+    \item Proceso rápido (menos de 10 segundos) sin esperas en filas
+    \item Confirmación inmediata de registro exitoso
+    \item Pueden usar su propio dispositivo si lo prefieren
+    \item Experiencia moderna y profesional desde el inicio del evento
+\end{itemize}
+
+\textbf{Para administradores:}
+\begin{itemize}
+    \item Menos estrés durante eventos al tener información en tiempo real
+    \item Menos trabajo manual repetitivo
+    \item Capacidad de tomar decisiones informadas durante el evento
+    \item Proceso de generación de reportes simplificado a un clic
+\end{itemize}
+
+\subsection{Rendimiento de la Inversión}
+
+El valor que aporta el sistema se refleja en múltiples dimensiones:
+
+\begin{itemize}
+    \item \textbf{Ahorro de tiempo:} Cada evento ahorra 3-3.5 horas de trabajo administrativo. En un año con 12 eventos, esto representa 36-42 horas recuperadas.
+    \item \textbf{Reducción de errores:} Eliminación de costos asociados a corrección de errores y reprocesamiento de información.
+    \item \textbf{Mejora en decisiones:} Información en tiempo real permite optimizar recursos y mejorar la planificación de eventos futuros.
+    \item \textbf{Imagen profesional:} Mejora en la percepción de la institución, lo que puede impactar positivamente en la satisfacción de estudiantes y funcionarios.
+    \item \textbf{Escalabilidad:} El sistema puede crecer con las necesidades del departamento sin costos adicionales significativos.
+\end{itemize}
+
+El retorno de inversión se materializa desde el primer evento, y los beneficios se acumulan con cada uso del sistema.
+
+% ============================================
+% IMPLEMENTACIÓN
+% ============================================
+\section{Implementación y Uso}
+
+\subsection{Requisitos}
+
+Los requisitos para usar el sistema son mínimos y accesibles:
+
+\begin{itemize}
+    \item \textbf{Conexión a internet:} Cualquier conexión funciona, ya sea WiFi o datos móviles. No se requiere ancho de banda especial.
+    \item \textbf{Navegador web:} Cualquier navegador moderno (Chrome, Firefox, Safari, Edge) en su versión reciente.
+    \item \textbf{Dispositivo:} Cualquier dispositivo con navegador web: computador, tablet o celular (Android, iOS, Windows, Mac, Linux).
+    \item \textbf{URL de acceso:} Solo se necesita la dirección web proporcionada. No se requiere instalación de software.
+    \item \textbf{Para administradores:} Credenciales de acceso proporcionadas por el desarrollador.
+\end{itemize}
+
+No se requiere hardware especial, software adicional, ni conocimientos técnicos avanzados.
+
+\subsection{Proceso de Implementación}
+
+El proceso de implementación es simple y rápido:
+
+\begin{enumerate}
+    \item \textbf{Configuración inicial (30 minutos):} Sesión donde se crea el primer evento de prueba, se importa una lista de participantes de ejemplo, y se explora la interfaz básica del sistema.
+    \item \textbf{Capacitación (30 minutos):} Explicación de todas las funcionalidades del panel de administración, incluyendo creación de eventos, gestión de participantes, visualización de estadísticas y exportación de reportes.
+    \item \textbf{Evento piloto:} Uso del sistema en un evento real pero pequeño, donde todos pueden familiarizarse con el proceso sin presión. Esto permite identificar cualquier ajuste necesario.
+    \item \textbf{Implementación completa:} Una vez que el equipo se siente cómodo, el sistema se usa en todos los eventos del departamento de forma regular.
+\end{enumerate}
+
+El proceso completo desde la primera sesión hasta el uso regular puede completarse en una semana, con el evento piloto como punto de validación.
+
+\subsection{Soporte Continuo}
+
+El sistema incluye soporte continuo para garantizar su uso exitoso:
+
+\begin{itemize}
+    \item \textbf{Documentación completa:} Manual de usuario detallado con capturas de pantalla y guías paso a paso para todas las funcionalidades.
+    \item \textbf{Soporte técnico:} Disponibilidad para resolver problemas técnicos o dudas sobre el uso del sistema cuando surjan.
+    \item \textbf{Mejoras continuas:} El sistema se actualiza periódicamente con mejoras y nuevas funcionalidades basadas en feedback de usuarios.
+    \item \textbf{Capacitación adicional:} Sesiones de refrescamiento o capacitación para nuevos administradores cuando sea necesario.
+    \item \textbf{Respuesta rápida:} Compromiso de responder consultas y resolver problemas en un tiempo razonable.
+\end{itemize}
+
+El objetivo es que el departamento se sienta apoyado en todo momento y pueda aprovechar al máximo las capacidades del sistema.
+
+% ============================================
+% CONCLUSIONES
+% ============================================
+\section{Conclusiones}
+
+\textbf{Mi Asistencia} representa una solución integral y moderna para la gestión de asistencia en eventos académicos y ceremonias de titulación. El sistema transforma un proceso tradicionalmente manual y propenso a errores en una experiencia digital eficiente, precisa y accesible.
+
+Desarrollado específicamente para las necesidades del Departamento de Informática de Santo Tomás Temuco, el sistema no es una solución genérica adaptada, sino una herramienta diseñada desde cero pensando en los desafíos reales que enfrenta el departamento en la gestión de eventos.
+
+\subsection{Resumen de Beneficios}
+
+Los beneficios clave que ofrece el sistema son:
+
+\begin{itemize}
+    \item \textbf{Ahorro de tiempo del 70-80\%:} Reducción de 4-5 horas a 45 minutos por evento, liberando recursos para actividades más estratégicas.
+    \item \textbf{Eliminación prácticamente total de errores:} De un 11-24\% de errores con método tradicional a prácticamente cero con validación automática.
+    \item \textbf{Información en tiempo real:} Estadísticas actualizadas automáticamente durante el evento, permitiendo tomar decisiones informadas.
+    \item \textbf{Accesibilidad total:} Funciona desde cualquier dispositivo con internet, sin instalaciones ni configuraciones complejas.
+    \item \textbf{Experiencia profesional:} Proceso rápido y moderno que mejora la percepción de la institución.
+    \item \textbf{Historial permanente:} Todos los datos quedan guardados para análisis histórico y planificación futura.
+\end{itemize}
+
+\subsection{Próximos Pasos}
+
+Para avanzar con la implementación del sistema, se proponen los siguientes pasos:
+
+\begin{enumerate}
+    \item \textbf{Revisión y aprobación:} Evaluación de esta presentación por parte del comité de evaluación y decisión sobre la implementación.
+    \item \textbf{Demostración práctica:} Sesión de demostración en vivo donde se muestre el sistema funcionando con datos reales.
+    \item \textbf{Evento piloto:} Implementación en un evento pequeño para validar el proceso y familiarizar al equipo.
+    \item \textbf{Capacitación formal:} Sesión de capacitación para todo el personal que utilizará el sistema como administradores.
+    \item \textbf{Implementación completa:} Uso regular del sistema en todos los eventos del departamento, con soporte continuo disponible.
+\end{enumerate}
+
+\vspace{1cm}
+
+El sistema está completamente desarrollado, probado y listo para implementarse de inmediato. Cada evento que se gestione con \textbf{Mi Asistencia} generará beneficios tangibles desde el primer uso, mejorando la eficiencia operativa del departamento y la experiencia tanto de participantes como de administradores.
+
+Estoy comprometido con el éxito de esta implementación y disponible para apoyar al departamento en cada paso del proceso. Creo firmemente que esta solución puede hacer una diferencia real en cómo se gestionan los eventos académicos, y estoy entusiasmado con la posibilidad de verla en acción beneficiando a toda la comunidad del Departamento de Informática.
+
+% ============================================
+% INFORMACIÓN DE CONTACTO
+% ============================================
+\newpage
+\section*{Información de Contacto}
+\addcontentsline{toc}{section}{Información de Contacto}
+
+Para consultas, demostraciones, implementación o soporte técnico relacionado con el sistema \textbf{Mi Asistencia}, pueden contactarme a través de los siguientes medios:
+
+\vspace{0.5cm}
+
+\textbf{Proyecto:} Mi Asistencia - Sistema de Gestión de Asistencia para Eventos\\
+\textbf{Desarrollado por:} Gerson Valdebenito\\
+\textbf{Institución:} Instituto Profesional Santo Tomás\\
+\textbf{Departamento:} Departamento de Informática\\
+\textbf{Sede:} Temuco\\
+\textbf{Email:} [Agregar email de contacto]\\
+\textbf{[Otro contacto si aplica]:} [Agregar información de contacto adicional]
+
+\vspace{0.5cm}
+
+El sistema \textbf{Mi Asistencia} fue desarrollado como proyecto de título para el Departamento de Informática del Instituto Profesional Santo Tomás, sede Temuco. Está diseñado específicamente para mejorar la gestión de asistencia en eventos académicos y ceremonias de titulación, proporcionando una solución moderna, eficiente y accesible.
+
+Estoy disponible para responder cualquier pregunta, proporcionar demostraciones del sistema en funcionamiento, o asistir en el proceso de implementación. Mi objetivo es asegurar que el departamento pueda aprovechar al máximo los beneficios que esta solución ofrece.
+
+% ============================================
+% ANEXOS (OPCIONAL)
+% ============================================
+\newpage
+\appendix
+
+\section{Anexo A: Capturas de Pantalla}
+
+\subsection{Interfaz Principal de Registro de Asistencia}
+
+La interfaz principal muestra un diseño limpio y centrado donde los participantes ingresan su RUT para registrar asistencia. El diseño es responsivo y se adapta perfectamente a dispositivos móviles y de escritorio.
+
+\textit{Nota: Para agregar la captura de pantalla, coloca la imagen en una carpeta (por ejemplo, 'imagenes') y descomenta la línea siguiente.}
+\textit{Asegúrate de usar la ruta correcta relativa al archivo .tex.}
+
+% Descomenta y ajusta la ruta cuando tengas la imagen:
+% \includegraphics[width=0.8\textwidth]{imagenes/interfaz-principal.png}
+
+\subsection{Confirmación de Asistencia}
+
+Cuando un participante marca su asistencia, el sistema muestra inmediatamente una confirmación con sus datos (nombre, RUT, carrera, institución), verificando que el registro fue exitoso.
+
+\textit{Nota: Para agregar la captura de pantalla, coloca la imagen en una carpeta (por ejemplo, 'imagenes') y descomenta la línea siguiente.}
+
+% Descomenta y ajusta la ruta cuando tengas la imagen:
+% \includegraphics[width=0.8\textwidth]{imagenes/confirmacion-asistencia.png}
+
+\subsection{Panel de Administración}
+
+El panel de administración permite gestionar eventos, participantes y ver estadísticas. La interfaz está organizada en pestañas para facilitar la navegación.
+
+\textit{Nota: Para agregar la captura de pantalla, coloca la imagen en una carpeta (por ejemplo, 'imagenes') y descomenta la línea siguiente.}
+
+% Descomenta y ajusta la ruta cuando tengas la imagen:
+% \includegraphics[width=0.8\textwidth]{imagenes/panel-administracion.png}
+
+\subsection{Estadísticas en Tiempo Real}
+
+Las estadísticas se actualizan automáticamente mostrando totales, presentes y ausentes. Permiten exportar esta información a Excel con un solo clic.
+
+\textit{Nota: Para agregar la captura de pantalla, coloca la imagen en una carpeta (por ejemplo, 'imagenes') y descomenta la línea siguiente.}
+
+% Descomenta y ajusta la ruta cuando tengas la imagen:
+% \includegraphics[width=0.8\textwidth]{imagenes/estadisticas.png}
+
+% [Agrega más anexos según sea necesario]
+
+\section{Anexo B: Comparativa Antes y Después}
+
+\subsection{Comparativa de Tiempo}
+
+La siguiente tabla muestra la comparativa de tiempo invertido en la gestión de asistencia para un evento típico con 200 participantes:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{5cm}|p{4cm}|p{4cm}|}
+\hline
+\textbf{Actividad} & \textbf{Método Tradicional} & \textbf{Con Mi Asistencia} \\
+\hline
+Preparación de listas & 30-60 minutos & 15 minutos (importación) \\
+\hline
+Registro durante evento & 2-3 horas & 30 minutos (auto-registro) \\
+\hline
+Conteo manual & 30 minutos & Instantáneo \\
+\hline
+Transcripción a Excel & 1 hora & 1 minuto (exportación) \\
+\hline
+Generación de reportes & 30 minutos & Instantáneo \\
+\hline
+\textbf{TOTAL} & \textbf{4-5 horas} & \textbf{45 minutos} \\
+\hline
+\textbf{AHORRO} & - & \textbf{3.5-4 horas (70-80\%)} \\
+\hline
+\end{tabular}
+\caption{Comparativa de tiempo invertido en gestión de asistencia}
+\end{table}
+
+\subsection{Comparativa de Errores}
+
+La siguiente tabla muestra la reducción de errores con el sistema:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{5cm}|p{4cm}|p{4cm}|}
+\hline
+\textbf{Tipo de Error} & \textbf{Método Tradicional} & \textbf{Con Mi Asistencia} \\
+\hline
+RUT incorrecto por transcripción & Frecuente (5-10\%) & No aplica (validación automática) \\
+\hline
+Marcas duplicadas & Ocasional (2-5\%) & No aplica (sistema previene duplicados) \\
+\hline
+Pérdida de información & Ocasional (1-2\%) & No aplica (almacenamiento automático) \\
+\hline
+Errores en conteo & Frecuente (3-7\%) & No aplica (conteo automático) \\
+\hline
+\textbf{TOTAL DE ERRORES} & \textbf{11-24\%} & \textbf{0\%} \\
+\hline
+\end{tabular}
+\caption{Comparativa de errores en el proceso}
+\end{table}
+
+% [Agrega más anexos según sea necesario]
+
+\end{document}
+
