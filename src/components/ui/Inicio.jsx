@@ -159,17 +159,16 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
                 if (esEventoFuncionarios) {
                   const nombres = result.data.nombres ?? result.data.nombre ?? '';
                   const apellidos = result.data.apellidos ?? (result.data.nombre ? result.data.nombre.split(' ').slice(1).join(' ') : '');
-                  const departamento = result.data.departamento ?? 'Sin institución';
-                  const vegano = getVeganoTexto(result.data.vegano);
                   const confirmacion = result.data.asiste ? '✅ Confirmó asistencia previa' : '❌ No confirmó asistencia previa';
+                  const estado = result.data.presente ? '✅ Presente' : '❌ Ausente';
+                  const observacion = result.data.observacion ?? 'Sin observación';
                   return (
                     <>
                       <InfoRow label="RUT" value={result.rut} />
                       <InfoRow label="Nombres" value={nombres} />
                       <InfoRow label="Apellidos" value={apellidos || 'Sin apellidos'} />
-                      <InfoRow label="Institución" value={departamento} />
-                      <InfoRow label="Vegano" value={vegano} />
-                      <InfoRow label="Confirmación" value={confirmacion} border={false} />
+                      <InfoRow label="Confirmación" value={confirmacion} />
+                      <InfoRow label="Observación" value={observacion} border={false} />
                     </>
                   );
                 }

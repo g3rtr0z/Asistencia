@@ -77,7 +77,8 @@ const TrabajadoresLista = ({
       }
 
       // Filtros de texto (case insensitive)
-      const cumpleRut = !rut || trabajador.rut.toLowerCase().includes(rut.toLowerCase());
+      const rutFiltro = rut.toLowerCase();
+      const cumpleRut = !rutFiltro || trabajador.rut.toLowerCase().startsWith(rutFiltro);
       const cumpleNombres = !localNombres || (trabajador.nombres ?? trabajador.nombre ?? '').toLowerCase().includes(localNombres.toLowerCase());
       const cumpleApellidos = !localApellidos || (trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '') ?? '').toLowerCase().includes(localApellidos.toLowerCase());
       const cumpleObservacion = !localObservacion || (trabajador.observacion ?? '').toLowerCase().includes(localObservacion.toLowerCase());
