@@ -23,19 +23,6 @@ const formatearFecha = (fecha) => {
   }
 };
 
-const formatearVegano = (valor) => {
-  if (typeof valor === 'boolean') {
-    return valor ? 'Sí' : 'No';
-  }
-  if (valor === null || valor === undefined) {
-    return 'No';
-  }
-  const texto = valor.toString().trim().toLowerCase();
-  if (!texto) return 'No';
-  const afirmativos = ['si', 'sí', 'yes', 'true', '1'];
-  return afirmativos.includes(texto) ? 'Sí' : 'No';
-};
-
 const formatearSiNo = (valor) => {
   return valor ? 'Sí' : 'No';
 };
@@ -73,8 +60,8 @@ export const exportarAExcel = (alumnos, nombreEvento = 'Evento', tipoEvento = 'a
           'RUT': alumno.rut || '',
           'Nombres': alumno.nombres || '',
           'Apellidos': alumno.apellidos || '',
-        'Institución': alumno.departamento || '',
-        'Vegano (Sí/No)': formatearVegano(alumno.vegano),
+          'Departamento': alumno.departamento || '',
+          'Observación': alumno.observacion || '',
           'Fecha y Hora de Registro': formatearFecha(alumno.fechaRegistro) || formatearFecha(alumno.ultimaActualizacion) || ''
         }))
       : alumnosFiltrados.map(alumno => ({
@@ -102,8 +89,8 @@ export const exportarAExcel = (alumnos, nombreEvento = 'Evento', tipoEvento = 'a
           { wch: 15 }, // RUT
           { wch: 20 }, // Nombres
           { wch: 20 }, // Apellidos
-          { wch: 25 }, // Institución
-          { wch: 15 }, // Vegano
+          { wch: 25 }, // Departamento
+          { wch: 30 }, // Observación
           { wch: 25 }  // Fecha y Hora de Registro
         ]
       : [
@@ -130,7 +117,6 @@ export const exportarAExcel = (alumnos, nombreEvento = 'Evento', tipoEvento = 'a
     // Exportar el archivo
     XLSX.writeFile(workbook, nombreArchivo);
 
-    console.log(`Archivo exportado: ${nombreArchivo}`);
     return true;
   } catch (error) {
     console.error('Error al exportar a Excel:', error);

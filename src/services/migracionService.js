@@ -12,7 +12,6 @@ import { db } from '../connection/firebase.js';
 // Función para migrar datos de la estructura antigua a la nueva
 export const migrarDatosAntiguos = async () => {
   try {
-    console.log('Iniciando migración de datos...');
     
     // 1. Obtener todos los eventos
     const eventosRef = collection(db, 'eventos');
@@ -20,7 +19,6 @@ export const migrarDatosAntiguos = async () => {
     const eventos = eventosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
     if (eventos.length === 0) {
-      console.log('No hay eventos para migrar');
       return { success: true, message: 'No hay eventos para migrar' };
     }
     
@@ -33,7 +31,6 @@ export const migrarDatosAntiguos = async () => {
     }));
     
     if (alumnosAntiguos.length === 0) {
-      console.log('No hay alumnos para migrar');
       return { success: true, message: 'No hay alumnos para migrar' };
     }
     
@@ -41,25 +38,20 @@ export const migrarDatosAntiguos = async () => {
     const eventoActivo = eventos.find(evento => evento.activo);
     
     if (!eventoActivo) {
-      console.log('No hay evento activo, migrando a todos los eventos...');
-      
       // Migrar a todos los eventos
       for (const evento of eventos) {
         await migrarAlumnosAEvento(alumnosAntiguos, evento.id);
       }
     } else {
-      console.log(`Migrando alumnos al evento activo: ${eventoActivo.nombre}`);
       // Migrar solo al evento activo
       await migrarAlumnosAEvento(alumnosAntiguos, eventoActivo.id);
     }
     
     // 4. Eliminar la colección antigua
-    console.log('Eliminando colección antigua...');
     for (const alumno of alumnosAntiguos) {
       await deleteDoc(doc(db, 'alumnos', alumno.id));
     }
     
-    console.log('Migración completada exitosamente');
     return { 
       success: true, 
       message: `Migración completada: ${alumnosAntiguos.length} alumnos migrados`,

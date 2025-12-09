@@ -186,8 +186,6 @@ export const crearEventosEjemplo = async () => {
       for (const evento of eventosEjemplo) {
         await crearEvento(evento);
       }
-      
-      console.log('Eventos de ejemplo creados exitosamente');
     }
   } catch (error) {
     console.error('Error al crear eventos de ejemplo:', error);

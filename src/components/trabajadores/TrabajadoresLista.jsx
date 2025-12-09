@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FixedSizeList } from "react-window";
 
 const TrabajadoresLista = ({
   trabajadores = [],
@@ -12,8 +13,7 @@ const TrabajadoresLista = ({
   const [localRUT, setLocalRUT] = useState("");
   const [localNombres, setLocalNombres] = useState("");
   const [localApellidos, setLocalApellidos] = useState("");
-  const [localInstitucion, setLocalInstitucion] = useState("");
-  const [localVegano, setLocalVegano] = useState("");
+  const [localObservacion, setLocalObservacion] = useState("");
 
   const rut = filtroRUT !== undefined ? filtroRUT : localRUT;
   const setRUT = setFiltroRUT || setLocalRUT;
@@ -28,8 +28,7 @@ const TrabajadoresLista = ({
     rut: true,
     nombres: true,
     apellidos: true,
-    departamento: true,
-    vegano: true,
+    observacion: true,
     asiste: true
   });
 
@@ -55,21 +54,10 @@ const TrabajadoresLista = ({
       rut: true,
       nombres: true,
       apellidos: true,
-      departamento: true,
-      vegano: true,
+      observacion: true,
       asiste: true
     });
   }
-
-  // Obtener instituciones únicas para el dropdown
-  const institucionesUnicas = useMemo(() => {
-    const instituciones = trabajadores
-      .map(t => t.departamento)
-      .filter(Boolean)
-      .filter((value, index, self) => self.indexOf(value) === index)
-      .sort();
-    return instituciones;
-  }, [trabajadores]);
 
   // Filtrado
   const trabajadoresFiltrados = useMemo(() => {
@@ -91,18 +79,11 @@ const TrabajadoresLista = ({
       const cumpleRut = !rut || trabajador.rut.toLowerCase().includes(rut.toLowerCase());
       const cumpleNombres = !localNombres || (trabajador.nombres ?? trabajador.nombre ?? '').toLowerCase().includes(localNombres.toLowerCase());
       const cumpleApellidos = !localApellidos || (trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '') ?? '').toLowerCase().includes(localApellidos.toLowerCase());
-      const cumpleInstitucion = !localInstitucion || trabajador.departamento === localInstitucion;
+      const cumpleObservacion = !localObservacion || (trabajador.observacion ?? '').toLowerCase().includes(localObservacion.toLowerCase());
 
-      // Filtro por vegano
-      let cumpleVegano = true;
-      if (localVegano) {
-        const veganoValue = trabajador.vegano ? 'si' : 'no';
-        cumpleVegano = veganoValue.includes(localVegano.toLowerCase());
-      }
-
-      return cumpleFiltro && cumpleRut && cumpleNombres && cumpleApellidos && cumpleInstitucion && cumpleVegano;
+      return cumpleFiltro && cumpleRut && cumpleNombres && cumpleApellidos && cumpleObservacion;
     });
-  }, [trabajadores, soloPresentes, rut, localNombres, localApellidos, localInstitucion, localVegano]);
+  }, [trabajadores, soloPresentes, rut, localNombres, localApellidos, localObservacion]);
 
   const trabajadoresOrdenados = useMemo(() => {
     return [...trabajadoresFiltrados].sort((a, b) => {
@@ -121,6 +102,74 @@ const TrabajadoresLista = ({
       }
     });
   }, [trabajadoresFiltrados, ordenCampo, ordenAlfabetico]);
+
+  const gridTemplateColumns = useMemo(() => {
+    const cols = [];
+    if (columnasVisibles.asiste) cols.push("90px");
+    if (columnasVisibles.estado) cols.push("120px");
+    if (columnasVisibles.rut) cols.push("160px");
+    if (columnasVisibles.nombres) cols.push("1.3fr");
+    if (columnasVisibles.apellidos) cols.push("1.3fr");
+    if (columnasVisibles.observacion) cols.push("1.2fr");
+    return cols.join(" ");
+  }, [columnasVisibles]);
+
+  const Row = ({ index, style, data }) => {
+    const { items, columnasVisibles, gridTemplateColumns } = data;
+    const trabajador = items[index];
+    const zebra = index % 2 === 0 ? 'bg-slate-50' : 'bg-white';
+
+    return (
+      <div
+        style={{ ...style, display: "grid", gridTemplateColumns, alignItems: "center" }}
+        className={`${zebra} border-b border-slate-100 px-4 text-sm text-slate-800`}
+      >
+        {columnasVisibles.asiste && (
+          <div className="flex justify-center">
+            <div
+              className={`w-3 h-3 rounded-full ${
+                trabajador.asiste ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+              title={trabajador.asiste ? 'Confirma asistencia previa' : 'No confirma asistencia previa'}
+            />
+          </div>
+        )}
+        {columnasVisibles.estado && (
+          <div className="flex justify-center">
+            {trabajador.presente ? (
+              <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
+                <div className="w-2 h-2 bg-green-800 rounded-full"></div>
+                Presente
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800 border border-red-200">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                Ausente
+              </span>
+            )}
+          </div>
+        )}
+        {columnasVisibles.rut && (
+          <div className="font-mono text-slate-700 truncate">{trabajador.rut}</div>
+        )}
+        {columnasVisibles.nombres && (
+          <div className="font-medium truncate" title={trabajador.nombres ?? trabajador.nombre ?? '-'}>
+            {trabajador.nombres ?? trabajador.nombre ?? '-'}
+          </div>
+        )}
+        {columnasVisibles.apellidos && (
+          <div className="font-medium truncate" title={trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}>
+            {trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}
+          </div>
+        )}
+        {columnasVisibles.observacion && (
+          <div className="text-slate-700 truncate" title={trabajador.observacion ?? '-'}>
+            {trabajador.observacion ?? '-'}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col items-center w-full">
@@ -207,32 +256,14 @@ const TrabajadoresLista = ({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Institución</label>
-                      <select
+                      <label className="block text-sm font-medium text-slate-700">Observación</label>
+                      <input
+                        type="text"
+                        placeholder="Buscar observación..."
                         className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
-                        value={localInstitucion}
-                        onChange={e => setLocalInstitucion(e.target.value)}
-                      >
-                        <option value="">Todas</option>
-                        {institucionesUnicas.map(institucion => (
-                          <option key={institucion} value={institucion}>
-                            {institucion}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Vegano</label>
-                      <select
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200"
-                        value={localVegano}
-                        onChange={e => setLocalVegano(e.target.value)}
-                      >
-                        <option value="">Todos</option>
-                        <option value="si">Sí</option>
-                        <option value="no">No</option>
-                      </select>
+                        value={localObservacion}
+                        onChange={e => setLocalObservacion(e.target.value)}
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -255,9 +286,8 @@ const TrabajadoresLista = ({
                           rut: "RUT",
                           nombres: "Nombres",
                           apellidos: "Apellidos",
-                          departamento: "Institución",
                           asiste: "Confirmación",
-                          vegano: "Vegano"
+                          observacion: "Observación"
                         }).map(([key, label]) => (
                           <option key={key} value={key}>
                             {columnasVisibles[key] ? "❌" : "✅"} {label}
@@ -277,8 +307,7 @@ const TrabajadoresLista = ({
                         setRUT("");
                         setLocalNombres("");
                         setLocalApellidos("");
-                        setLocalInstitucion("");
-                        setLocalVegano("");
+                        setLocalObservacion("");
                         if (setSoloPresentes) setSoloPresentes("");
                         mostrarTodasLasColumnas();
                       }}
@@ -299,181 +328,101 @@ const TrabajadoresLista = ({
         </div>
       </motion.div>
 
-      {/* Tabla Simplificada */}
+      {/* Lista virtualizada */}
       <div className="w-full flex justify-center">
-        <motion.div
-          className="w-full max-w-full sm:max-w-4xl md:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-lg border border-slate-200 bg-white"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm table-auto">
-              <thead className="bg-gradient-to-r from-green-800 to-emerald-600 text-white sticky top-0 z-10">
-                {/* Indicadores de estado de asistencia */}
-                <tr className="bg-gradient-to-r from-green-900 to-emerald-700">
-                  <th colSpan={Object.values(columnasVisibles).filter(Boolean).length} className="py-2 px-4 text-left text-sm font-medium">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span>Confirman asistencia</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                        <span>Pendientes</span>
-                      </div>
-                    </div>
-                  </th>
-                </tr>
-                <tr>
-                  {columnasVisibles.asiste && (
-                    <th className="py-4 px-4 text-center font-semibold min-w-24">Confirmación</th>
+        <div className="w-full max-w-full sm:max-w-4xl md:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-lg border border-slate-200 bg-white">
+          <div className="bg-gradient-to-r from-green-800 to-emerald-600 text-white sticky top-0 z-10">
+            <div className="bg-gradient-to-r from-green-900 to-emerald-700 py-2 px-4 text-sm font-medium">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Confirman asistencia</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
+                  <span>Pendientes</span>
+                </div>
+              </div>
+            </div>
+            <div
+              className="grid items-center py-3 px-4 text-sm font-semibold"
+              style={{ gridTemplateColumns }}
+            >
+              {columnasVisibles.asiste && (
+                <div className="text-center">Confirmación</div>
+              )}
+              {columnasVisibles.estado && (
+                <div className="text-center">Estado</div>
+              )}
+              {columnasVisibles.rut && (
+                <div className="text-left">RUT</div>
+              )}
+              {columnasVisibles.nombres && (
+                <button
+                  className="text-left hover:text-slate-100 transition-colors flex items-center gap-1"
+                  onClick={() => handleOrdenarPor("nombre")}
+                >
+                  <span>Nombres</span>
+                  {ordenCampo === "nombre" && (
+                    <span aria-label={ordenAlfabetico === "asc" ? "Ascendente" : "Descendente"}>
+                      {ordenAlfabetico === "asc" ? "▲" : "▼"}
+                    </span>
                   )}
-                  {columnasVisibles.estado && (
-                    <th className="py-4 px-4 text-center font-semibold min-w-28">Estado</th>
+                </button>
+              )}
+              {columnasVisibles.apellidos && (
+                <button
+                  className="text-left hover:text-slate-100 transition-colors flex items-center gap-1"
+                  onClick={() => handleOrdenarPor("apellidos")}
+                >
+                  <span>Apellidos</span>
+                  {ordenCampo === "apellidos" && (
+                    <span aria-label={ordenAlfabetico === "asc" ? "Ascendente" : "Descendente"}>
+                      {ordenAlfabetico === "asc" ? "▲" : "▼"}
+                    </span>
                   )}
-                  {columnasVisibles.rut && (
-                    <th className="py-4 px-4 text-left font-semibold min-w-32">RUT</th>
-                  )}
-                  {columnasVisibles.nombres && (
-                    <th
-                      className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors min-w-36 flex-1"
-                      onClick={() => handleOrdenarPor("nombre")}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>Nombres</span>
-                        {ordenCampo === "nombre" && (
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d={ordenAlfabetico === "asc" ? "M7 14l5-5 5 5z" : "M7 10l5 5 5-5z"} />
-                          </svg>
-                        )}
-                      </div>
-                    </th>
-                  )}
-                  {columnasVisibles.apellidos && (
-                    <th
-                      className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors min-w-36 flex-1"
-                      onClick={() => handleOrdenarPor("apellidos")}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>Apellidos</span>
-                        {ordenCampo === "apellidos" && (
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d={ordenAlfabetico === "asc" ? "M7 14l5-5 5 5z" : "M7 10l5 5 5-5z"} />
-                          </svg>
-                        )}
-                      </div>
-                    </th>
-                  )}
-                  {columnasVisibles.departamento && (
-                    <th className="py-4 px-4 text-left font-semibold min-w-32 max-w-48">Institución</th>
-                  )}
-                  {columnasVisibles.vegano && (
-                    <th className="py-4 px-4 text-center font-semibold min-w-28">Vegano</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {trabajadoresOrdenados.length === 0 ? (
-                  <tr>
-                    <td colSpan={Object.values(columnasVisibles).filter(Boolean).length} className="py-16 text-center">
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3 }}
-                        className="flex flex-col items-center gap-4"
-                      >
-                        <div className="relative">
-                          <svg className="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-white">?</span>
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-slate-500 font-semibold text-lg mb-1">Sin funcionarios encontrados</div>
-                          <div className="text-slate-400 text-sm max-w-md">
-                            No hay funcionarios que coincidan con los filtros aplicados.
-                            <br />
-                            <span className="text-green-600 font-medium">Prueba ajustando los filtros de búsqueda.</span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    </td>
-                  </tr>
-                ) : (
-                  trabajadoresOrdenados.map((trabajador, idx) => (
-                    <motion.tr
-                      key={trabajador.rut}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: idx * 0.02 }}
-                      className={`${idx % 2 === 0 ? 'bg-slate-50' : 'bg-white'} hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 border-b border-slate-100 group ${trabajador.asiste ? 'border-l-4 border-l-green-400' : 'border-l-4 border-l-gray-300'}`}
-                    >
-                      {columnasVisibles.asiste && (
-                        <td className="py-4 px-4 text-center min-w-24">
-                          <div
-                            className={`w-3 h-3 rounded-full mx-auto cursor-help transition-transform duration-200 hover:scale-110 ${
-                              trabajador.asiste ? 'bg-green-500 shadow-green-200 shadow-md' : 'bg-gray-300 hover:bg-gray-400'
-                            }`}
-                            title={`${trabajador.asiste ? '✅ Confirma asistencia previa' : '❌ No confirma asistencia previa'}`}
-                          ></div>
-                        </td>
-                      )}
-                      {columnasVisibles.estado && (
-                        <td className="py-4 px-4 text-center min-w-28">
-                          {trabajador.presente ? (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
-                              <div className="w-2 h-2 bg-green-800 rounded-full"></div>
-                              Presente
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800 border border-red-200">
-                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                              Ausente
-                            </span>
-                          )}
-                        </td>
-                      )}
-                      {columnasVisibles.rut && (
-                        <td className="py-4 px-4 font-mono text-slate-700 min-w-32">{trabajador.rut}</td>
-                      )}
-                      {columnasVisibles.nombres && (
-                        <td className="py-4 px-4 text-slate-800 font-medium min-w-36 flex-1">
-                          <div className="truncate" title={trabajador.nombres ?? trabajador.nombre ?? '-'}>
-                            {trabajador.nombres ?? trabajador.nombre ?? '-'}
-                          </div>
-                        </td>
-                      )}
-                      {columnasVisibles.apellidos && (
-                        <td className="py-4 px-4 text-slate-800 font-medium min-w-36 flex-1">
-                          <div className="truncate" title={trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}>
-                            {trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}
-                          </div>
-                        </td>
-                      )}
-                      {columnasVisibles.departamento && (
-                        <td className="py-4 px-4 text-slate-700 min-w-32 max-w-48">
-                          {trabajador.departamento ?? 'Sin institución'}
-                        </td>
-                      )}
-                      {columnasVisibles.vegano && (
-                        <td className="py-4 px-4 text-center min-w-28">
-                          <span className={`inline-flex items-center justify-center px-3 py-1 text-xs font-semibold rounded-full ${
-                            trabajador.vegano ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-700 border border-slate-200'
-                          }`}>
-                            {trabajador.vegano ? 'Sí' : 'No'}
-                          </span>
-                        </td>
-                      )}
-                    </motion.tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                </button>
+              )}
+              {columnasVisibles.observacion && (
+                <div className="text-left">Observación</div>
+              )}
+            </div>
           </div>
-        </motion.div>
+
+          {trabajadoresOrdenados.length === 0 ? (
+            <div className="py-16 text-center">
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative">
+                  <svg className="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-slate-400 rounded-full flex items-center justify-center">
+                    <span className="text-xs text-white">?</span>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-slate-500 font-semibold text-lg mb-1">Sin funcionarios encontrados</div>
+                  <div className="text-slate-400 text-sm max-w-md">
+                    No hay funcionarios que coincidan con los filtros aplicados.
+                    <br />
+                    <span className="text-green-600 font-medium">Prueba ajustando los filtros de búsqueda.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <FixedSizeList
+              height={Math.min(560, Math.max(240, trabajadoresOrdenados.length * 64))}
+              itemCount={trabajadoresOrdenados.length}
+              itemSize={64}
+              width="100%"
+              itemData={{ items: trabajadoresOrdenados, columnasVisibles, gridTemplateColumns }}
+              overscanCount={8}
+            >
+              {Row}
+            </FixedSizeList>
+          )}
+        </div>
       </div>
     </div>
   );

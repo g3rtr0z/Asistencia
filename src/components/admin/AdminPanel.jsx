@@ -28,9 +28,6 @@ function AdminPanel({
   // Hook para alumnos del evento activo
   const { alumnos, loading: alumnosLoading, error: alumnosError } = useAlumnosEvento();
 
-  // Log para debuggear
-  console.log('AdminPanel: Alumnos recibidos:', alumnos.length, 'Evento activo:', eventoActivo?.nombre);
-
   // Estado para agregar/eliminar alumnos
   const [nuevoAlumno, setNuevoAlumno] = useState({
     nombres: '',
@@ -41,7 +38,7 @@ function AdminPanel({
     asiento: '',
     grupo: '',
     departamento: '',
-    vegano: 'no'
+    observacion: ''
   });
   const [rutEliminar, setRutEliminar] = useState('');
   const [mensajeAdmin, setMensajeAdmin] = useState('');
@@ -77,7 +74,7 @@ function AdminPanel({
 
       if (esEventoTrabajadores) {
         payload.departamento = nuevoAlumno.departamento;
-        payload.vegano = nuevoAlumno.vegano;
+        payload.observacion = nuevoAlumno.observacion;
       } else {
         payload.carrera = nuevoAlumno.carrera;
         payload.institucion = nuevoAlumno.institucion;
@@ -87,7 +84,7 @@ function AdminPanel({
 
       await agregarAlumno(payload, eventoActivo?.id); // Pasar el eventoId
       setMensajeAdmin('Alumno agregado correctamente');
-      setNuevoAlumno({ nombres: '', apellidos: '', rut: '', carrera: '', institucion: '', asiento: '', grupo: '', departamento: '', vegano: 'no' });
+      setNuevoAlumno({ nombres: '', apellidos: '', rut: '', carrera: '', institucion: '', asiento: '', grupo: '', departamento: '', observacion: '' });
     } catch (err) {
       setMensajeAdmin('Error al agregar alumno');
     }
@@ -213,16 +210,13 @@ function AdminPanel({
                         />
                       </div>
                       <div className="flex flex-col">
-                        <label className="text-sm font-medium text-st-verde mb-1">Vegano</label>
-                        <select
+                        <label className="text-sm font-medium text-st-verde mb-1">Observación</label>
+                        <input
                           className="border border-st-verde rounded px-3 py-2 text-base"
-                          value={nuevoAlumno.vegano}
-                          onChange={e => setNuevoAlumno(a => ({ ...a, vegano: e.target.value }))}
-                          required
-                        >
-                          <option value="si">Sí</option>
-                          <option value="no">No</option>
-                        </select>
+                          placeholder="Ej: Requiere acceso temprano"
+                          value={nuevoAlumno.observacion}
+                          onChange={e => setNuevoAlumno(a => ({ ...a, observacion: e.target.value }))}
+                        />
                       </div>
                     </>
                   ) : (

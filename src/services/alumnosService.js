@@ -43,7 +43,7 @@ function mapFirestoreData(doc) {
     carrera: data["Carrera"],
     institucion: data["Institución"],
     departamento: data["Departamento"] ?? null,
-    vegano: parseBooleanField(data["Vegano"]),
+    observacion: data["Observación"] ?? data["Observacion"] ?? null,
     presente: Boolean(data.presente),
     asiste: parseBooleanField(asisteValor) ?? false,
     asiento: data["asiento"] ?? null,
@@ -86,7 +86,6 @@ export const getAlumnosPorEvento = async (eventoId) => {
   } catch (error) {
     // Si la subcolección no existe (error 404), retornar array vacío
     if (error.code === 'not-found' || error.message?.includes('404') || error.message?.includes('NOT_FOUND')) {
-      console.log('getAlumnosPorEvento: La subcolección alumnos aún no existe, retornando array vacío');
       return [];
     }
     console.error('Error al obtener alumnos por evento:', error);
@@ -97,7 +96,6 @@ export const getAlumnosPorEvento = async (eventoId) => {
 // Obtener alumnos del evento activo
 export const getAlumnosEventoActivo = async () => {
   try {
-    console.log('getAlumnosEventoActivo: Iniciando búsqueda del evento activo...');
 
     // Primero obtener el evento activo
     const eventosRef = collection(db, 'eventos');
@@ -105,26 +103,21 @@ export const getAlumnosEventoActivo = async () => {
     const eventoSnapshot = await getDocs(qEvento);
 
     if (eventoSnapshot.empty) {
-      console.log('getAlumnosEventoActivo: No hay evento activo');
       return [];
     }
 
     const eventoActivo = eventoSnapshot.docs[0];
     const eventoId = eventoActivo.id;
-    console.log('getAlumnosEventoActivo: Evento activo encontrado:', eventoId, eventoActivo.data().nombre);
 
     // Luego obtener los alumnos de la colección específica de ese evento
     try {
       const alumnosRef = collection(db, `eventos/${eventoId}/alumnos`);
       const alumnosSnapshot = await getDocs(alumnosRef);
       const alumnos = alumnosSnapshot.docs.map(mapFirestoreData);
-
-      console.log('getAlumnosEventoActivo: Alumnos encontrados:', alumnos.length);
       return alumnos;
     } catch (subError) {
       // Si la subcolección no existe, retornar array vacío en lugar de lanzar error
       if (subError.code === 'not-found' || subError.message?.includes('404') || subError.message?.includes('NOT_FOUND')) {
-        console.log('getAlumnosEventoActivo: La subcolección alumnos aún no existe, retornando array vacío');
         return [];
       }
       throw subError;
@@ -133,7 +126,6 @@ export const getAlumnosEventoActivo = async () => {
     console.error('Error al obtener alumnos del evento activo:', error);
     // Si es un error 404, retornar array vacío en lugar de lanzar error
     if (error.code === 'not-found' || error.message?.includes('404') || error.message?.includes('NOT_FOUND')) {
-      console.log('getAlumnosEventoActivo: Error 404, retornando array vacío');
       return [];
     }
     throw error;
@@ -193,7 +185,6 @@ export const subscribeToAlumnosPorEvento = (eventoId, callback, errorCallback) =
     }, (error) => {
       // Manejar error 404 cuando la subcolección aún no existe
       if (error.code === 'not-found' || error.message?.includes('404') || error.message?.includes('NOT_FOUND') || error.code === 'permission-denied') {
-        console.log('subscribeToAlumnosPorEvento: La subcolección alumnos aún no existe o no hay permisos, retornando array vacío');
         callback([]);
         return;
       }
@@ -213,37 +204,29 @@ export const subscribeToAlumnosEventoActivo = (callback, errorCallback) => {
       throw new Error('Firestore no está inicializado');
     }
 
-    console.log('subscribeToAlumnosEventoActivo: Iniciando suscripción...');
-
     // Suscribirse a cambios en eventos activos
     const eventosRef = collection(db, 'eventos');
     const qEvento = query(eventosRef, where("activo", "==", true));
 
     const unsubscribeEventos = onSnapshot(qEvento, async (eventoSnapshot) => {
-      console.log('subscribeToAlumnosEventoActivo: Cambio en eventos activos detectado');
 
       if (eventoSnapshot.empty) {
-        console.log('subscribeToAlumnosEventoActivo: No hay eventos activos');
         callback([]);
         return;
       }
 
       const eventoActivo = eventoSnapshot.docs[0];
       const eventoId = eventoActivo.id;
-      console.log('subscribeToAlumnosEventoActivo: Evento activo:', eventoId, eventoActivo.data().nombre);
-
       // Suscribirse a cambios en alumnos de la colección específica de ese evento
       const alumnosRef = collection(db, `eventos/${eventoId}/alumnos`);
       const unsubscribeAlumnos = onSnapshot(alumnosRef, (alumnosSnapshot) => {
         const alumnos = alumnosSnapshot.docs.map(mapFirestoreData);
-        console.log('subscribeToAlumnosEventoActivo: Alumnos actualizados:', alumnos.length);
         callback(alumnos);
       }, (error) => {
         // Manejar error 404 cuando la subcolección aún no existe
         if (error.code === 'not-found' || error.code === 'permission-denied' || 
             error.message?.includes('404') || error.message?.includes('NOT_FOUND') ||
             error.message?.includes('N0T_F0UND')) {
-          console.log('subscribeToAlumnosEventoActivo: La subcolección alumnos aún no existe o no hay permisos, retornando array vacío');
           callback([]);
           return;
         }
@@ -363,7 +346,7 @@ export const agregarAlumno = async (alumno, eventoId) => {
       "Carrera": alumno.carrera,
       "Institución": alumno.institucion,
       "Departamento": alumno.departamento ?? null,
-      "Vegano": parseBooleanField(alumno.vegano),
+      "Observación": alumno.observacion ?? null,
       asiste: parseBooleanField(alumno.asiste) ?? false,
       presente: alumno.presente ?? false,
       asiento: alumno.asiento ?? null,
@@ -403,19 +386,16 @@ export const actualizarPresencia = async (alumnoId, presente, eventoId) => {
 // Borrar toda la colección de alumnos de un evento específico
 export const borrarColeccionAlumnos = async (eventoId) => {
   try {
-    console.log(`Iniciando borrado de colección de alumnos del evento ${eventoId}...`);
     const alumnosRef = collection(db, `eventos/${eventoId}/alumnos`);
     const querySnapshot = await getDocs(alumnosRef);
 
     if (querySnapshot.empty) {
-      console.log('La colección ya está vacía');
       return { success: true, deletedCount: 0 };
     }
 
     const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
     await Promise.all(deletePromises);
 
-    console.log(`Colección borrada exitosamente. ${querySnapshot.size} documentos eliminados.`);
     return { success: true, deletedCount: querySnapshot.size };
   } catch (error) {
     console.error('Error al borrar la colección:', error);
@@ -542,7 +522,7 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
         'pre asistencia'
       ]),
       departamento: normalizarAlias(['departamento', 'área', 'area', 'unidad', 'dependencia', 'departamento/area', 'area/departamento']),
-      vegano: normalizarAlias(['vegano', 'opcion vegana', 'es vegano', 'vegano (si,no)', 'vegano (si/no)', 'vegano (sí/no)', 'opcionvegana', 'preferencia alimentaria'])
+      observacion: normalizarAlias(['observacion', 'observación', 'obs', 'nota', 'notas', 'comentario', 'comentarios'])
     };
 
     const obtenerValorCampo = (fila, alias) => {
@@ -578,7 +558,6 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
 
         // Validar que exista nombre (ya sea completo o compuesto)
         if ((estaVacio(nombres) || estaVacio(apellidos)) && estaVacio(nombreCompleto)) {
-          console.log('Error: Fila sin nombre válido:', alumno);
           errorCount++;
           continue;
         }
@@ -587,7 +566,6 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
 
         // Validar campos obligatorios
         if (estaVacio(rut)) {
-          console.log('Error: Fila sin RUT válido:', alumno);
           errorCount++;
           continue;
         }
@@ -599,39 +577,21 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
         const estado = obtenerValorCampo(filaNormalizada, aliasCampos.estado);
         const presente = parseBooleanField(estado);
         const departamento = obtenerValorCampo(filaNormalizada, aliasCampos.departamento);
-        const veganoValor = obtenerValorCampo(filaNormalizada, aliasCampos.vegano);
-        const vegano = parseBooleanField(veganoValor);
+        const observacion = obtenerValorCampo(filaNormalizada, aliasCampos.observacion);
         const asisteValor = obtenerValorCampo(filaNormalizada, aliasCampos.asiste);
         const asiste = parseBooleanField(asisteValor);
 
-        // Para eventos de trabajadores, permitir usar "Institucion" como "departamento"
-        const departamentoFinal = esEventoTrabajadores
-          ? (departamento || institucion)  // Usar departamento si existe, sino usar institucion
-          : departamento;
+        // Para eventos de trabajadores, solo usamos departamento; institución ya no aplica
+        const departamentoFinal = esEventoTrabajadores ? (departamento ?? null) : departamento;
 
         const carreraFinal = estaVacio(carrera)
           ? (esEventoTrabajadores ? 'Colaboradores Santo Tomás' : null)
           : carrera;
-        const institucionFinal = estaVacio(institucion)
-          ? (esEventoTrabajadores ? 'Santo Tomás' : null)
-          : institucion;
+        const institucionFinal = estaVacio(institucion) ? null : institucion;
 
         if (!esEventoTrabajadores && (estaVacio(carreraFinal) || estaVacio(institucionFinal))) {
-          console.log('Error: Fila sin carrera o institución (evento alumnos):', alumno);
           errorCount++;
           continue;
-        }
-
-        // Para vegano, si no está presente o es inválido, asignar false por defecto
-        const veganoFinal = esEventoTrabajadores ? (vegano !== null ? vegano : false) : null;
-
-        if (esEventoTrabajadores) {
-          if (estaVacio(departamentoFinal)) {
-            console.log('Error: Fila sin departamento/institución (evento trabajadores):', alumno, 'departamento:', departamento, 'institucion:', institucion);
-            errorCount++;
-            continue;
-          }
-          console.log('Vegano procesado:', veganoValor, '->', veganoFinal);
         }
 
         // Guardar el RUT tal como viene (sin puntos ni guión)
@@ -641,12 +601,12 @@ export const importarAlumnosDesdeExcel = async (file, eventoId, tipoEvento = 'al
           nombre: nombreCompleto,
           rut: String(rut),
           carrera: carreraFinal || 'Sin definir',
-          institucion: institucionFinal || 'Sin definir',
+          institucion: esEventoTrabajadores ? null : (institucionFinal || 'Sin definir'),
           asiento: esEventoTrabajadores ? null : asiento,
           grupo: esEventoTrabajadores ? null : grupo,
           presente: presente ?? false,
           departamento: esEventoTrabajadores ? departamentoFinal : null,
-          vegano: esEventoTrabajadores ? veganoFinal : null,
+          observacion: esEventoTrabajadores ? observacion ?? null : null,
           asiste: asiste ?? false
         }, eventoId);
 
