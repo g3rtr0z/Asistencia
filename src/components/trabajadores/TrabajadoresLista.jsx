@@ -411,14 +411,14 @@ const TrabajadoresLista = ({
                       )}
                       {columnasVisibles.nombres && (
                         <td className="py-4 px-4 text-slate-800 font-medium min-w-36 flex-1">
-                          <div className="truncate" title={trabajador.nombres ?? trabajador.nombre ?? '-'}>
+                          <div className="truncate uppercase" title={trabajador.nombres ?? trabajador.nombre ?? '-'}>
                             {trabajador.nombres ?? trabajador.nombre ?? '-'}
                           </div>
                         </td>
                       )}
                       {columnasVisibles.apellidos && (
                         <td className="py-4 px-4 text-slate-800 font-medium min-w-36 flex-1">
-                          <div className="truncate" title={trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}>
+                          <div className="truncate uppercase" title={trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}>
                             {trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}
                           </div>
                         </td>

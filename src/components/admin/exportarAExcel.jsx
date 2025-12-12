@@ -60,7 +60,6 @@ export const exportarAExcel = (alumnos, nombreEvento = 'Evento', tipoEvento = 'a
           'RUT': alumno.rut || '',
           'Nombres': alumno.nombres || '',
           'Apellidos': alumno.apellidos || '',
-          'Departamento': alumno.departamento || '',
           'Observación': alumno.observacion || '',
           'Fecha y Hora de Registro': formatearFecha(alumno.fechaRegistro) || formatearFecha(alumno.ultimaActualizacion) || ''
         }))
@@ -89,7 +88,6 @@ export const exportarAExcel = (alumnos, nombreEvento = 'Evento', tipoEvento = 'a
           { wch: 15 }, // RUT
           { wch: 20 }, // Nombres
           { wch: 20 }, // Apellidos
-          { wch: 25 }, // Departamento
           { wch: 30 }, // Observación
           { wch: 25 }  // Fecha y Hora de Registro
         ]

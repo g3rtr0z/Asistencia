@@ -74,14 +74,14 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
 
   const esEventoFuncionarios = eventoActivo?.tipo === 'trabajadores';
 
-  const InfoRow = ({ label, value, border = true }) => {
+  const InfoRow = ({ label, value, border = true, uppercase = false }) => {
     if (value === null || value === undefined || value === '') {
       return null;
     }
     return (
       <div className={`flex justify-between items-center py-2 gap-x-6 ${border ? 'border-b border-gray-100' : ''}`}>
         <span className="text-gray-600 font-medium">{label}:</span>
-        <span className="text-gray-800 font-semibold text-right">{value}</span>
+        <span className={`text-gray-800 font-semibold text-right ${uppercase ? 'uppercase' : ''}`}>{value}</span>
       </div>
     );
   };
@@ -165,8 +165,8 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
                   return (
                     <>
                       <InfoRow label="RUT" value={result.rut} />
-                      <InfoRow label="Nombres" value={nombres} />
-                      <InfoRow label="Apellidos" value={apellidos || 'Sin apellidos'} />
+                      <InfoRow label="Nombres" value={nombres} uppercase={true} />
+                      <InfoRow label="Apellidos" value={apellidos || 'Sin apellidos'} uppercase={true} />
                       <InfoRow label="Confirmación" value={confirmacion} />
                       <InfoRow label="Observación" value={observacion} border={false} />
                     </>
