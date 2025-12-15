@@ -45,7 +45,7 @@ export default defineConfig([
       // Formato
       'prefer-const': 'error',
       'no-var': 'error',
-      'no-console': 'warn',
+      'no-console': 'off', // Permitir console.log en desarrollo
       'no-debugger': 'error',
 
       // Funciones
@@ -65,15 +65,14 @@ export default defineConfig([
 
       // Condicionales
       'no-unneeded-ternary': 'error',
-      'prefer-const': 'error',
     },
   },
   {
     files: ['src/components/**/*.{js,jsx}'],
     rules: {
       // Reglas específicas para componentes
-      'react/jsx-filename-extension': ['error', { extensions: ['.jsx'] }],
-      'react/prop-types': 'off', // Usando JSDoc para tipos
+      // 'react/jsx-filename-extension': ['error', { extensions: ['.jsx'] }], // Requiere eslint-plugin-react
+      // 'react/prop-types': 'off', // Usando JSDoc para tipos - Requiere eslint-plugin-react
     },
   },
   {

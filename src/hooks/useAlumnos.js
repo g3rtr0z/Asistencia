@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { subscribeToAlumnos, borrarColeccionAlumnos } from '../services/alumnosService';
+import {
+  subscribeToAlumnos,
+  borrarColeccionAlumnos,
+} from '../services/alumnosService';
 
 export default function useAlumnos() {
   const [alumnos, setAlumnos] = useState([]);
@@ -8,27 +11,30 @@ export default function useAlumnos() {
   useEffect(() => {
     let unsubscribe = null;
     let timeoutId = null;
-    
+
     const loadData = async () => {
       setLoading(true);
-      
+
       // Timeout para detectar si Firebase no responde
       timeoutId = setTimeout(() => {
         setLoading(false);
       }, 10000);
-      
-      unsubscribe = subscribeToAlumnos((alumnosData) => {
-        clearTimeout(timeoutId);
-        setAlumnos(alumnosData);
-        setLoading(false);
-      }, (error) => {
-        clearTimeout(timeoutId);
-        setLoading(false);
-      });
+
+      unsubscribe = subscribeToAlumnos(
+        alumnosData => {
+          clearTimeout(timeoutId);
+          setAlumnos(alumnosData);
+          setLoading(false);
+        },
+        _error => {
+          clearTimeout(timeoutId);
+          setLoading(false);
+        }
+      );
     };
-    
+
     loadData();
-    
+
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
       if (unsubscribe) unsubscribe();
@@ -36,17 +42,17 @@ export default function useAlumnos() {
   }, []);
 
   // Borrar colección
-  const handleDeleteComplete = useCallback(async (eventoId) => {
+  const handleDeleteComplete = useCallback(async eventoId => {
     try {
       await borrarColeccionAlumnos(eventoId);
-    } catch (e) {
+    } catch (_e) {
+      // Error silenciado intencionalmente
     }
   }, []);
 
   return {
     alumnos,
     loading,
-    error,
-    handleDeleteComplete
+    handleDeleteComplete,
   };
-} 
+}

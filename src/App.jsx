@@ -1,5 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+  Navigate,
+} from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
 import { actualizarPresencia } from './services/alumnosService';
 import useAlumnosEvento from './hooks/useAlumnosEvento';
@@ -17,10 +25,10 @@ import TrabajadoresResumen from './components/trabajadores/TrabajadoresResumen';
 // Loader
 function Loader() {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center animate-fadeIn">
-      <div className="text-center flex flex-col items-center gap-4">
-        <div className="h-16 w-16 border-4 border-green-300 border-t-green-700 rounded-full animate-spin" />
-        <p className="text-green-800 text-xl font-medium tracking-wide animate-pulse">
+    <div className='min-h-screen bg-white flex flex-col items-center justify-center animate-fadeIn'>
+      <div className='text-center flex flex-col items-center gap-4'>
+        <div className='h-16 w-16 border-4 border-green-300 border-t-green-700 rounded-full animate-spin' />
+        <p className='text-green-800 text-xl font-medium tracking-wide animate-pulse'>
           Cargando datos...
         </p>
       </div>
@@ -28,20 +36,19 @@ function Loader() {
   );
 }
 
-
 // Error
 function ErrorMessage({ error }) {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center">
-      <div className="text-center">
-        <p className="text-red-600 text-xl mb-4">Error al cargar los datos</p>
+    <div className='min-h-screen bg-white flex flex-col items-center justify-center'>
+      <div className='text-center'>
+        <p className='text-red-600 text-xl mb-4'>Error al cargar los datos</p>
         <button
           onClick={() => window.location.reload()}
-          className="bg-green-800 text-white px-4 py-2 rounded mr-2"
+          className='bg-green-800 text-white px-4 py-2 rounded mr-2'
         >
           Reintentar
         </button>
-        <div className="text-gray-500 mt-2 text-sm">{error}</div>
+        <div className='text-gray-500 mt-2 text-sm'>{error}</div>
       </div>
     </div>
   );
@@ -49,12 +56,7 @@ function ErrorMessage({ error }) {
 
 function App() {
   // Custom hook para la lógica de alumnos
-  const {
-    alumnos,
-    loading,
-    error,
-    handleDeleteComplete
-  } = useAlumnosEvento();
+  const { alumnos, loading, error } = useAlumnosEvento();
 
   // Hook para eventos
   const { eventoActivo } = useEventos();
@@ -62,19 +64,19 @@ function App() {
   const [usuario, setUsuario] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const [filtroEstado, setFiltroEstado] = useState('todos');
+  // const [filtroEstado] = useState('todos'); // No se usa actualmente
   const [showConfirm, setShowConfirm] = useState(false);
-  const [errorVisual, setErrorVisual] = useState("");
+  const [errorVisual, setErrorVisual] = useState('');
   const [showAlumnosModal, setShowAlumnosModal] = useState(false);
 
   // Filtros para el modal de alumnos
-  const [filtroCarrera, setFiltroCarrera] = useState("");
-  const [filtroInstitucion, setFiltroInstitucion] = useState("");
-  const [filtroRUT, setFiltroRUT] = useState("");
-  const [soloPresentes, setSoloPresentes] = useState("");
+  const [filtroCarrera, setFiltroCarrera] = useState('');
+  const [filtroInstitucion, setFiltroInstitucion] = useState('');
+  const [filtroRUT, setFiltroRUT] = useState('');
+  const [soloPresentes, setSoloPresentes] = useState('');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [filtroGrupo, setFiltroGrupo] = useState("");
-  
+  const [filtroGrupo, setFiltroGrupo] = useState('');
+
   // Controlar el scroll según la ruta y modales
   React.useEffect(() => {
     if (location.pathname === '/admin' || showAlumnosModal) {
@@ -87,22 +89,24 @@ function App() {
     };
   }, [location.pathname, showAlumnosModal]);
 
-  // Filtrado para la vista de admin (memorizado)
-  const alumnosFiltrados = useMemo(() => {
-    if (filtroEstado === 'presentes') {
-      return alumnos.filter(a => a.presente);
-    } else if (filtroEstado === 'ausentes') {
-      return alumnos.filter(a => !a.presente);
-    }
-    return alumnos;
-  }, [alumnos, filtroEstado]);
+  // Filtrado para la vista de admin (memorizado) - comentado porque no se usa actualmente
+  // const alumnosFiltrados = useMemo(() => {
+  //   if (filtroEstado === 'presentes') {
+  //     return alumnos.filter(a => a.presente);
+  //   } else if (filtroEstado === 'ausentes') {
+  //     return alumnos.filter(a => !a.presente);
+  //   }
+  //   return alumnos;
+  // }, [alumnos, filtroEstado]);
 
   // Filtrado para el modal de alumnos (Inicio), incluyendo grupo
   const alumnosFiltradosModal = useMemo(() => {
-    let filtrados = alumnos.filter(alumno =>
-      (filtroCarrera === "" || alumno.carrera === filtroCarrera) &&
-      (filtroInstitucion === "" || alumno.institucion === filtroInstitucion) &&
-      (filtroRUT === "" || alumno.rut.includes(filtroRUT))
+    let filtrados = alumnos.filter(
+      alumno =>
+        (filtroCarrera === '' || alumno.carrera === filtroCarrera) &&
+        (filtroInstitucion === '' ||
+          alumno.institucion === filtroInstitucion) &&
+        (filtroRUT === '' || alumno.rut.includes(filtroRUT))
     );
     if (filtroGrupo) {
       const grupoNum = Number(filtroGrupo);
@@ -112,7 +116,7 @@ function App() {
   }, [alumnos, filtroCarrera, filtroInstitucion, filtroRUT, filtroGrupo]);
 
   // Login de alumno
-  const handleLogin = async (rut) => {
+  const handleLogin = async rut => {
     try {
       if (!eventoActivo) {
         setErrorVisual('No hay un evento activo en este momento.');
@@ -127,9 +131,11 @@ function App() {
         setShowConfirm(true);
         return actualizado;
       } else {
-        setErrorVisual('RUT no encontrado en la base de datos del evento activo.');
+        setErrorVisual(
+          'RUT no encontrado en la base de datos del evento activo.'
+        );
       }
-    } catch (error) {
+    } catch (_error) {
       setErrorVisual('Error al procesar el RUT. Inténtalo de nuevo.');
     }
   };
@@ -149,7 +155,7 @@ function App() {
   // Ocultar errorVisual después de 1 segundo
   React.useEffect(() => {
     if (errorVisual) {
-      const timeout = setTimeout(() => setErrorVisual(""), 2000);
+      const timeout = setTimeout(() => setErrorVisual(''), 2000);
       return () => clearTimeout(timeout);
     }
   }, [errorVisual]);
@@ -160,7 +166,7 @@ function App() {
       const actualizado = alumnos.find(a => a.rut === usuario.rut);
       if (actualizado) setUsuario(actualizado);
     }
-  }, [alumnos]);
+  }, [alumnos, usuario]);
 
   // Acciones admin
   const handleAdminClick = () => navigate('/admin');
@@ -173,11 +179,11 @@ function App() {
     setShowAlumnosModal(false);
 
     // Limpiar filtros del modal de alumnos
-    setFiltroCarrera("");
-    setFiltroInstitucion("");
-    setFiltroRUT("");
-    setSoloPresentes("");
-    setFiltroGrupo("");
+    setFiltroCarrera('');
+    setFiltroInstitucion('');
+    setFiltroRUT('');
+    setSoloPresentes('');
+    setFiltroGrupo('');
 
     // Desautenticar y navegar al inicio
     setIsAdminAuthenticated(false);
@@ -192,21 +198,21 @@ function App() {
   // Determinar clases del contenedor según la ruta
   const getContainerClasses = () => {
     if (location.pathname === '/panel') {
-      return "bg-white flex flex-col";
+      return 'bg-white flex flex-col';
     }
     if (location.pathname === '/admin') {
-      return "min-h-screen bg-white flex flex-col items-center justify-center";
+      return 'min-h-screen bg-white flex flex-col items-center justify-center';
     }
-    return "min-h-screen bg-white flex flex-col";
+    return 'min-h-screen bg-white flex flex-col';
   };
 
   return (
     <div className={getContainerClasses()}>
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode='wait'>
         {location.pathname === '/' && (
           <motion.div
-            key="botones-inicio"
-            className="fixed top-8 right-4 z-50 flex flex-row items-center space-x-14"
+            key='botones-inicio'
+            className='fixed top-8 right-4 z-50 flex flex-row items-center space-x-14'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -214,13 +220,24 @@ function App() {
           >
             {/* Icono de información */}
             <button
-              className="bg-blue-600 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center"
-              title="Ver lista de asistentes"
+              className='bg-blue-600 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center'
+              title='Ver lista de asistentes'
               style={{ transition: 'background 0.2s' }}
               onClick={() => setShowAlumnosModal(true)}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6.75v.75m0 3v.75m0 3v.75m0 3v.75m-3-12h6a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0116.5 21h-9A2.25 2.25 0 015.25 18.75V5.25A2.25 2.25 0 017.5 3h3z" />
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                fill='none'
+                viewBox='0 0 24 24'
+                strokeWidth={1.5}
+                stroke='currentColor'
+                className='w-8 h-8'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  d='M13.5 6.75v.75m0 3v.75m0 3v.75m0 3v.75m-3-12h6a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0116.5 21h-9A2.25 2.25 0 015.25 18.75V5.25A2.25 2.25 0 017.5 3h3z'
+                />
               </svg>
             </button>
             <AdminButton onClick={handleAdminClick} />
@@ -229,33 +246,39 @@ function App() {
       </AnimatePresence>
 
       {/* Evento activo minimalista - solo en la página principal */}
-      {location.pathname === '/' && <EventoActivoMinimalista eventoActivo={eventoActivo} />}
+      {location.pathname === '/' && (
+        <EventoActivoMinimalista eventoActivo={eventoActivo} />
+      )}
 
       <AnimatePresence>
         {showAlumnosModal && (
           <motion.div
-            className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50"
+            className='fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            key="modal-bg"
+            key='modal-bg'
           >
             <motion.div
-              className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 md:p-8 max-w-6xl w-full relative max-h-[95vh] overflow-auto"
+              className='bg-white rounded-xl shadow-2xl p-4 sm:p-6 md:p-8 max-w-6xl w-full relative max-h-[95vh] overflow-auto'
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              key="modal-content"
+              key='modal-content'
             >
               <button
                 onClick={() => setShowAlumnosModal(false)}
-                className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600"
-                title="Cerrar"
-              >×</button>
-              <h2 className="text-xl font-bold mb-4 text-green-800">
-                {esEventoTrabajadores ? 'Lista de Funcionarios' : 'Lista de Alumnos'}
+                className='absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600'
+                title='Cerrar'
+              >
+                ×
+              </button>
+              <h2 className='text-xl font-bold mb-4 text-green-800'>
+                {esEventoTrabajadores
+                  ? 'Lista de Funcionarios'
+                  : 'Lista de Alumnos'}
               </h2>
               {esEventoTrabajadores ? (
                 <>
@@ -266,7 +289,7 @@ function App() {
                     trabajadoresCompletos={alumnos}
                     eventoActivo={eventoActivo}
                   />
-                  <div className="mt-6">
+                  <div className='mt-6'>
                     <TrabajadoresLista
                       trabajadores={alumnos}
                       soloPresentes={soloPresentes}
@@ -305,107 +328,118 @@ function App() {
       <AnimatePresence>
         {errorVisual && (
           <motion.div
-            className="fixed top-6 left-2 sm:top-6 sm:left-6 sm:max-w-md z-50 flex items-center"
+            className='fixed top-6 left-2 sm:top-6 sm:left-6 sm:max-w-md z-50 flex items-center'
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
             transition={{ duration: 0.3 }}
-            key="errorVisual"
+            key='errorVisual'
           >
             <div
-              role="alert"
-              className="border-s-4 border-red-700 bg-red-50 p-4 max-w-md mx-auto rounded-md shadow-md"
+              role='alert'
+              className='border-s-4 border-red-700 bg-red-50 p-4 max-w-md mx-auto rounded-md shadow-md'
             >
-              <div className="flex items-center gap-2 text-red-700">
+              <div className='flex items-center gap-2 text-red-700'>
                 <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-5 h-5"
+                  xmlns='http://www.w3.org/2000/svg'
+                  viewBox='0 0 24 24'
+                  fill='currentColor'
+                  className='w-5 h-5'
                 >
                   <path
-                    fillRule="evenodd"
-                    d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
-                    clipRule="evenodd"
+                    fillRule='evenodd'
+                    d='M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z'
+                    clipRule='evenodd'
                   />
                 </svg>
-                <strong className="font-medium">Algo salió mal</strong>
+                <strong className='font-medium'>Algo salió mal</strong>
               </div>
-              <p className="mt-2 text-sm text-red-700">
-                {errorVisual}
-              </p>
+              <p className='mt-2 text-sm text-red-700'>{errorVisual}</p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <main className={`flex-1 flex flex-col w-full ${
-        location.pathname === '/panel' 
-          ? '' 
-          : location.pathname === '/admin' 
-            ? 'items-center justify-center min-h-screen' 
-            : 'min-h-screen flex items-center justify-center px-2'
-      }`}>
-        <div className={`w-full flex flex-col ${
-          location.pathname === '/panel' 
-            ? '' 
-            : 'items-center justify-center'
-        }`}>
-          <AnimatePresence mode="wait">
+      <main
+        className={`flex-1 flex flex-col w-full ${
+          location.pathname === '/panel'
+            ? ''
+            : location.pathname === '/admin'
+              ? 'items-center justify-center min-h-screen'
+              : 'min-h-screen flex items-center justify-center px-2'
+        }`}
+      >
+        <div
+          className={`w-full flex flex-col ${
+            location.pathname === '/panel' ? '' : 'items-center justify-center'
+          }`}
+        >
+          <AnimatePresence mode='wait'>
             <Routes location={location} key={location.pathname}>
-              <Route path="/" element={
-                <motion.div
-                  key="inicio"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="w-full flex flex-col items-center justify-center"
-                >
-                  <Inicio
-                    className="w-full"
-                    onLogin={handleLogin}
-                    setErrorVisual={setErrorVisual}
-                    eventoActivo={eventoActivo}
-                  />
-                </motion.div>
-              } />
-              <Route path="/admin" element={
-                <motion.div
-                  key="admin-login"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="w-full flex flex-col items-center justify-center"
-                >
-                  <AdminLogin onAuth={handleAuthAdmin} onSalir={handleSalirAdmin} />
-                </motion.div>
-              } />
-              <Route path="/panel" element={
-                isAdminAuthenticated ? (
+              <Route
+                path='/'
+                element={
                   <motion.div
-                    key="admin-panel"
+                    key='inicio'
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="w-full flex flex-col items-center justify-center"
+                    className='w-full flex flex-col items-center justify-center'
                   >
-                    <AdminPanel
+                    <Inicio
+                      className='w-full'
+                      onLogin={handleLogin}
+                      setErrorVisual={setErrorVisual}
+                      eventoActivo={eventoActivo}
+                    />
+                  </motion.div>
+                }
+              />
+              <Route
+                path='/admin'
+                element={
+                  <motion.div
+                    key='admin-login'
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className='w-full flex flex-col items-center justify-center'
+                  >
+                    <AdminLogin
+                      onAuth={handleAuthAdmin}
                       onSalir={handleSalirAdmin}
                     />
                   </motion.div>
-                ) : (
-                  <Navigate to="/" replace />
-                )
-              } />
-              <Route path="*" element={<Navigate to="/" replace />} />
+                }
+              />
+              <Route
+                path='/panel'
+                element={
+                  isAdminAuthenticated ? (
+                    <motion.div
+                      key='admin-panel'
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className='w-full flex flex-col items-center justify-center'
+                    >
+                      <AdminPanel onSalir={handleSalirAdmin} />
+                    </motion.div>
+                  ) : (
+                    <Navigate to='/' replace />
+                  )
+                }
+              />
+              <Route path='*' element={<Navigate to='/' replace />} />
             </Routes>
           </AnimatePresence>
         </div>
       </main>
-      {!location.pathname.startsWith('/admin') && location.pathname !== '/panel' && <Footer />}
+      {!location.pathname.startsWith('/admin') &&
+        location.pathname !== '/panel' && <Footer />}
     </div>
   );
 }

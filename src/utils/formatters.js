@@ -3,15 +3,15 @@
  * @param {string} rut - RUT sin formato
  * @returns {string} RUT formateado
  */
-export const formatRut = (rut) => {
+export const formatRut = rut => {
   if (!rut) return '';
-  
+
   // Limpiar el RUT de caracteres no válidos
   let clean = rut.replace(/[^0-9kK]/g, '').toUpperCase();
-  
+
   // Limitar a 9 caracteres máximo
   clean = clean.slice(0, 9);
-  
+
   return clean;
 };
 
@@ -20,24 +20,25 @@ export const formatRut = (rut) => {
  * @param {string} rut - RUT a validar
  * @returns {boolean} true si es válido
  */
-export const validateRut = (rut) => {
+export const validateRut = rut => {
   if (!rut || rut.length < 8) return false;
-  
+
   const cleanRut = rut.replace(/[^0-9kK]/g, '').toUpperCase();
   const dv = cleanRut.slice(-1);
   const rutNumber = cleanRut.slice(0, -1);
-  
+
   let sum = 0;
   let multiplier = 2;
-  
+
   for (let i = rutNumber.length - 1; i >= 0; i--) {
     sum += parseInt(rutNumber[i]) * multiplier;
     multiplier = multiplier === 7 ? 2 : multiplier + 1;
   }
-  
+
   const expectedDv = 11 - (sum % 11);
-  const calculatedDv = expectedDv === 11 ? '0' : expectedDv === 10 ? 'K' : expectedDv.toString();
-  
+  const calculatedDv =
+    expectedDv === 11 ? '0' : expectedDv === 10 ? 'K' : expectedDv.toString();
+
   return dv === calculatedDv;
 };
 
@@ -46,16 +47,16 @@ export const validateRut = (rut) => {
  * @param {Date|string} date - Fecha a formatear
  * @returns {string} Fecha formateada
  */
-export const formatDate = (date) => {
+export const formatDate = date => {
   if (!date) return '';
-  
+
   const d = new Date(date);
   return d.toLocaleDateString('es-CL', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 };
 
@@ -64,14 +65,14 @@ export const formatDate = (date) => {
  * @param {string} phone - Número de teléfono
  * @returns {string} Teléfono formateado
  */
-export const formatPhone = (phone) => {
+export const formatPhone = phone => {
   if (!phone) return '';
-  
+
   const clean = phone.replace(/\D/g, '');
-  
+
   if (clean.length === 9) {
     return `+56 ${clean.slice(0, 1)} ${clean.slice(1, 5)} ${clean.slice(5)}`;
   }
-  
+
   return phone;
-}; 
+};

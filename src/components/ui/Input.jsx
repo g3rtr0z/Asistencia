@@ -1,20 +1,20 @@
 import React from 'react';
 
-const Input = ({ 
+const Input = ({
   label,
   error,
   disabled = false,
   className = '',
-  ...props 
+  ...props
 }) => {
   return (
-    <div className="w-full">
+    <div className='w-full'>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className='block text-sm font-medium text-gray-700 mb-2'>
           {label}
         </label>
       )}
-      <div className="relative">
+      <div className='relative'>
         <input
           disabled={disabled}
           className={`
@@ -28,11 +28,9 @@ const Input = ({
           {...props}
         />
       </div>
-      {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className='mt-1 text-sm text-red-600'>{error}</p>}
     </div>
   );
 };
 
-export default Input; 
+export default Input;

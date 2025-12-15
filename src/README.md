@@ -37,16 +37,19 @@ Los componentes en `components/ui/` son reutilizables y siguen el diseño de San
 ## 🎯 Convenciones de Nomenclatura
 
 ### Archivos y Carpetas
+
 - **PascalCase** para componentes: `AlumnosLista.jsx`
 - **camelCase** para utilidades: `formatters.js`
 - **kebab-case** para assets: `logo-santo-tomas.png`
 
 ### Componentes
+
 - **PascalCase** para nombres de componentes
 - **camelCase** para props y métodos
 - **UPPER_CASE** para constantes
 
 ### Estilos
+
 - Usar **Tailwind CSS** para estilos
 - Colores de la marca Santo Tomás definidos en `constants/colors.js`
 - Componentes responsivos por defecto
@@ -54,12 +57,14 @@ Los componentes en `components/ui/` son reutilizables y siguen el diseño de San
 ## 🔧 Utilidades
 
 ### Formatters (`utils/formatters.js`)
+
 - `formatRut()`: Formatea RUTs chilenos
 - `validateRut()`: Valida RUTs
 - `formatDate()`: Formatea fechas
 - `formatPhone()`: Formatea teléfonos
 
 ### Validators (`utils/validators.js`)
+
 - `validateRequired()`: Valida campos requeridos
 - `validateEmail()`: Valida emails
 - `validateRutField()`: Valida RUTs

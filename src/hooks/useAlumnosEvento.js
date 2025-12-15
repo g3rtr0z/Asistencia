@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { subscribeToAlumnosEventoActivo, subscribeToAlumnosPorEvento } from '../services/alumnosService';
+import {
+  subscribeToAlumnosEventoActivo,
+  subscribeToAlumnosPorEvento,
+} from '../services/alumnosService';
 
 export default function useAlumnosEvento(eventoId = null) {
   const [alumnos, setAlumnos] = useState([]);
@@ -15,12 +18,15 @@ export default function useAlumnosEvento(eventoId = null) {
           // Si se proporciona un eventoId específico, suscribirse a ese evento
           unsubscribe = subscribeToAlumnosPorEvento(
             eventoId,
-            (alumnosData) => {
+            alumnosData => {
               setAlumnos(alumnosData);
               setLoading(false);
             },
-            (error) => {
-              console.error('Error en suscripción de alumnos por evento:', error);
+            error => {
+              console.error(
+                'Error en suscripción de alumnos por evento:',
+                error
+              );
               setError(error.message);
               setLoading(false);
             }
@@ -28,12 +34,15 @@ export default function useAlumnosEvento(eventoId = null) {
         } else {
           // Si no se proporciona eventoId, suscribirse al evento activo
           unsubscribe = subscribeToAlumnosEventoActivo(
-            (alumnosData) => {
+            alumnosData => {
               setAlumnos(alumnosData);
               setLoading(false);
             },
-            (error) => {
-              console.error('Error en suscripción de alumnos evento activo:', error);
+            error => {
+              console.error(
+                'Error en suscripción de alumnos evento activo:',
+                error
+              );
               setError(error.message);
               setLoading(false);
             }
@@ -58,6 +67,6 @@ export default function useAlumnosEvento(eventoId = null) {
   return {
     alumnos,
     loading,
-    error
+    error,
   };
 }

@@ -22,13 +22,13 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
     }
   }, [result]);
 
-  const formatRut = (value) => {
+  const formatRut = value => {
     let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
     clean = clean.slice(0, 9);
     return clean;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setRut(''); // Limpia el campo RUT
 
@@ -49,7 +49,10 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
         return;
       }
 
-      const alumno = await buscarAlumnoPorRutEnEvento(rut.trim(), eventoActivo.id);
+      const alumno = await buscarAlumnoPorRutEnEvento(
+        rut.trim(),
+        eventoActivo.id
+      );
       if (alumno && alumno.presente) {
         setErrorVisual('Su RUT ya se encuentra registrado');
         setLoading(false);
@@ -59,14 +62,14 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
       if (res && res.nombre) {
         setResult({ data: res, rut });
       }
-    } catch (error) {
+    } catch (_error) {
       setErrorVisual('Error al procesar el login');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = e => {
     if (e.key === 'Enter') {
       handleSubmit(e);
     }
@@ -79,54 +82,62 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
       return null;
     }
     return (
-      <div className={`flex justify-between items-center py-2 gap-x-6 ${border ? 'border-b border-gray-100' : ''}`}>
-        <span className="text-gray-600 font-medium">{label}:</span>
-        <span className={`text-gray-800 font-semibold text-right ${uppercase ? 'uppercase' : ''}`}>{value}</span>
+      <div
+        className={`flex justify-between items-center py-2 gap-x-6 ${border ? 'border-b border-gray-100' : ''}`}
+      >
+        <span className='text-gray-600 font-medium'>{label}:</span>
+        <span
+          className={`text-gray-800 font-semibold text-right ${uppercase ? 'uppercase' : ''}`}
+        >
+          {value}
+        </span>
       </div>
     );
   };
 
-  const getVeganoTexto = (valor) => {
-    if (valor === null || valor === undefined || valor === '') return 'No';
-    if (typeof valor === 'boolean') return valor ? 'Sí' : 'No';
-    const texto = valor.toString().trim().toLowerCase();
-    return ['si', 'sí', 'yes', 'true', '1'].includes(texto) ? 'Sí' : 'No';
-  };
+  // Función no utilizada - comentada
+  // const getVeganoTexto = valor => {
+  //   if (valor === null || valor === undefined || valor === '') return 'No';
+  //   if (typeof valor === 'boolean') return valor ? 'Sí' : 'No';
+  //   const texto = valor.toString().trim().toLowerCase();
+  //   return ['si', 'sí', 'yes', 'true', '1'].includes(texto) ? 'Sí' : 'No';
+  // };
 
   return (
-    <div className="flex flex-col sm:flex-row items-start justify-center bg-white sm:gap-x-8">
-      <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
-        <div className="text-center mb-5">
+    <div className='flex flex-col sm:flex-row items-start justify-center bg-white sm:gap-x-8'>
+      <div className='w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto'>
+        <div className='text-center mb-5'>
           <img
             src={Logo}
-            alt="Logo"
-            className="mx-auto mb-2 w-20 h-20 object-contain z-50"
+            alt='Logo'
+            className='mx-auto mb-2 w-20 h-20 object-contain z-50'
           />
-          <h1 className="text-2xl sm:text-3xl font-bold text-green-800 mb-2">
+          <h1 className='text-2xl sm:text-3xl font-bold text-green-800 mb-2'>
             Mi Asistencia
           </h1>
         </div>
 
-        <Card className="max-w-3xl mx-auto mb-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <Card className='max-w-3xl mx-auto mb-6'>
+          <form onSubmit={handleSubmit} className='space-y-4'>
             <Input
-              label="RUT"
-              type="text"
+              label='RUT'
+              type='text'
               value={rut}
               ref={rutInputRef}
-              onChange={(e) => setRut(formatRut(e.target.value))}
+              onChange={e => setRut(formatRut(e.target.value))}
               onKeyPress={handleKeyPress}
-              placeholder="Ingresa tu RUT"
+              placeholder='Ingresa tu RUT'
               maxLength={13}
               disabled={!eventoActivo}
-              className={`min-w-[280px] h-12 text-base px-4 font-medium ${!eventoActivo ? 'bg-gray-100 cursor-not-allowed' : ''
-                }`}
+              className={`min-w-[280px] h-12 text-base px-4 font-medium ${
+                !eventoActivo ? 'bg-gray-100 cursor-not-allowed' : ''
+              }`}
             />
             <Button
-              type="submit"
+              type='submit'
               disabled={loading || !rut.trim() || !eventoActivo}
               loading={loading}
-              className="w-full h-12 text-base font-semibold"
+              className='w-full h-12 text-base font-semibold'
             >
               {loading ? 'Buscando...' : 'Buscar'}
             </Button>
@@ -135,53 +146,81 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
 
         {/* Resultados */}
         {result && (
-          <Card className="mb-12">
-            <div className="flex items-center space-x-2 mb-4">
+          <Card className='mb-12'>
+            <div className='flex items-center space-x-2 mb-4'>
               <svg
-                className="w-6 h-6 text-green-800"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                className='w-6 h-6 text-green-800'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
               >
                 <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
                   strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
                 />
               </svg>
-              <h2 className="text-lg sm:text-xl font-semibold text-green-800">
+              <h2 className='text-lg sm:text-xl font-semibold text-green-800'>
                 Asistencia Realizada
               </h2>
             </div>
-            <div className="space-y-3">
+            <div className='space-y-3'>
               {(() => {
                 if (esEventoFuncionarios) {
-                  const nombres = result.data.nombres ?? result.data.nombre ?? '';
-                  const apellidos = result.data.apellidos ?? (result.data.nombre ? result.data.nombre.split(' ').slice(1).join(' ') : '');
-                  const confirmacion = result.data.asiste ? '✅ Confirmó asistencia previa' : '❌ No confirmó asistencia previa';
-                  const estado = result.data.presente ? '✅ Presente' : '❌ Ausente';
-                  const observacion = result.data.observacion ?? 'Sin observación';
+                  const nombres =
+                    result.data.nombres ?? result.data.nombre ?? '';
+                  const apellidos =
+                    result.data.apellidos ??
+                    (result.data.nombre
+                      ? result.data.nombre.split(' ').slice(1).join(' ')
+                      : '');
+                  const confirmacion = result.data.asiste
+                    ? '✅ Confirmó asistencia previa'
+                    : '❌ No confirmó asistencia previa';
+                  // const estado = result.data.presente
+                  //   ? '✅ Presente'
+                  //   : '❌ Ausente';
+                  const observacion =
+                    result.data.observacion ?? 'Sin observación';
                   return (
                     <>
-                      <InfoRow label="RUT" value={result.rut} />
-                      <InfoRow label="Nombres" value={nombres} uppercase={true} />
-                      <InfoRow label="Apellidos" value={apellidos || 'Sin apellidos'} uppercase={true} />
-                      <InfoRow label="Confirmación" value={confirmacion} />
-                      <InfoRow label="Observación" value={observacion} border={false} />
+                      <InfoRow label='RUT' value={result.rut} />
+                      <InfoRow
+                        label='Nombres'
+                        value={nombres}
+                        uppercase={true}
+                      />
+                      <InfoRow
+                        label='Apellidos'
+                        value={apellidos || 'Sin apellidos'}
+                        uppercase={true}
+                      />
+                      <InfoRow label='Confirmación' value={confirmacion} />
+                      <InfoRow
+                        label='Observación'
+                        value={observacion}
+                        border={false}
+                      />
                     </>
                   );
                 }
 
-                const nombreMostrar = result.data.nombre ?? `${result.data.nombres ?? ''} ${result.data.apellidos ?? ''}`.trim();
+                const nombreMostrar =
+                  result.data.nombre ??
+                  `${result.data.nombres ?? ''} ${result.data.apellidos ?? ''}`.trim();
                 return (
                   <>
-                    <InfoRow label="RUT" value={result.rut} />
-                    <InfoRow label="Nombre" value={nombreMostrar} />
-                    <InfoRow label="Asiento" value={result.data.asiento} />
-                    <InfoRow label="N° de Lista" value={result.data.grupo} />
-                    <InfoRow label="Carrera" value={result.data.carrera} />
-                    <InfoRow label="Institución" value={result.data.institucion} border={false} />
+                    <InfoRow label='RUT' value={result.rut} />
+                    <InfoRow label='Nombre' value={nombreMostrar} />
+                    <InfoRow label='Asiento' value={result.data.asiento} />
+                    <InfoRow label='N° de Lista' value={result.data.grupo} />
+                    <InfoRow label='Carrera' value={result.data.carrera} />
+                    <InfoRow
+                      label='Institución'
+                      value={result.data.institucion}
+                      border={false}
+                    />
                   </>
                 );
               })()}

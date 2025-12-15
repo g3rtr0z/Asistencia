@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { agregarAlumno } from '../../services/alumnosService';
 import { getAlumnosEjemploPorEvento } from '../../services/eventosAlumnosService';
@@ -10,7 +11,7 @@ function ImportarAlumnosEvento({ eventos, onImportComplete }) {
   const [mensaje, setMensaje] = useState('');
   const [alumnosSeleccionados, setAlumnosSeleccionados] = useState([]);
 
-  const handleEventoChange = (eventoId) => {
+  const handleEventoChange = eventoId => {
     setEventoSeleccionado(eventoId);
     if (eventoId) {
       const alumnos = getAlumnosEjemploPorEvento(eventoId);
@@ -21,7 +22,7 @@ function ImportarAlumnosEvento({ eventos, onImportComplete }) {
     setAlumnosSeleccionados([]);
   };
 
-  const handleAlumnoToggle = (alumno) => {
+  const handleAlumnoToggle = alumno => {
     setAlumnosSeleccionados(prev => {
       const existe = prev.find(a => a.rut === alumno.rut);
       if (existe) {
@@ -50,39 +51,49 @@ function ImportarAlumnosEvento({ eventos, onImportComplete }) {
     setMensaje('');
 
     try {
-      const promises = alumnosSeleccionados.map(alumno =>
-        agregarAlumno({
-          nombres: alumno.nombres,
-          apellidos: alumno.apellidos,
-          nombre: `${alumno.nombres} ${alumno.apellidos}`.trim(),
-          rut: alumno.rut,
-          carrera: alumno.carrera,
-          institucion: alumno.institucion,
-          asiento: alumno.asiento,
-          grupo: alumno.grupo
-        }, eventoSeleccionado) // Pasar el eventoId
+      const promises = alumnosSeleccionados.map(
+        alumno =>
+          agregarAlumno(
+            {
+              nombres: alumno.nombres,
+              apellidos: alumno.apellidos,
+              nombre: `${alumno.nombres} ${alumno.apellidos}`.trim(),
+              rut: alumno.rut,
+              carrera: alumno.carrera,
+              institucion: alumno.institucion,
+              asiento: alumno.asiento,
+              grupo: alumno.grupo,
+            },
+            eventoSeleccionado
+          ) // Pasar el eventoId
       );
 
       await Promise.all(promises);
-      setMensaje(`${alumnosSeleccionados.length} alumnos importados correctamente`);
+      setMensaje(
+        `${alumnosSeleccionados.length} alumnos importados correctamente`
+      );
       setAlumnosSeleccionados([]);
       if (onImportComplete) onImportComplete();
     } catch (error) {
-      setMensaje('Error al importar alumnos: ' + error.message);
+      setMensaje(`Error al importar alumnos: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="w-full">
-      <h3 className="text-xl font-bold text-green-800 mb-4">Importar Alumnos desde Evento</h3>
+    <div className='w-full'>
+      <h3 className='text-xl font-bold text-green-800 mb-4'>
+        Importar Alumnos desde Evento
+      </h3>
 
       {/* Mensaje de estado */}
       {mensaje && (
         <motion.div
           className={`p-4 rounded-lg mb-4 ${
-            mensaje.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+            mensaje.includes('Error')
+              ? 'bg-red-100 text-red-700'
+              : 'bg-green-100 text-green-700'
           }`}
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -93,17 +104,17 @@ function ImportarAlumnosEvento({ eventos, onImportComplete }) {
       )}
 
       {/* Selector de evento */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className='mb-6'>
+        <label className='block text-sm font-medium text-gray-700 mb-2'>
           Seleccionar Evento
         </label>
         <select
           value={eventoSeleccionado}
-          onChange={(e) => handleEventoChange(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+          onChange={e => handleEventoChange(e.target.value)}
+          className='w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500'
         >
-          <option value="">Selecciona un evento</option>
-          {eventos.map((evento) => (
+          <option value=''>Selecciona un evento</option>
+          {eventos.map(evento => (
             <option key={evento.id} value={evento.id}>
               {evento.nombre}
             </option>
@@ -113,20 +124,22 @@ function ImportarAlumnosEvento({ eventos, onImportComplete }) {
 
       {/* Lista de alumnos del evento */}
       {eventoSeleccionado && alumnosEvento.length > 0 && (
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="text-lg font-semibold text-gray-800">
+        <div className='mb-6'>
+          <div className='flex justify-between items-center mb-4'>
+            <h4 className='text-lg font-semibold text-gray-800'>
               Alumnos del Evento ({alumnosEvento.length})
             </h4>
             <button
               onClick={handleSelectAll}
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
+              className='text-sm text-blue-600 hover:text-blue-800 underline'
             >
-              {alumnosSeleccionados.length === alumnosEvento.length ? 'Deseleccionar todo' : 'Seleccionar todo'}
+              {alumnosSeleccionados.length === alumnosEvento.length
+                ? 'Deseleccionar todo'
+                : 'Seleccionar todo'}
             </button>
           </div>
 
-          <div className="grid gap-2 max-h-96 overflow-y-auto">
+          <div className='grid gap-2 max-h-96 overflow-y-auto'>
             {alumnosEvento.map((alumno, index) => (
               <motion.div
                 key={alumno.rut}
@@ -140,24 +153,28 @@ function ImportarAlumnosEvento({ eventos, onImportComplete }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-3'>
                     <input
-                      type="checkbox"
-                      checked={alumnosSeleccionados.find(a => a.rut === alumno.rut) !== undefined}
+                      type='checkbox'
+                      checked={
+                        alumnosSeleccionados.find(a => a.rut === alumno.rut) !==
+                        undefined
+                      }
                       onChange={() => handleAlumnoToggle(alumno)}
-                      className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                      className='w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500'
                     />
                     <div>
-                      <div className="font-medium text-gray-900">
+                      <div className='font-medium text-gray-900'>
                         {alumno.nombres} {alumno.apellidos}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        RUT: {alumno.rut} | {alumno.carrera} | Grupo: {alumno.grupo}
+                      <div className='text-sm text-gray-500'>
+                        RUT: {alumno.rut} | {alumno.carrera} | Grupo:{' '}
+                        {alumno.grupo}
                       </div>
                     </div>
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className='text-sm text-gray-500'>
                     Asiento: {alumno.asiento}
                   </div>
                 </div>
@@ -169,20 +186,22 @@ function ImportarAlumnosEvento({ eventos, onImportComplete }) {
 
       {/* Botón de importar */}
       {alumnosSeleccionados.length > 0 && (
-        <div className="flex justify-end">
+        <div className='flex justify-end'>
           <button
             onClick={handleImportar}
             disabled={loading}
-            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className='bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed'
           >
-            {loading ? 'Importando...' : `Importar ${alumnosSeleccionados.length} alumno(s)`}
+            {loading
+              ? 'Importando...'
+              : `Importar ${alumnosSeleccionados.length} alumno(s)`}
           </button>
         </div>
       )}
 
       {/* Mensaje cuando no hay alumnos */}
       {eventoSeleccionado && alumnosEvento.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
+        <div className='text-center py-8 text-gray-500'>
           <p>No hay alumnos registrados para este evento.</p>
         </div>
       )}

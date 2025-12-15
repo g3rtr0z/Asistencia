@@ -18,9 +18,9 @@ export const validateRequired = (value, fieldName = 'Este campo') => {
  * @param {string} email - Email a validar
  * @returns {string|null} Mensaje de error o null si es válido
  */
-export const validateEmail = (email) => {
+export const validateEmail = email => {
   if (!email) return null;
-  
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return 'Email inválido';
@@ -33,9 +33,9 @@ export const validateEmail = (email) => {
  * @param {string} rut - RUT a validar
  * @returns {string|null} Mensaje de error o null si es válido
  */
-export const validateRutField = (rut) => {
+export const validateRutField = rut => {
   if (!rut) return null;
-  
+
   if (!validateRut(rut)) {
     return 'RUT inválido';
   }
@@ -49,9 +49,13 @@ export const validateRutField = (rut) => {
  * @param {string} fieldName - Nombre del campo
  * @returns {string|null} Mensaje de error o null si es válido
  */
-export const validateMinLength = (value, minLength, fieldName = 'Este campo') => {
+export const validateMinLength = (
+  value,
+  minLength,
+  fieldName = 'Este campo'
+) => {
   if (!value) return null;
-  
+
   if (value.length < minLength) {
     return `${fieldName} debe tener al menos ${minLength} caracteres`;
   }
@@ -65,9 +69,13 @@ export const validateMinLength = (value, minLength, fieldName = 'Este campo') =>
  * @param {string} fieldName - Nombre del campo
  * @returns {string|null} Mensaje de error o null si es válido
  */
-export const validateMaxLength = (value, maxLength, fieldName = 'Este campo') => {
+export const validateMaxLength = (
+  value,
+  maxLength,
+  fieldName = 'Este campo'
+) => {
   if (!value) return null;
-  
+
   if (value.length > maxLength) {
     return `${fieldName} debe tener máximo ${maxLength} caracteres`;
   }
@@ -79,14 +87,14 @@ export const validateMaxLength = (value, maxLength, fieldName = 'Este campo') =>
  * @param {string} phone - Teléfono a validar
  * @returns {string|null} Mensaje de error o null si es válido
  */
-export const validatePhone = (phone) => {
+export const validatePhone = phone => {
   if (!phone) return null;
-  
+
   const cleanPhone = phone.replace(/\D/g, '');
-  
+
   if (cleanPhone.length !== 9) {
     return 'El teléfono debe tener 9 dígitos';
   }
-  
+
   return null;
-}; 
+};

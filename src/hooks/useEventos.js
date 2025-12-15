@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { subscribeToEventos, subscribeToEventoActivo, crearEventosEjemplo } from '../services/eventosService';
+import {
+  subscribeToEventos,
+  subscribeToEventoActivo,
+  crearEventosEjemplo,
+} from '../services/eventosService';
 
 export default function useEventos() {
   const [eventos, setEventos] = useState([]);
@@ -18,11 +22,11 @@ export default function useEventos() {
 
         // Suscribirse a todos los eventos
         unsubscribeEventos = subscribeToEventos(
-          (eventosData) => {
+          eventosData => {
             setEventos(eventosData);
             setLoading(false);
           },
-          (error) => {
+          error => {
             console.error('Error en suscripción de eventos:', error);
             setError(error.message);
             setLoading(false);
@@ -31,10 +35,10 @@ export default function useEventos() {
 
         // Suscribirse al evento activo
         unsubscribeEventoActivo = subscribeToEventoActivo(
-          (eventoActivoData) => {
+          eventoActivoData => {
             setEventoActivo(eventoActivoData);
           },
-          (error) => {
+          error => {
             console.error('Error en suscripción de evento activo:', error);
             setError(error.message);
           }
@@ -62,6 +66,6 @@ export default function useEventos() {
     eventos,
     eventoActivo,
     loading,
-    error
+    error,
   };
 }
