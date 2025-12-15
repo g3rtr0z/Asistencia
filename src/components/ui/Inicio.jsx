@@ -8,6 +8,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { data: alumno, rut: string }
   const rutInputRef = useRef(null);
+  const scanTimeoutRef = useRef(null);
 
   // Auto-ocultar la asistencia realizada después de 30 segundos
   useEffect(() => {
@@ -22,26 +23,41 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
     }
   }, [result]);
 
+  // Limpiar timeout al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const formatRut = value => {
-    let clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
+    // Eliminar caracteres de control comunes del escáner (salto de línea, retorno de carro, tabs, etc.)
+    let clean = value
+      .replace(/[\r\n\t]/g, '') // Eliminar saltos de línea, retornos de carro y tabs
+      .trim() // Eliminar espacios al inicio y final
+      .replace(/[^0-9kK]/g, '') // Solo números y K
+      .toUpperCase();
+    // Limitar a 9 caracteres máximo (8 dígitos + 1 dígito verificador)
     clean = clean.slice(0, 9);
     return clean;
   };
 
   const handleSubmit = async e => {
     e.preventDefault();
-    setRut(''); // Limpia el campo RUT
-
-    // Vuelve a enfocar el input
-    if (rutInputRef.current) {
-      rutInputRef.current.focus();
-    }
-    if (!rut.trim()) {
+    
+    // Obtener el RUT del input directamente para evitar problemas de sincronización
+    const rutValue = formatRut(rutInputRef.current?.value || rut);
+    
+    if (!rutValue.trim()) {
       setErrorVisual('Por favor ingresa tu RUT');
       return;
     }
+    
     setLoading(true);
     setResult(null);
+    
     try {
       if (!eventoActivo?.id) {
         setErrorVisual('No hay un evento activo disponible.');
@@ -50,7 +66,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
       }
 
       const alumno = await buscarAlumnoPorRutEnEvento(
-        rut.trim(),
+        rutValue.trim(),
         eventoActivo.id
       );
       if (alumno && alumno.presente) {
@@ -58,9 +74,17 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
         setLoading(false);
         return;
       }
-      const res = await onLogin(rut.trim());
+      const res = await onLogin(rutValue.trim());
       if (res && res.nombre) {
-        setResult({ data: res, rut });
+        setResult({ data: res, rut: rutValue });
+      }
+      
+      // Limpiar el campo RUT después de procesar
+      setRut('');
+      
+      // Vuelve a enfocar el input para el siguiente escaneo
+      if (rutInputRef.current) {
+        rutInputRef.current.focus();
       }
     } catch (_error) {
       setErrorVisual('Error al procesar el login');
@@ -71,7 +95,48 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
 
   const handleKeyPress = e => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       handleSubmit(e);
+    }
+  };
+
+  // Manejar el evento de paste/escaneo automático
+  const handlePaste = e => {
+    e.preventDefault();
+    const pastedData = e.clipboardData?.getData('text') || '';
+    const formatted = formatRut(pastedData);
+    setRut(formatted);
+    // Si el RUT tiene 8 o 9 caracteres después del formato, enviar automáticamente
+    if (formatted.length >= 8) {
+      setTimeout(() => {
+        handleSubmit(e);
+      }, 100);
+    }
+  };
+
+  // Detectar cuando se ingresa texto rápidamente (típico de escáner)
+  const handleInput = e => {
+    const value = e.target.value;
+    const formatted = formatRut(value);
+    setRut(formatted);
+    
+    // Limpiar timeout anterior si existe
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+    }
+    
+    // Si el RUT tiene 8 o 9 caracteres y parece ser un escaneo completo, enviar automáticamente
+    // El escáner generalmente envía todos los caracteres de una vez, así que detectamos cuando
+    // el valor tiene la longitud correcta
+    if (formatted.length >= 8 && formatted.length <= 9) {
+      // Pequeño delay para asegurar que el escáner terminó de enviar datos
+      // y que no hay más caracteres pendientes
+      scanTimeoutRef.current = setTimeout(() => {
+        const currentValue = formatRut(rutInputRef.current?.value || '');
+        if (currentValue.length >= 8 && currentValue.length <= 9 && currentValue === formatted && !loading) {
+          handleSubmit(e);
+        }
+      }, 300);
     }
   };
 
@@ -124,11 +189,13 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
               type='text'
               value={rut}
               ref={rutInputRef}
-              onChange={e => setRut(formatRut(e.target.value))}
+              onChange={handleInput}
               onKeyPress={handleKeyPress}
+              onPaste={handlePaste}
               placeholder='Ingresa tu RUT'
               maxLength={13}
               disabled={!eventoActivo}
+              autoComplete='off'
               className={`min-w-[280px] h-12 text-base px-4 font-medium ${
                 !eventoActivo ? 'bg-gray-100 cursor-not-allowed' : ''
               }`}
