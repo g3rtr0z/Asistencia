@@ -34,6 +34,10 @@ const AlumnosLista = ({
   const [localRUT, setLocalRUT] = useState('');
   const [localInstitucion, setLocalInstitucion] = useState('');
   const [localGrupo, setLocalGrupo] = useState('');
+  const [localNumeroLista, setLocalNumeroLista] = useState('');
+  const [localAsiento, setLocalAsiento] = useState('');
+  const [localNombres, setLocalNombres] = useState('');
+  const [localApellidos, setLocalApellidos] = useState('');
 
   const carrera = filtroCarrera !== undefined ? filtroCarrera : localCarrera;
   const setCarrera = setFiltroCarrera || setLocalCarrera;
@@ -44,6 +48,14 @@ const AlumnosLista = ({
   const setRUT = setFiltroRUT || setLocalRUT;
   const grupo = filtroGrupo !== undefined ? filtroGrupo : localGrupo;
   const setGrupo = setFiltroGrupo || setLocalGrupo;
+  const numeroLista = localNumeroLista;
+  const setNumeroLista = setLocalNumeroLista;
+  const asiento = localAsiento;
+  const setAsiento = setLocalAsiento;
+  const nombres = localNombres;
+  const setNombres = setLocalNombres;
+  const apellidos = localApellidos;
+  const setApellidos = setLocalApellidos;
 
   const [ordenAlfabetico, setOrdenAlfabetico] = useState('asc');
   const [ordenCampo, setOrdenCampo] = useState('nombre');
@@ -55,6 +67,7 @@ const AlumnosLista = ({
       return {
         estado: true,
         grupo: false,
+        numeroLista: true, // Siempre mostrar N° de Lista
         asiento: false,
         nombres: true,
         apellidos: true,
@@ -66,6 +79,9 @@ const AlumnosLista = ({
 
     // Verificar si algún alumno tiene valor no nulo para cada campo
     const tieneGrupo = alumnos.some(a => a.grupo != null && a.grupo !== '');
+    const tieneNumeroLista = alumnos.some(
+      a => a.numeroLista != null && a.numeroLista !== ''
+    );
     const tieneAsiento = alumnos.some(
       a => a.asiento != null && a.asiento !== ''
     );
@@ -88,6 +104,7 @@ const AlumnosLista = ({
     return {
       estado: true,
       grupo: tieneGrupo,
+      numeroLista: true, // Siempre mostrar N° de Lista
       asiento: tieneAsiento,
       nombres: tieneNombres,
       apellidos: tieneApellidos,
@@ -101,6 +118,7 @@ const AlumnosLista = ({
   const [columnasVisibles, setColumnasVisibles] = useState({
     estado: true,
     grupo: true,
+    numeroLista: true,
     asiento: true,
     nombres: true,
     apellidos: true,
@@ -110,14 +128,17 @@ const AlumnosLista = ({
   });
 
   // Actualizar columnas visibles cuando cambian los datos de alumnos
-  // Ocultar automáticamente columnas que no tienen datos
+  // Ocultar automáticamente columnas que no tienen datos (excepto numeroLista que siempre se muestra)
   useEffect(() => {
     setColumnasVisibles(prev => {
       const nuevas = {};
 
       // Para cada columna, verificar si tiene datos
       Object.keys(columnasConDatos).forEach(columna => {
-        if (!columnasConDatos[columna]) {
+        // numeroLista siempre se muestra, incluso si no tiene datos
+        if (columna === 'numeroLista') {
+          nuevas[columna] = true; // Siempre visible
+        } else if (!columnasConDatos[columna]) {
           // Si no tiene datos, ocultarla automáticamente
           nuevas[columna] = false;
         } else {
@@ -150,6 +171,7 @@ const AlumnosLista = ({
     setColumnasVisibles({
       estado: true,
       grupo: true,
+      numeroLista: true,
       asiento: true,
       nombres: true,
       apellidos: true,
@@ -189,6 +211,35 @@ const AlumnosLista = ({
     return Array.from(set).sort((a, b) => a - b);
   }, [alumnos]);
 
+  // Obtener los números de lista únicos presentes en los alumnos
+  const numerosListaUnicos = useMemo(() => {
+    const set = new Set();
+    alumnos.forEach(a => {
+      if (a.numeroLista) set.add(a.numeroLista);
+    });
+    return Array.from(set).sort((a, b) => {
+      // Intentar ordenar numéricamente si es posible
+      const numA = Number(a);
+      const numB = Number(b);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return String(a).localeCompare(String(b));
+    });
+  }, [alumnos]);
+
+  // Obtener los asientos únicos presentes en los alumnos
+  const asientosUnicos = useMemo(() => {
+    const set = new Set();
+    alumnos.forEach(a => {
+      if (a.asiento) set.add(a.asiento);
+    });
+    return Array.from(set).sort((a, b) => {
+      const numA = Number(a);
+      const numB = Number(b);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return String(a).localeCompare(String(b));
+    });
+  }, [alumnos]);
+
   // Filtrado simplificado
   const alumnosFiltrados = useMemo(() => {
     return alumnos.filter(alumno => {
@@ -196,20 +247,31 @@ const AlumnosLista = ({
         !soloPresentes ||
         (soloPresentes === 'presentes' ? alumno.presente : !alumno.presente);
       const cumpleCarrera = !carrera || alumno.carrera === carrera;
-      const cumpleRut = !rut || alumno.rut.startsWith(rut);
+      const cumpleRut = !rut || alumno.rut.toLowerCase().includes(rut.toLowerCase());
       const cumpleInstitucion =
         !institucion || alumno.institucion === institucion;
-      const cumpleGrupo = !grupo || Number(alumno.grupo) === Number(grupo);
+      const cumpleGrupo = !grupo || String(alumno.grupo) === String(grupo);
+      const cumpleNumeroLista = !numeroLista || String(alumno.numeroLista) === String(numeroLista);
+      const cumpleAsiento = !asiento || String(alumno.asiento) === String(asiento);
+      const cumpleNombres = !nombres || 
+        (alumno.nombres && alumno.nombres.toLowerCase().includes(nombres.toLowerCase())) ||
+        (alumno.nombre && alumno.nombre.toLowerCase().includes(nombres.toLowerCase()));
+      const cumpleApellidos = !apellidos || 
+        (alumno.apellidos && alumno.apellidos.toLowerCase().includes(apellidos.toLowerCase()));
 
       return (
         cumplePresente &&
         cumpleCarrera &&
         cumpleRut &&
         cumpleInstitucion &&
-        cumpleGrupo
+        cumpleGrupo &&
+        cumpleNumeroLista &&
+        cumpleAsiento &&
+        cumpleNombres &&
+        cumpleApellidos
       );
     });
-  }, [alumnos, soloPresentes, carrera, rut, institucion, grupo]);
+  }, [alumnos, soloPresentes, carrera, rut, institucion, grupo, numeroLista, asiento, nombres, apellidos]);
 
   const alumnosOrdenados = useMemo(() => {
     return [...alumnosFiltrados].sort((a, b) => {
@@ -306,7 +368,7 @@ const AlumnosLista = ({
                     className='overflow-hidden'
                   >
                     <div className='p-3 border-t border-slate-200'>
-                      <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-2'>
+                      <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 mb-2'>
                         <div className='space-y-2'>
                           <label className='block text-sm font-medium text-slate-700'>
                             RUT
@@ -368,7 +430,7 @@ const AlumnosLista = ({
                         {columnasConDatos.grupo && (
                           <div className='space-y-2'>
                             <label className='block text-sm font-medium text-slate-700'>
-                              N° de Lista
+                              Grupo
                             </label>
                             <select
                               className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
@@ -382,6 +444,68 @@ const AlumnosLista = ({
                             </select>
                           </div>
                         )}
+
+                        {columnasConDatos.numeroLista && (
+                          <div className='space-y-2'>
+                            <label className='block text-sm font-medium text-slate-700'>
+                              N° de Lista
+                            </label>
+                            <select
+                              className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                              value={numeroLista}
+                              onChange={e => setNumeroLista(e.target.value)}
+                            >
+                              <option value=''>Todos</option>
+                              {numerosListaUnicos.map(num => (
+                                <option key={num} value={num}>{num}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        {columnasConDatos.asiento && (
+                          <div className='space-y-2'>
+                            <label className='block text-sm font-medium text-slate-700'>
+                              Asiento
+                            </label>
+                            <select
+                              className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                              value={asiento}
+                              onChange={e => setAsiento(e.target.value)}
+                            >
+                              <option value=''>Todos</option>
+                              {asientosUnicos.map(asi => (
+                                <option key={asi} value={asi}>{asi}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        <div className='space-y-2'>
+                          <label className='block text-sm font-medium text-slate-700'>
+                            Nombres
+                          </label>
+                          <input
+                            type='text'
+                            placeholder='Buscar nombres...'
+                            className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                            value={nombres}
+                            onChange={e => setNombres(e.target.value)}
+                          />
+                        </div>
+
+                        <div className='space-y-2'>
+                          <label className='block text-sm font-medium text-slate-700'>
+                            Apellidos
+                          </label>
+                          <input
+                            type='text'
+                            placeholder='Buscar apellidos...'
+                            className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                            value={apellidos}
+                            onChange={e => setApellidos(e.target.value)}
+                          />
+                        </div>
 
                         <div className='space-y-2'>
                           <label className='block text-sm font-medium text-slate-700'>
@@ -402,7 +526,8 @@ const AlumnosLista = ({
                             <option value=''>Configurar...</option>
                             {Object.entries({
                               estado: 'Estado',
-                              grupo: 'N° de Lista',
+                              grupo: 'Grupo',
+                              numeroLista: 'N° de Lista',
                               asiento: 'Asiento',
                               nombres: 'Nombres',
                               apellidos: 'Apellidos',
@@ -433,6 +558,10 @@ const AlumnosLista = ({
                             setInstitucion('');
                             setRUT('');
                             setGrupo('');
+                            setNumeroLista('');
+                            setAsiento('');
+                            setNombres('');
+                            setApellidos('');
                             if (setSoloPresentes) setSoloPresentes('');
                             mostrarTodasLasColumnas(); // Resetear columnas también
                           }}
@@ -482,14 +611,24 @@ const AlumnosLista = ({
                       Estado
                     </th>
                   )}
-                  {columnasVisibles.grupo && (
-                    <th className='py-4 px-4 text-left font-semibold w-32 whitespace-nowrap'>
-                      N° de Lista
+                  {columnasVisibles.rut && (
+                    <th className='py-4 px-4 text-left font-semibold w-32'>
+                      RUT
                     </th>
                   )}
                   {columnasVisibles.asiento && (
                     <th className='py-4 px-4 text-left font-semibold w-24'>
                       Asiento
+                    </th>
+                  )}
+                  {columnasVisibles.grupo && (
+                    <th className='py-4 px-4 text-left font-semibold w-32 whitespace-nowrap'>
+                      Grupo
+                    </th>
+                  )}
+                  {columnasVisibles.numeroLista && (
+                    <th className='py-4 px-4 text-left font-semibold w-32 whitespace-nowrap'>
+                      N° de Lista
                     </th>
                   )}
                   {columnasVisibles.nombres && (
@@ -545,11 +684,6 @@ const AlumnosLista = ({
                   {columnasVisibles.carrera && (
                     <th className='py-4 px-4 text-left font-semibold w-48'>
                       Carrera
-                    </th>
-                  )}
-                  {columnasVisibles.rut && (
-                    <th className='py-4 px-4 text-left font-semibold w-32'>
-                      RUT
                     </th>
                   )}
                   {columnasVisibles.institucion && (
@@ -612,6 +746,18 @@ const AlumnosLista = ({
                           )}
                         </td>
                       )}
+                      {columnasVisibles.rut && (
+                        <td className='py-4 px-4 font-mono text-slate-700 w-32'>
+                          {alumno.rut}
+                        </td>
+                      )}
+                      {columnasVisibles.asiento && (
+                        <td className='py-4 px-4 font-semibold text-slate-700 text-center w-24'>
+                          <span className='bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold'>
+                            {alumno.asiento ?? '-'}
+                          </span>
+                        </td>
+                      )}
                       {columnasVisibles.grupo && (
                         <td className='py-4 px-4 font-semibold text-slate-700 text-center w-32 whitespace-nowrap'>
                           <span className='bg-slate-200 text-slate-700 px-2 py-1 rounded-full text-xs font-bold'>
@@ -619,10 +765,10 @@ const AlumnosLista = ({
                           </span>
                         </td>
                       )}
-                      {columnasVisibles.asiento && (
-                        <td className='py-4 px-4 font-semibold text-slate-700 text-center w-24'>
-                          <span className='bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold'>
-                            {alumno.asiento ?? '-'}
+                      {columnasVisibles.numeroLista && (
+                        <td className='py-4 px-4 font-semibold text-slate-700 text-center w-32 whitespace-nowrap'>
+                          <span className='bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold'>
+                            {alumno.numeroLista ?? '-'}
                           </span>
                         </td>
                       )}
@@ -659,11 +805,6 @@ const AlumnosLista = ({
                           <div className='truncate' title={alumno.carrera}>
                             {alumno.carrera}
                           </div>
-                        </td>
-                      )}
-                      {columnasVisibles.rut && (
-                        <td className='py-4 px-4 font-mono text-slate-700 w-32'>
-                          {alumno.rut}
                         </td>
                       )}
                       {columnasVisibles.institucion && (

@@ -52,6 +52,7 @@ function mapFirestoreData(doc) {
     asiste: parseBooleanField(asisteValor) ?? false,
     asiento: data['asiento'] ?? null,
     grupo: data['grupo'] ?? null,
+    numeroLista: data['numeroLista'] ?? data['N° de Lista'] ?? data['N de Lista'] ?? data['numero de lista'] ?? data['nro de lista'] ?? null,
     fechaRegistro: data.fechaRegistro ?? null,
     ultimaActualizacion: data.ultimaActualizacion ?? null,
   };
@@ -407,6 +408,7 @@ export const agregarAlumno = async (alumno, eventoId) => {
       presente: alumno.presente ?? false,
       asiento: alumno.asiento ?? null,
       grupo: alumno.grupo ?? null,
+      numeroLista: alumno.numeroLista ?? null,
     });
     return docRef.id;
   } catch (error) {
@@ -575,12 +577,16 @@ export const importarAlumnosDesdeExcel = async (
         'nombre(s)',
         'name',
         'primer nombre',
+        'nombres del alumno',
+        'nombre del alumno',
       ]),
       apellidos: normalizarAlias([
         'apellidos',
         'apellido',
         'second name',
         'segundo nombre',
+        'apellidos del alumno',
+        'apellido del alumno',
       ]),
       nombreCompleto: normalizarAlias([
         'nombre completo',
@@ -592,6 +598,7 @@ export const importarAlumnosDesdeExcel = async (
       rut: normalizarAlias([
         'rut',
         'r.u.t',
+        'r.u.t.',
         'documento',
         'dni',
         'cedula',
@@ -601,21 +608,28 @@ export const importarAlumnosDesdeExcel = async (
         'identificación',
         'numero documento',
         'nro documento',
+        'numero de documento',
+        'nro de documento',
       ]),
       carrera: normalizarAlias([
         'carrera',
         'programa',
         'curso',
         'especialidad',
+        'carrera profesional',
+        'programa de estudios',
       ]),
       institucion: normalizarAlias([
         'institucion',
         'institución',
+        'institucion de origen',
+        'institución de origen',
         'sede',
         'universidad',
         'colegio',
         'centro',
         'instituto',
+        'casa de estudios',
       ]),
       asiento: normalizarAlias([
         'asiento',
@@ -628,13 +642,21 @@ export const importarAlumnosDesdeExcel = async (
         'grupo nro',
         'grupo numero',
         'group',
+      ]),
+      numeroLista: normalizarAlias([
         'n° de lista',
         'n de lista',
+        'n. de lista',
         'numero de lista',
         'nro de lista',
         'numero lista',
         'nro lista',
         'lista',
+        'n lista',
+        'num lista',
+        'numero de lista',
+        'n° lista',
+        'n lista',
       ]),
       estado: normalizarAlias([
         'estado',
@@ -743,6 +765,7 @@ export const importarAlumnosDesdeExcel = async (
         );
         const asiento = obtenerValorCampo(filaNormalizada, aliasCampos.asiento);
         const grupo = obtenerValorCampo(filaNormalizada, aliasCampos.grupo);
+        const numeroLista = obtenerValorCampo(filaNormalizada, aliasCampos.numeroLista);
         const estado = obtenerValorCampo(filaNormalizada, aliasCampos.estado);
         const presente = parseBooleanField(estado);
         const departamento = obtenerValorCampo(
@@ -792,6 +815,7 @@ export const importarAlumnosDesdeExcel = async (
               : institucionFinal || 'Sin definir',
             asiento: esEventoTrabajadores ? null : asiento,
             grupo: esEventoTrabajadores ? null : grupo,
+            numeroLista: esEventoTrabajadores ? null : numeroLista,
             presente: presente ?? false,
             departamento: esEventoTrabajadores ? departamentoFinal : null,
             observacion: esEventoTrabajadores ? (observacion ?? null) : null,

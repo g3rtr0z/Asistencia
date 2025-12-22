@@ -94,6 +94,9 @@ function ImportExcel({
                 <p className='text-blue-100 text-sm'>
                   Sube tu archivo Excel con los datos de alumnos
                 </p>
+                <p className='text-blue-50 text-xs mt-1'>
+                  Columnas esperadas: RUT, Asiento, Grupo, N° de Lista, Nombres, Apellidos, Carrera, Institución
+                </p>
               </div>
             </div>
             <motion.button
