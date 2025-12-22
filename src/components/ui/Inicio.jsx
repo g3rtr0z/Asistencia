@@ -273,15 +273,15 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo }) => {
                   );
                 }
 
-                const nombreMostrar =
+                // Combinar nombres y apellidos para mostrar el nombre completo
+                const nombreCompleto =
                   result.data.nombre ??
                   `${result.data.nombres ?? ''} ${result.data.apellidos ?? ''}`.trim();
                 return (
                   <>
-                    <InfoRow label='RUT' value={result.rut} />
-                    <InfoRow label='Nombre' value={nombreMostrar} />
+                    <InfoRow label='Nombre' value={nombreCompleto} />
                     <InfoRow label='Asiento' value={result.data.asiento} />
-                    <InfoRow label='N° de Lista' value={result.data.grupo} />
+                    <InfoRow label='Grupo' value={result.data.grupo} />
                     <InfoRow label='Carrera' value={result.data.carrera} />
                     <InfoRow
                       label='Institución'

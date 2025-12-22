@@ -104,7 +104,7 @@ const AlumnosLista = ({
     return {
       estado: true,
       grupo: tieneGrupo,
-      numeroLista: true, // Siempre mostrar N° de Lista
+      numeroLista: true, // SIEMPRE mostrar N° de Lista - no depende de datos
       asiento: tieneAsiento,
       nombres: tieneNombres,
       apellidos: tieneApellidos,
@@ -115,10 +115,11 @@ const AlumnosLista = ({
   }, [alumnos]);
 
   // Configuración de columnas visibles - inicializar basado en datos disponibles
+  // numeroLista SIEMPRE debe estar visible
   const [columnasVisibles, setColumnasVisibles] = useState({
     estado: true,
     grupo: true,
-    numeroLista: true,
+    numeroLista: true, // SIEMPRE visible
     asiento: true,
     nombres: true,
     apellidos: true,
@@ -131,13 +132,13 @@ const AlumnosLista = ({
   // Ocultar automáticamente columnas que no tienen datos (excepto numeroLista que siempre se muestra)
   useEffect(() => {
     setColumnasVisibles(prev => {
-      const nuevas = {};
+      const nuevas = { ...prev };
 
       // Para cada columna, verificar si tiene datos
       Object.keys(columnasConDatos).forEach(columna => {
         // numeroLista siempre se muestra, incluso si no tiene datos
         if (columna === 'numeroLista') {
-          nuevas[columna] = true; // Siempre visible
+          nuevas[columna] = true; // Siempre visible, forzar true
         } else if (!columnasConDatos[columna]) {
           // Si no tiene datos, ocultarla automáticamente
           nuevas[columna] = false;
@@ -146,6 +147,9 @@ const AlumnosLista = ({
           nuevas[columna] = prev[columna] !== undefined ? prev[columna] : true;
         }
       });
+
+      // Asegurar que numeroLista siempre esté visible
+      nuevas.numeroLista = true;
 
       return nuevas;
     });
@@ -161,6 +165,10 @@ const AlumnosLista = ({
   }
 
   function toggleColumna(columna) {
+    // No permitir ocultar numeroLista
+    if (columna === 'numeroLista') {
+      return;
+    }
     setColumnasVisibles(prev => ({
       ...prev,
       [columna]: !prev[columna],
@@ -626,11 +634,9 @@ const AlumnosLista = ({
                       Grupo
                     </th>
                   )}
-                  {columnasVisibles.numeroLista && (
-                    <th className='py-4 px-4 text-left font-semibold w-32 whitespace-nowrap'>
-                      N° de Lista
-                    </th>
-                  )}
+                  <th className='py-4 px-4 text-left font-semibold w-32 whitespace-nowrap'>
+                    N° de Lista
+                  </th>
                   {columnasVisibles.nombres && (
                     <th
                       className='py-4 px-4 text-left font-semibold cursor-pointer hover:bg-green-700 transition-colors w-40'
@@ -698,7 +704,8 @@ const AlumnosLista = ({
                   <tr>
                     <td
                       colSpan={
-                        Object.values(columnasVisibles).filter(Boolean).length
+                        // Contar todas las columnas visibles + numeroLista (que siempre está visible)
+                        Object.values(columnasVisibles).filter(Boolean).length + 1
                       }
                       className='py-12 text-center'
                     >
@@ -726,9 +733,15 @@ const AlumnosLista = ({
                     </td>
                   </tr>
                 ) : (
-                  alumnosOrdenados.map((alumno, idx) => (
+                  alumnosOrdenados.map((alumno, idx) => {
+                    // Crear una clave única: usar id si existe, sino combinar rut con índice
+                    const uniqueKey = alumno.id 
+                      ? `alumno-${alumno.id}` 
+                      : `alumno-${alumno.rut}-${idx}-${alumno.nombres || ''}-${alumno.apellidos || ''}`;
+                    
+                    return (
                     <tr
-                      key={alumno.rut}
+                      key={uniqueKey}
                       className={`${idx % 2 === 0 ? 'bg-slate-50' : 'bg-white'} hover:bg-green-50 transition-all duration-200 border-b border-slate-100`}
                     >
                       {columnasVisibles.estado && (
@@ -765,13 +778,13 @@ const AlumnosLista = ({
                           </span>
                         </td>
                       )}
-                      {columnasVisibles.numeroLista && (
-                        <td className='py-4 px-4 font-semibold text-slate-700 text-center w-32 whitespace-nowrap'>
-                          <span className='bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold'>
-                            {alumno.numeroLista ?? '-'}
-                          </span>
-                        </td>
-                      )}
+                      <td className='py-4 px-4 font-semibold text-slate-700 text-center w-32 whitespace-nowrap'>
+                        <span className='bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold'>
+                          {alumno.numeroLista != null && alumno.numeroLista !== '' 
+                            ? String(alumno.numeroLista) 
+                            : '-'}
+                        </span>
+                      </td>
                       {columnasVisibles.nombres && (
                         <td className='py-4 px-4 text-slate-800 font-medium w-40'>
                           <div
@@ -818,7 +831,8 @@ const AlumnosLista = ({
                         </td>
                       )}
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>

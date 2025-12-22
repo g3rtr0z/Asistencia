@@ -52,7 +52,16 @@ function mapFirestoreData(doc) {
     asiste: parseBooleanField(asisteValor) ?? false,
     asiento: data['asiento'] ?? null,
     grupo: data['grupo'] ?? null,
-    numeroLista: data['numeroLista'] ?? data['N° de Lista'] ?? data['N de Lista'] ?? data['numero de lista'] ?? data['nro de lista'] ?? null,
+    numeroLista: (() => {
+      const valor = data['numeroLista'] ?? 
+                    data['N° de Lista'] ?? 
+                    data['N de Lista'] ?? 
+                    data['numero de lista'] ?? 
+                    data['nro de lista'] ?? 
+                    data['N° de lista'] ?? 
+                    data['N de lista'];
+      return valor != null ? String(valor) : null;
+    })(),
     fechaRegistro: data.fechaRegistro ?? null,
     ultimaActualizacion: data.ultimaActualizacion ?? null,
   };
@@ -566,7 +575,9 @@ export const importarAlumnosDesdeExcel = async (
         .trim()
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+        .replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
+        .replace(/°/g, '') // Eliminar símbolo de grado
+        .replace(/[^\w\s]/g, ' '); // Reemplazar otros símbolos con espacio
 
     const normalizarAlias = lista => lista.map(normalizarClave);
 
@@ -644,19 +655,18 @@ export const importarAlumnosDesdeExcel = async (
         'group',
       ]),
       numeroLista: normalizarAlias([
-        'n° de lista',
-        'n de lista',
-        'n. de lista',
+        'numero de lista', // Prioridad: sin símbolo de grado
         'numero de lista',
         'nro de lista',
         'numero lista',
         'nro lista',
+        'n° de lista',
+        'n de lista',
+        'n. de lista',
         'lista',
         'n lista',
         'num lista',
-        'numero de lista',
         'n° lista',
-        'n lista',
       ]),
       estado: normalizarAlias([
         'estado',
@@ -765,7 +775,9 @@ export const importarAlumnosDesdeExcel = async (
         );
         const asiento = obtenerValorCampo(filaNormalizada, aliasCampos.asiento);
         const grupo = obtenerValorCampo(filaNormalizada, aliasCampos.grupo);
-        const numeroLista = obtenerValorCampo(filaNormalizada, aliasCampos.numeroLista);
+        const numeroListaRaw = obtenerValorCampo(filaNormalizada, aliasCampos.numeroLista);
+        // Convertir numeroLista a string si existe
+        const numeroLista = numeroListaRaw != null ? String(numeroListaRaw).trim() : null;
         const estado = obtenerValorCampo(filaNormalizada, aliasCampos.estado);
         const presente = parseBooleanField(estado);
         const departamento = obtenerValorCampo(
