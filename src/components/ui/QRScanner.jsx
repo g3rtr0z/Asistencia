@@ -19,10 +19,22 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                     fps: 10,
                     qrbox: { width: 250, height: 250 },
                     aspectRatio: 1.0,
+                    disableFlip: false,
+                    videoConstraints: {
+                        facingMode: "environment",
+                        focusMode: "continuous",
+                        advanced: [{ zoom: 2.0 }]
+                    }
                 };
 
                 await html5QrCode.start(
-                    { facingMode: "environment" },
+                    {
+                        facingMode: "environment",
+                        advanced: [
+                            { focusMode: "continuous" },
+                            { focusMode: "auto" }
+                        ]
+                    },
                     config,
                     (decodedText) => {
                         // Parse Chilean ID QR code
