@@ -9,6 +9,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
   const rutInputRef = useRef(null);
   const scanTimeoutRef = useRef(null);
 
@@ -270,15 +271,8 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                   </button>
                 </form>
 
-                {/* Mobile Footer inside form area */}
-                <div className="mt-8 pt-6 border-t border-slate-100 text-center md:hidden">
-                  <p className='text-[10px] text-slate-400'>
-                    Departamento de Informática · Santo Tomás Temuco
-                  </p>
-                  <p className='text-[10px] text-slate-300 mt-1 uppercase tracking-wider'>
-                    Desarrollado por Gerson Uziel Valdebenito
-                  </p>
-                </div>
+                {/* Mobile Footer inside form area - removed, now using floating button */}
+
               </motion.div>
             ) : (
               <motion.div
@@ -316,14 +310,14 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                   ) : (
                     <>
                       <InfoRow
-                        label="Nombre"
+                        label="Nombre Completo"
                         value={result.data.nombre ?? `${result.data.nombres ?? ''} ${result.data.apellidos ?? ''}`}
                         highlight
                       />
                       <InfoRow label="RUT" value={result.rut} />
-                      <div className='pt-2 mt-2 border-t border-slate-200'>
-                        <InfoRow label="Carrera" value={result.data.carrera} border={false} />
-                      </div>
+                      <InfoRow label="Carrera" value={result.data.carrera} />
+                      <InfoRow label="Grupo" value={result.data.grupo || 'No asignado'} />
+                      <InfoRow label="Asiento" value={result.data.asiento || 'No asignado'} border={false} />
                     </>
                   )}
                 </div>
@@ -366,14 +360,17 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
         </div>
       </div>
 
-      {/* Footer minimal desktop */}
-      <div className='fixed bottom-4 text-center w-full pointer-events-none opacity-50 hidden md:block'>
-        <p className='text-[10px] text-slate-400'>
-          Departamento de Informática · Santo Tomás Temuco
-        </p>
-        <p className='text-[10px] text-slate-300 mt-1 uppercase tracking-wider'>
-          Desarrollado por Gerson Uziel Valdebenito
-        </p>
+      {/* Footer info button - bottom right on all screens */}
+      <div className='fixed bottom-4 right-4 z-40'>
+        <button
+          onClick={() => setShowCredits(true)}
+          className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm hover:shadow-md text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center"
+          title="Información del sistema"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+        </button>
       </div>
 
       {/* QR Scanner Modal */}
@@ -382,6 +379,57 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
         onClose={() => setShowScanner(false)}
         onScan={handleQRScan}
       />
+
+      {/* Credits Modal */}
+      <AnimatePresence>
+        {showCredits && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowCredits(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-800">Información del Sistema</h3>
+                <button
+                  onClick={() => setShowCredits(false)}
+                  className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-slate-600">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Departamento</p>
+                  <p className="text-sm font-medium text-slate-800">Departamento de Informática</p>
+                  <p className="text-sm text-slate-600">Santo Tomás Temuco</p>
+                </div>
+
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Desarrollador</p>
+                  <p className="text-sm font-medium text-slate-800">Gerson Uziel Valdebenito</p>
+                </div>
+
+                <div className="text-center pt-2">
+                  <p className="text-xs text-slate-400">Sistema de Gestión de Asistencia</p>
+                  <p className="text-xs text-slate-300 mt-1">Versión 2.0 · 2026</p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
