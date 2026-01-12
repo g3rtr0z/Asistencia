@@ -178,15 +178,18 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3, type: "spring", stiffness: 100 }}
-                className="fixed md:absolute top-4 left-4 md:top-10 md:left-8 z-50 max-w-xs md:max-w-sm"
+                className="fixed md:absolute top-4 left-4 right-24 md:right-auto md:top-10 md:left-8 z-50 md:max-w-sm"
               >
-                <div className='bg-red-50 border-l-4 border-red-500 p-3 md:p-4 rounded-lg flex items-start gap-2 md:gap-3 shadow-lg'>
-                  <div className='w-4 h-4 md:w-5 md:h-5 rounded-full bg-red-500 flex items-center justify-center shrink-0 mt-0.5'>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" className="w-2.5 h-2.5 md:w-3 md:h-3">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-                    </svg>
+                <div className='bg-red-50 border-l-4 border-red-500 p-2 md:p-4 rounded-lg shadow-lg'>
+                  {/* Horizontal layout on all screen sizes */}
+                  <div className='flex flex-row items-center gap-2 md:gap-3'>
+                    <div className='w-5 h-5 md:w-5 md:h-5 rounded-full bg-red-500 flex items-center justify-center shrink-0'>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" className="w-3 h-3 md:w-3 md:h-3">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className='text-xs md:text-sm font-medium text-red-800 text-left flex-1'>{errorVisual}</p>
                   </div>
-                  <p className='text-xs md:text-sm font-medium text-red-800 flex-1'>{errorVisual}</p>
                 </div>
               </motion.div>
             )}
@@ -217,7 +220,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
 
             <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block"></div>
 
-            <img src={Logo} alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain opacity-50 grayscale hover:grayscale-0 transition-all duration-500 hidden md:block" />
+            <img src={Logo} alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain opacity-90 hover:opacity-100 transition-all duration-500 hidden md:block" />
           </div>
 
           <AnimatePresence mode='wait'>
