@@ -9,6 +9,7 @@ import {
 } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
+import { Alert } from './components/ui/Alert';
 import { actualizarPresencia } from './services/alumnosService';
 import useAlumnosEvento from './hooks/useAlumnosEvento';
 import useEventos from './hooks/useEventos';
@@ -297,45 +298,7 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* Alerta de errorVisual en la esquina superior izquierda */}
-      <AnimatePresence>
-        {errorVisual && (
-          <motion.div
-            className='fixed top-6 left-2 sm:top-6 sm:left-6 sm:max-w-md z-50 flex items-center'
-            initial={{ opacity: 0, x: -40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.3 }}
-            key='errorVisual'
-          >
-            <div
-              role='alert'
-              className='bg-white border border-red-100 p-5 max-w-md mx-auto rounded-2xl shadow-xl shadow-red-900/10'
-            >
-              <div className='flex items-start gap-3'>
-                <div className='w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0'>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    viewBox='0 0 24 24'
-                    fill='currentColor'
-                    className='w-5 h-5 text-red-600'
-                  >
-                    <path
-                      fillRule='evenodd'
-                      d='M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z'
-                      clipRule='evenodd'
-                    />
-                  </svg>
-                </div>
-                <div className='flex-1'>
-                  <p className='font-bold text-slate-800 mb-1'>Atención</p>
-                  <p className='text-sm text-slate-600'>{errorVisual}</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       <main
         className={`flex-1 flex flex-col w-full ${location.pathname === '/panel'
@@ -366,6 +329,7 @@ function App() {
                       className='w-full'
                       onLogin={handleLogin}
                       setErrorVisual={setErrorVisual}
+                      errorVisual={errorVisual}
                       eventoActivo={eventoActivo}
                       onInfoClick={() => setShowAlumnosModal(true)}
                       onAdminClick={handleAdminClick}

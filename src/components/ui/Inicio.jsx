@@ -4,7 +4,7 @@ import { buscarAlumnoPorRutEnEvento } from '../../services/alumnosService';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRScanner from './QRScanner';
 
-const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminClick }) => {
+const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminClick, errorVisual }) => {
   const [rut, setRut] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -170,6 +170,28 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
         {/* Right Section - Form */}
         <div className='md:w-7/12 p-6 md:p-16 flex flex-col justify-center bg-white relative'>
 
+          {/* Error Message - Fixed top on mobile, absolute on desktop */}
+          <AnimatePresence>
+            {errorVisual && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, type: "spring", stiffness: 100 }}
+                className="fixed md:absolute top-4 left-4 md:top-10 md:left-8 z-50 max-w-xs md:max-w-sm"
+              >
+                <div className='bg-red-50 border-l-4 border-red-500 p-3 md:p-4 rounded-lg flex items-start gap-2 md:gap-3 shadow-lg'>
+                  <div className='w-4 h-4 md:w-5 md:h-5 rounded-full bg-red-500 flex items-center justify-center shrink-0 mt-0.5'>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" className="w-2.5 h-2.5 md:w-3 md:h-3">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <p className='text-xs md:text-sm font-medium text-red-800 flex-1'>{errorVisual}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className='absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-3 md:gap-4'>
             {/* Info Button */}
             <button
@@ -206,7 +228,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
-                className='max-w-md mx-auto w-full md:mt-0'
+                className='max-w-md mx-auto w-full md:mt-0 relative'
               >
                 <h2 className='text-2xl md:text-3xl font-bold text-slate-800 mb-2'>Registra tu llegada</h2>
                 <p className='text-slate-500 mb-6 md:mb-8 text-sm md:text-base'>Ingresa tu RUT para confirmar tu asistencia.</p>
@@ -223,7 +245,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                         value={rut}
                         onChange={handleInput}
                         placeholder='12345678K'
-                        className={`w-full h-14 md:h-16 px-5 md:px-6 pr-24 bg-slate-50 border-2 rounded-2xl text-xl md:text-2xl font-bold tracking-wider text-slate-800 outline-none transition-all duration-300
+                        className={`w-full h-14 md:h-16 px-5 md:px-6 pr-24 bg-slate-50 border-2 rounded-2xl text-base md:text-2xl font-bold tracking-wider text-slate-800 outline-none transition-all duration-300
                             ${!eventoActivo
                             ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
                             : 'border-slate-200 focus:border-st-verde focus:bg-white focus:shadow-xl'
@@ -271,7 +293,9 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                   </button>
                 </form>
 
+
                 {/* Mobile Footer inside form area - removed, now using floating button */}
+
 
               </motion.div>
             ) : (
