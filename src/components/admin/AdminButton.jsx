@@ -3,10 +3,9 @@ import React from 'react';
 function AdminButton({ onClick }) {
   return (
     <button
-      className='fixed top-8 right-4 z-50 bg-green-800 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-400 flex items-center justify-center'
+      className='w-12 h-12 rounded-xl bg-white text-slate-400 border border-slate-200 shadow-sm hover:text-st-verde hover:border-st-verde/30 hover:shadow-md transition-all duration-300 flex items-center justify-center'
       title='Entrar como Administrador'
       onClick={onClick}
-      style={{ transition: 'background 0.2s' }}
     >
       <svg
         xmlns='http://www.w3.org/2000/svg'
@@ -14,7 +13,7 @@ function AdminButton({ onClick }) {
         viewBox='0 0 24 24'
         strokeWidth={1.5}
         stroke='currentColor'
-        className='w-8 h-8'
+        className='w-6 h-6'
       >
         <path
           strokeLinecap='round'

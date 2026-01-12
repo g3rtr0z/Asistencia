@@ -16,8 +16,6 @@ import { Inicio, Footer } from './components/ui';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminPanel from './components/admin/AdminPanel';
 import AlumnosLista from './components/alumnos/AlumnosLista';
-import AdminButton from './components/admin/AdminButton';
-import EventoActivoMinimalista from './components/eventos/EventoActivoMinimalista';
 import EstadisticasPanel from './components/alumnos/EstadisticasPanel';
 import TrabajadoresLista from './components/trabajadores/TrabajadoresLista';
 import TrabajadoresResumen from './components/trabajadores/TrabajadoresResumen';
@@ -223,47 +221,7 @@ function App() {
 
   return (
     <div className={getContainerClasses()}>
-      <AnimatePresence mode='wait'>
-        {location.pathname === '/' && (
-          <motion.div
-            key='botones-inicio'
-            className='fixed top-8 right-4 z-50 flex flex-row items-center space-x-14'
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {/* Icono de información */}
-            <button
-              className='bg-blue-600 text-white w-12 h-12 p-3 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center'
-              title='Ver lista de asistentes'
-              style={{ transition: 'background 0.2s' }}
-              onClick={() => setShowAlumnosModal(true)}
-            >
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                fill='none'
-                viewBox='0 0 24 24'
-                strokeWidth={1.5}
-                stroke='currentColor'
-                className='w-8 h-8'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='M13.5 6.75v.75m0 3v.75m0 3v.75m0 3v.75m-3-12h6a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0116.5 21h-9A2.25 2.25 0 015.25 18.75V5.25A2.25 2.25 0 017.5 3h3z'
-                />
-              </svg>
-            </button>
-            <AdminButton onClick={handleAdminClick} />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* Evento activo minimalista - solo en la página principal */}
-      {location.pathname === '/' && (
-        <EventoActivoMinimalista eventoActivo={eventoActivo} />
-      )}
 
       <AnimatePresence>
         {showAlumnosModal && (
@@ -376,18 +334,16 @@ function App() {
       </AnimatePresence>
 
       <main
-        className={`flex-1 flex flex-col w-full ${
-          location.pathname === '/panel'
-            ? ''
-            : location.pathname === '/admin'
-              ? 'items-center justify-center min-h-screen'
-              : 'min-h-screen flex items-center justify-center px-2'
-        }`}
+        className={`flex-1 flex flex-col w-full ${location.pathname === '/panel'
+          ? ''
+          : location.pathname === '/admin'
+            ? 'items-center justify-center min-h-screen'
+            : 'min-h-screen flex items-center justify-center px-2'
+          }`}
       >
         <div
-          className={`w-full flex flex-col ${
-            location.pathname === '/panel' ? '' : 'items-center justify-center'
-          }`}
+          className={`w-full flex flex-col ${location.pathname === '/panel' ? '' : 'items-center justify-center'
+            }`}
         >
           <AnimatePresence mode='wait'>
             <Routes location={location} key={location.pathname}>
@@ -407,6 +363,8 @@ function App() {
                       onLogin={handleLogin}
                       setErrorVisual={setErrorVisual}
                       eventoActivo={eventoActivo}
+                      onInfoClick={() => setShowAlumnosModal(true)}
+                      onAdminClick={handleAdminClick}
                     />
                   </motion.div>
                 }
@@ -458,7 +416,7 @@ function App() {
         </div>
       </main>
       {!location.pathname.startsWith('/admin') &&
-        location.pathname !== '/panel' && <Footer />}
+        location.pathname !== '/panel' && null}
     </div>
   );
 }
