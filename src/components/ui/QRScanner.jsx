@@ -2,26 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Add focus ring animation
-const focusRingStyle = document.createElement('style');
-focusRingStyle.textContent = `
-  @keyframes focusPulse {
-    0% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    100% {
-      transform: scale(1.3);
-      opacity: 0;
-    }
-  }
-`;
-if (typeof document !== 'undefined' && !document.querySelector('#focus-ring-style')) {
-    focusRingStyle.id = 'focus-ring-style';
-    document.head.appendChild(focusRingStyle);
-}
-
-
 const QRScanner = ({ isOpen, onClose, onScan }) => {
     const scannerRef = useRef(null);
     const html5QrCodeRef = useRef(null);
@@ -45,10 +25,7 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
 
                 await html5QrCode.start(
                     {
-                        facingMode: "environment",
-                        // Force main camera lens on iPhone (not ultra-wide)
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+                        facingMode: "environment"
                     },
                     config,
                     (decodedText) => {
@@ -83,109 +60,87 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                             videoTrackRef.current = videoTrack;
 
                             const capabilities = videoTrack.getCapabilities();
-                            const constraints = { advanced: [] };
 
                             // Apply focus mode if supported
                             if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-                                constraints.advanced.push({ focusMode: 'continuous' });
+                                await videoTrack.applyConstraints({
+                                    advanced: [{ focusMode: 'continuous' }]
+                                });
                             }
 
-                            // Apply zoom if supported (helps with small QR codes)
+                            // Apply zoom if supported
                             if (capabilities.zoom) {
                                 const maxZoom = capabilities.zoom.max;
-                                const optimalZoom = Math.min(1.5, maxZoom);
-                                constraints.advanced.push({ zoom: optimalZoom });
-                            }
+                                const minZoom = capabilities.zoom.min;
+                                const optimalZoom = Math.min(2.0, maxZoom);
 
-                            // Enable torch/flash if available (helps in low light)
-                            if (capabilities.torch) {
-                                constraints.advanced.push({ torch: true });
-                            }
-
-                            // Apply all constraints at once
-                            if (constraints.advanced.length > 0) {
-                                await videoTrack.applyConstraints(constraints);
+                                await videoTrack.applyConstraints({
+                                    advanced: [{ zoom: optimalZoom }]
+                                });
                             }
 
                             // Add tap-to-focus functionality
                             const handleTapToFocus = async (e) => {
                                 e.preventDefault();
                                 try {
-                                    const track = videoTrackRef.current;
-                                    if (!track) return;
+                                    const rect = videoElement.getBoundingClientRect();
+                                    const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+                                    const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
 
-                                    const caps = track.getCapabilities();
+                                    // Normalize coordinates to 0-1 range
+                                    const normalizedX = x / rect.width;
+                                    const normalizedY = y / rect.height;
 
-                                    // Try to trigger manual focus
-                                    if (caps.focusMode) {
-                                        // First switch to manual/single-shot mode
-                                        if (caps.focusMode.includes('single-shot')) {
-                                            await track.applyConstraints({
-                                                advanced: [{ focusMode: 'single-shot' }]
+                                    // Try to apply manual focus at the touch point
+                                    if (capabilities.focusMode && capabilities.focusMode.includes('manual')) {
+                                        await videoTrack.applyConstraints({
+                                            advanced: [{
+                                                focusMode: 'manual',
+                                                pointsOfInterest: [{ x: normalizedX, y: normalizedY }]
+                                            }]
+                                        });
+
+                                        // Return to continuous focus after 2 seconds
+                                        setTimeout(async () => {
+                                            try {
+                                                await videoTrack.applyConstraints({
+                                                    advanced: [{ focusMode: 'continuous' }]
+                                                });
+                                            } catch (err) {
+                                                console.log('Could not return to continuous focus');
+                                            }
+                                        }, 2000);
+                                    } else {
+                                        // Fallback: toggle between auto and continuous to trigger refocus
+                                        await videoTrack.applyConstraints({
+                                            advanced: [{ focusMode: 'auto' }]
+                                        });
+                                        setTimeout(async () => {
+                                            await videoTrack.applyConstraints({
+                                                advanced: [{ focusMode: 'continuous' }]
                                             });
-
-                                            // Wait a bit then switch back to continuous
-                                            setTimeout(async () => {
-                                                try {
-                                                    if (caps.focusMode.includes('continuous')) {
-                                                        await track.applyConstraints({
-                                                            advanced: [{ focusMode: 'continuous' }]
-                                                        });
-                                                    }
-                                                } catch (err) {
-                                                    console.log('Could not switch back to continuous focus:', err);
-                                                }
-                                            }, 1000);
-                                        } else if (caps.focusMode.includes('manual')) {
-                                            // Toggle manual focus to trigger refocus
-                                            await track.applyConstraints({
-                                                advanced: [{ focusMode: 'manual' }]
-                                            });
-                                            setTimeout(async () => {
-                                                try {
-                                                    if (caps.focusMode.includes('continuous')) {
-                                                        await track.applyConstraints({
-                                                            advanced: [{ focusMode: 'continuous' }]
-                                                        });
-                                                    }
-                                                } catch (err) {
-                                                    console.log('Could not switch back to continuous focus:', err);
-                                                }
-                                            }, 1000);
-                                        }
+                                        }, 100);
                                     }
 
                                     // Visual feedback
-                                    const rect = videoElement.getBoundingClientRect();
-                                    const x = e.clientX || (e.touches && e.touches[0].clientX);
-                                    const y = e.clientY || (e.touches && e.touches[0].clientY);
-
-                                    if (x && y) {
-                                        const focusRing = document.createElement('div');
-                                        focusRing.style.cssText = `
-                                            position: fixed;
-                                            left: ${x - 40}px;
-                                            top: ${y - 40}px;
-                                            width: 80px;
-                                            height: 80px;
-                                            border: 2px solid #10b981;
-                                            border-radius: 50%;
-                                            pointer-events: none;
-                                            z-index: 9999;
-                                            animation: focusPulse 0.6s ease-out;
-                                        `;
-                                        document.body.appendChild(focusRing);
-                                        setTimeout(() => focusRing.remove(), 600);
-                                    }
+                                    videoElement.style.filter = 'brightness(1.2)';
+                                    setTimeout(() => {
+                                        videoElement.style.filter = 'brightness(1)';
+                                    }, 200);
                                 } catch (err) {
                                     console.log('Tap to focus error:', err);
                                 }
                             };
 
-                            // Add event listeners for tap-to-focus
+                            // Add event listeners for both touch and click
                             videoElement.addEventListener('touchstart', handleTapToFocus);
                             videoElement.addEventListener('click', handleTapToFocus);
-                            videoElement.style.cursor = 'pointer';
+
+                            // Store cleanup function
+                            videoElement._focusCleanup = () => {
+                                videoElement.removeEventListener('touchstart', handleTapToFocus);
+                                videoElement.removeEventListener('click', handleTapToFocus);
+                            };
                         }
                     } catch (err) {
                         console.log('Could not apply advanced camera settings:', err);
@@ -199,6 +154,12 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
         };
 
         const stopScanner = async () => {
+            // Clean up tap-to-focus listeners
+            const videoElement = document.querySelector('#qr-reader video');
+            if (videoElement && videoElement._focusCleanup) {
+                videoElement._focusCleanup();
+            }
+
             if (html5QrCodeRef.current) {
                 try {
                     await html5QrCodeRef.current.stop();
@@ -263,8 +224,9 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
 
                     <p className="text-xs text-slate-500 text-center">
                         Apunta la cámara al código QR de tu carnet
-                        <br />
-                        <span className="text-st-verde font-medium">Toca la pantalla para enfocar</span>
+                    </p>
+                    <p className="text-xs text-slate-400 text-center mt-1">
+                        💡 Toca la pantalla para enfocar manualmente
                     </p>
                 </motion.div>
             </motion.div>
