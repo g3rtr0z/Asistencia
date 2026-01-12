@@ -3,6 +3,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../connection/firebase';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import Logo from '../../assets/logo3.png';
 
 function AdminLogin({ onAuth, onSalir }) {
   const [email, setEmail] = useState('');
@@ -25,139 +26,86 @@ function AdminLogin({ onAuth, onSalir }) {
   };
 
   return (
-    <div className='min-h-screen w-full bg-white flex items-center justify-center'>
-      <div className='w-full max-w-xs sm:max-w-sm mx-auto '>
+    <div className='min-h-screen w-full bg-st-verde flex items-center justify-center p-4 relative overflow-hidden'>
+      {/* Background Decor - Subtle */}
+      <div className='absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none'>
+        <div className='absolute -top-[20%] -right-[20%] w-[80%] h-[80%] bg-white/5 rounded-full blur-3xl'></div>
+        <div className='absolute bottom-[10%] left-[10%] w-[30%] h-[30%] bg-black/10 rounded-full blur-3xl'></div>
+      </div>
+
+      <div className='w-full max-w-sm mx-auto relative z-10'>
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.5, ease: "outCirc" }}
         >
-          {/* Card de login */}
-          <div className='bg-white border border-slate-200 rounded-lg p-6 sm:p-8 md:p-10 shadow-sm'>
+          {/* Card de login - Ultra Clean */}
+          <div className='bg-white rounded-3xl p-8 md:p-10 shadow-2xl shadow-green-900/50 border border-white/20'>
             {/* Header */}
-            <div className='flex items-center gap-2 mb-6'>
-              <div className='w-3 h-3 bg-green-800 rounded-full'></div>
-              <h2 className='text-lg font-semibold text-slate-800'>
-                Acceso Administrador
+            <div className='flex flex-col items-center mb-10'>
+              <img src={Logo} alt="Santo Tomás" className="h-12 object-contain mb-6" />
+              <h2 className='text-xl font-bold text-slate-800 text-center tracking-tight'>
+                Administración
               </h2>
             </div>
 
             {/* Formulario */}
-            <form onSubmit={handleSubmit} className='space-y-6'>
-              <div>
-                <label className='block text-sm font-medium text-slate-700 mb-2'>
-                  Correo electrónico
-                </label>
+            <form onSubmit={handleSubmit} className='flex flex-col gap-5'>
+              <div className='space-y-1.5'>
                 <input
                   type='email'
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder='correo@institucion.cl'
-                  className='w-full px-4 py-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm'
+                  placeholder='nombre@institucion.cl'
+                  className='w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-st-verde/50 text-slate-700 placeholder:text-slate-400 font-medium transition-all text-sm'
                   autoComplete='username'
                 />
               </div>
 
-              <div>
-                <label className='block text-sm font-medium text-slate-700 mb-2'>
-                  Contraseña
-                </label>
+              <div className='space-y-1.5'>
                 <input
                   type='password'
                   value={pass}
                   onChange={e => setPass(e.target.value)}
                   placeholder='Contraseña'
-                  className='w-full px-4 py-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm'
+                  className='w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-st-verde/50 text-slate-700 placeholder:text-slate-400 font-medium transition-all text-sm'
                   autoComplete='current-password'
                 />
               </div>
 
               {error && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className='bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2'
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className='text-red-600 text-xs font-medium text-center bg-red-50 py-2 rounded-lg'
                 >
-                  <svg
-                    className='w-4 h-4 text-red-500 flex-shrink-0'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                    />
-                  </svg>
-                  <span className='text-red-700 text-sm'>{error}</span>
+                  {error}
                 </motion.div>
               )}
 
-              <div className='flex gap-3 pt-4'>
+              <div className='flex flex-col gap-3 pt-4'>
                 <motion.button
                   type='submit'
                   disabled={loading || !email.trim() || !pass.trim()}
-                  className={`flex-1 py-4 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm ${
-                    loading || !email.trim() || !pass.trim()
+                  className={`w-full py-3.5 px-4 rounded-xl font-bold transition-all duration-200 ${loading || !email.trim() || !pass.trim()
                       ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                      : 'bg-green-800 hover:bg-green-700 text-white'
-                  }`}
-                  whileHover={
-                    !loading && email.trim() && pass.trim()
-                      ? { scale: 1.02 }
-                      : {}
-                  }
-                  whileTap={
-                    !loading && email.trim() && pass.trim()
-                      ? { scale: 0.98 }
-                      : {}
-                  }
+                      : 'bg-st-verde hover:bg-[#004b30] text-white shadow-lg shadow-green-900/20'
+                    }`}
+                  whileHover={!loading && email.trim() && pass.trim() ? { scale: 1.01 } : {}}
+                  whileTap={!loading && email.trim() && pass.trim() ? { scale: 0.99 } : {}}
                 >
-                  {loading ? (
-                    <>
-                      <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white'></div>
-                      <span>Ingresando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className='w-4 h-4'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z'
-                        />
-                      </svg>
-                      <span>Ingresar</span>
-                    </>
-                  )}
+                  {loading ? 'Ingresando...' : 'Iniciar Sesión'}
                 </motion.button>
-                <motion.button
+
+                <button
                   type='button'
-                  className='flex-1 py-4 px-4 text-green-800 text-sm hover:text-green-900 transition-colors border border-slate-300 rounded-lg hover:bg-green-50'
                   onClick={onSalir}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  className='w-full py-3 text-slate-400 hover:text-slate-600 font-medium text-xs transition-colors'
                 >
-                  Cancelar
-                </motion.button>
+                  Volver al inicio
+                </button>
               </div>
             </form>
-          </div>
-
-          {/* Footer */}
-          <div className='text-center mt-6 space-y-1'>
-            <p className='text-xs text-slate-500'>Versión 1.0</p>
-            <p className='text-xs text-slate-500'>
-              Departamento de Informática Santo Tomas Temuco 2025
-            </p>
           </div>
         </motion.div>
       </div>

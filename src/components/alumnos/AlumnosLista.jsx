@@ -209,15 +209,24 @@ const AlumnosLista = ({
     });
   }
 
-  // Generar opciones dinámicamente desde los datos
+  // 1. Filtrar base de alumnos para las opciones
+  // Si está marcado "soloPresentes", las opciones solo deben mostrar datos de alumnos presentes.
+  const alumnosParaOpciones = useMemo(() => {
+    if (!soloPresentes) return alumnos;
+    return alumnos.filter(alumno =>
+      soloPresentes === 'presentes' ? alumno.presente : !alumno.presente
+    );
+  }, [alumnos, soloPresentes]);
+
+  // Generar opciones dinámicamente desde los datos (usando la base filtrada)
   const opcionesInstituciones = useMemo(() => {
-    return [...new Set(alumnos.map(a => a.institucion))].sort();
-  }, [alumnos]);
+    return [...new Set(alumnosParaOpciones.map(a => a.institucion))].sort();
+  }, [alumnosParaOpciones]);
 
   // Agrupar carreras por institución
   const carrerasPorInstitucion = useMemo(() => {
     const grupos = {};
-    alumnos.forEach(alumno => {
+    alumnosParaOpciones.forEach(alumno => {
       if (!grupos[alumno.institucion]) {
         grupos[alumno.institucion] = new Set();
       }
@@ -228,14 +237,14 @@ const AlumnosLista = ({
       grupos[inst] = [...grupos[inst]].sort();
     });
     return grupos;
-  }, [alumnos]);
+  }, [alumnosParaOpciones]);
 
   // Obtener los grupos únicos presentes en los alumnos, filtrados por carrera/institución
   const gruposUnicos = useMemo(() => {
     const set = new Set();
 
     // Filtrar alumnos para mostrar solo los grupos coherentes con los filtros actuales
-    const alumnosParaGrupos = alumnos.filter(a => {
+    const alumnosParaGrupos = alumnosParaOpciones.filter(a => {
       const matchCarrera = !carrera || a.carrera === carrera;
       const matchInstitucion = !institucion || a.institucion === institucion;
       return matchCarrera && matchInstitucion;
@@ -251,18 +260,18 @@ const AlumnosLista = ({
       // Intentar ordenar con lógica natural
       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
-  }, [alumnos, carrera, institucion]);
+  }, [alumnosParaOpciones, carrera, institucion]);
 
   // Obtener los asientos únicos presentes en los alumnos
   const asientosUnicos = useMemo(() => {
     const set = new Set();
-    alumnos.forEach(a => {
+    alumnosParaOpciones.forEach(a => {
       if (a.asiento) set.add(String(a.asiento).trim());
     });
     return Array.from(set).sort((a, b) => {
       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
-  }, [alumnos]);
+  }, [alumnosParaOpciones]);
 
   // Filtrado simplificado
   const alumnosFiltrados = useMemo(() => {
@@ -332,7 +341,7 @@ const AlumnosLista = ({
         <select
           value={itemsPerPage}
           onChange={(e) => setItemsPerPage(Number(e.target.value))}
-          className="bg-white border border-slate-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="bg-white border border-slate-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde"
         >
           <option value={20}>20</option>
           <option value={50}>50</option>
@@ -386,7 +395,7 @@ const AlumnosLista = ({
                 className='w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors'
               >
                 <div className='flex items-center gap-3'>
-                  <div className='w-8 h-8 bg-gradient-to-br from-green-800 to-emerald-800 rounded-lg flex items-center justify-center'>
+                  <div className='w-8 h-8 bg-st-verde rounded-lg flex items-center justify-center'>
                     <svg
                       className='w-5 h-5 text-white'
                       fill='none'
@@ -442,7 +451,7 @@ const AlumnosLista = ({
                         <input
                           type='text'
                           placeholder='Buscar RUT...'
-                          className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                          className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde focus:border-transparent transition-all duration-200'
                           value={rut}
                           onChange={e => setRUT(e.target.value)}
                         />
@@ -453,7 +462,7 @@ const AlumnosLista = ({
                           Carrera
                         </label>
                         <select
-                          className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                          className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde focus:border-transparent transition-all duration-200'
                           value={carrera}
                           onChange={e => setCarrera(e.target.value)}
                         >
@@ -480,7 +489,7 @@ const AlumnosLista = ({
                           Institución
                         </label>
                         <select
-                          className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                          className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde focus:border-transparent transition-all duration-200'
                           value={institucion}
                           onChange={e => setInstitucion(e.target.value)}
                         >
@@ -499,7 +508,7 @@ const AlumnosLista = ({
                             Grupo
                           </label>
                           <select
-                            className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                            className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde focus:border-transparent transition-all duration-200'
                             value={grupo}
                             onChange={e => setGrupo(e.target.value)}
                           >
@@ -517,7 +526,7 @@ const AlumnosLista = ({
                             Asiento
                           </label>
                           <select
-                            className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                            className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde focus:border-transparent transition-all duration-200'
                             value={asiento}
                             onChange={e => setAsiento(e.target.value)}
                           >
@@ -536,7 +545,7 @@ const AlumnosLista = ({
                         <input
                           type='text'
                           placeholder='Buscar nombres...'
-                          className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                          className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde focus:border-transparent transition-all duration-200'
                           value={nombres}
                           onChange={e => setNombres(e.target.value)}
                         />
@@ -549,7 +558,7 @@ const AlumnosLista = ({
                         <input
                           type='text'
                           placeholder='Buscar apellidos...'
-                          className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                          className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde focus:border-transparent transition-all duration-200'
                           value={apellidos}
                           onChange={e => setApellidos(e.target.value)}
                         />
@@ -560,7 +569,7 @@ const AlumnosLista = ({
                           Columnas
                         </label>
                         <select
-                          className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                          className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde focus:border-transparent transition-all duration-200'
                           value=''
                           onChange={e => {
                             if (e.target.value === 'mostrar-todas') {
@@ -912,7 +921,7 @@ const AlumnosLista = ({
                     required
                     value={editFormData.nombres}
                     onChange={e => setEditFormData({ ...editFormData, nombres: e.target.value })}
-                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition-all"
+                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all"
                   />
                 </div>
 
@@ -923,7 +932,7 @@ const AlumnosLista = ({
                     required
                     value={editFormData.apellidos}
                     onChange={e => setEditFormData({ ...editFormData, apellidos: e.target.value })}
-                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition-all"
+                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all"
                   />
                 </div>
 
@@ -934,7 +943,7 @@ const AlumnosLista = ({
                     required
                     value={editFormData.rut}
                     onChange={e => setEditFormData({ ...editFormData, rut: e.target.value })}
-                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition-all bg-slate-50"
+                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all bg-slate-50"
                   />
                 </div>
 
@@ -944,7 +953,7 @@ const AlumnosLista = ({
                     type="text"
                     value={editFormData.carrera}
                     onChange={e => setEditFormData({ ...editFormData, carrera: e.target.value })}
-                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition-all"
+                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all"
                   />
                 </div>
 
@@ -953,7 +962,7 @@ const AlumnosLista = ({
                   <select
                     value={editFormData.institucion}
                     onChange={e => setEditFormData({ ...editFormData, institucion: e.target.value })}
-                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition-all appearance-none bg-white"
+                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all appearance-none bg-white"
                   >
                     <option value="">Seleccionar...</option>
                     {INSTITUCIONES.map(inst => (
@@ -968,7 +977,7 @@ const AlumnosLista = ({
                     type="text"
                     value={editFormData.grupo}
                     onChange={e => setEditFormData({ ...editFormData, grupo: e.target.value })}
-                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition-all"
+                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all"
                   />
                 </div>
 
@@ -978,7 +987,7 @@ const AlumnosLista = ({
                     type="text"
                     value={editFormData.asiento}
                     onChange={e => setEditFormData({ ...editFormData, asiento: e.target.value })}
-                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition-all"
+                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all"
                   />
                 </div>
 
@@ -993,7 +1002,7 @@ const AlumnosLista = ({
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="px-6 py-2 bg-green-700 text-white font-bold rounded-lg hover:bg-green-800 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-2 bg-st-verde text-white font-bold rounded-lg hover:bg-[#004b30] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {isSaving ? (
                       <>

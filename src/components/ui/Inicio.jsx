@@ -2,11 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import Logo from '../../assets/logo3.png';
 import { buscarAlumnoPorRutEnEvento } from '../../services/alumnosService';
 import { motion, AnimatePresence } from 'framer-motion';
+import QRScanner from './QRScanner';
 
 const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminClick }) => {
   const [rut, setRut] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [showScanner, setShowScanner] = useState(false);
   const rutInputRef = useRef(null);
   const scanTimeoutRef = useRef(null);
 
@@ -97,6 +99,20 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
   };
 
   const esEventoFuncionarios = eventoActivo?.tipo === 'trabajadores';
+
+  const handleQRScan = (scannedRut) => {
+    const formatted = formatRut(scannedRut);
+    setRut(formatted);
+    setShowScanner(false);
+
+    // Auto-submit after scan
+    setTimeout(() => {
+      if (rutInputRef.current) {
+        rutInputRef.current.value = formatted;
+        handleSubmit({ preventDefault: () => { } });
+      }
+    }, 300);
+  };
 
   const InfoRow = ({ label, value, border = true, highlight = false }) => {
     if (!value) return null;
@@ -206,7 +222,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                         value={rut}
                         onChange={handleInput}
                         placeholder='12345678K'
-                        className={`w-full h-14 md:h-16 px-5 md:px-6 bg-slate-50 border-2 rounded-2xl text-xl md:text-2xl font-bold tracking-wider text-slate-800 outline-none transition-all duration-300
+                        className={`w-full h-14 md:h-16 px-5 md:px-6 pr-24 bg-slate-50 border-2 rounded-2xl text-xl md:text-2xl font-bold tracking-wider text-slate-800 outline-none transition-all duration-300
                             ${!eventoActivo
                             ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
                             : 'border-slate-200 focus:border-st-verde focus:bg-white focus:shadow-xl'
@@ -216,10 +232,19 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                         autoFocus
                         autoComplete='off'
                       />
-                      <div className='absolute right-5 top-1/2 transform -translate-y-1/2 text-slate-300'>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
+                      <div className='absolute right-5 top-1/2 transform -translate-y-1/2 flex items-center gap-2'>
+                        <button
+                          type='button'
+                          onClick={() => setShowScanner(true)}
+                          disabled={!eventoActivo || loading}
+                          className='w-10 h-10 rounded-xl bg-st-verde/10 hover:bg-st-verde/20 text-st-verde flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed'
+                          title='Escanear QR'
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -351,6 +376,12 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
         </p>
       </div>
 
+      {/* QR Scanner Modal */}
+      <QRScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScan={handleQRScan}
+      />
     </div>
   );
 };
