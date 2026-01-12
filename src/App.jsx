@@ -74,7 +74,11 @@ function App() {
   const [filtroInstitucion, setFiltroInstitucion] = useState('');
   const [filtroRUT, setFiltroRUT] = useState('');
   const [soloPresentes, setSoloPresentes] = useState('');
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  // Restaurar estado de autenticación desde localStorage
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    const savedAuth = localStorage.getItem('adminAuthenticated');
+    return savedAuth === 'true';
+  });
   const [filtroGrupo, setFiltroGrupo] = useState('');
 
   // Controlar el scroll según la ruta y modales
@@ -168,10 +172,20 @@ function App() {
     }
   }, [alumnos, usuario]);
 
+  // Restaurar sesión al cargar la aplicación
+  React.useEffect(() => {
+    const savedAuth = localStorage.getItem('adminAuthenticated');
+    if (savedAuth === 'true' && location.pathname === '/panel') {
+      setIsAdminAuthenticated(true);
+    }
+  }, [location.pathname]);
+
   // Acciones admin
   const handleAdminClick = () => navigate('/admin');
   const handleAuthAdmin = () => {
     setIsAdminAuthenticated(true);
+    // Guardar estado de autenticación en localStorage
+    localStorage.setItem('adminAuthenticated', 'true');
     navigate('/panel');
   };
   const handleSalirAdmin = () => {
@@ -185,8 +199,9 @@ function App() {
     setSoloPresentes('');
     setFiltroGrupo('');
 
-    // Desautenticar y navegar al inicio
+    // Desautenticar y limpiar localStorage
     setIsAdminAuthenticated(false);
+    localStorage.removeItem('adminAuthenticated');
     navigate('/');
   };
 
@@ -399,19 +414,23 @@ function App() {
               <Route
                 path='/admin'
                 element={
-                  <motion.div
-                    key='admin-login'
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className='w-full flex flex-col items-center justify-center'
-                  >
-                    <AdminLogin
-                      onAuth={handleAuthAdmin}
-                      onSalir={handleSalirAdmin}
-                    />
-                  </motion.div>
+                  isAdminAuthenticated ? (
+                    <Navigate to='/panel' replace />
+                  ) : (
+                    <motion.div
+                      key='admin-login'
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className='w-full flex flex-col items-center justify-center'
+                    >
+                      <AdminLogin
+                        onAuth={handleAuthAdmin}
+                        onSalir={handleSalirAdmin}
+                      />
+                    </motion.div>
+                  )
                 }
               />
               <Route

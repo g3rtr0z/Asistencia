@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 // eslint-disable-next-line no-unused-vars
-import { motion, AnimatePresence } from 'framer-motion';
+// import { motion, AnimatePresence } from 'framer-motion';
 
 const TrabajadoresLista = ({
   trabajadores = [],
@@ -171,18 +171,14 @@ const TrabajadoresLista = ({
   return (
     <div className='flex flex-col items-center w-full'>
       {/* Filtros Desplegables */}
-      <motion.div
-        className='mb-6 w-full max-w-full sm:max-w-4xl md:max-w-5xl mx-auto'
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+      <div
+        className='mb-6 w-full mx-auto'
       >
         <div className='bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden'>
           {/* Header del filtro */}
-          <motion.button
+          <button
             onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
             className='w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors'
-            whileHover={{ backgroundColor: '#f8fafc' }}
           >
             <div className='flex items-center gap-3'>
               <div className='w-8 h-8 bg-gradient-to-br from-green-800 to-emerald-800 rounded-lg flex items-center justify-center'>
@@ -208,9 +204,8 @@ const TrabajadoresLista = ({
                 funcionarios)
               </span>
             </div>
-            <motion.div
-              animate={{ rotate: filtrosAbiertos ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
+            <div
+              className={`transform transition-transform duration-200 ${filtrosAbiertos ? 'rotate-180' : ''}`}
             >
               <svg
                 className='w-5 h-5 text-slate-600'
@@ -225,155 +220,143 @@ const TrabajadoresLista = ({
                   d='M19 9l-7 7-7-7'
                 />
               </svg>
-            </motion.div>
-          </motion.button>
+            </div>
+          </button>
 
           {/* Contenido desplegable */}
-          <AnimatePresence>
-            {filtrosAbiertos && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className='overflow-hidden'
-              >
-                <div className='p-4 border-t border-slate-200'>
-                  <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-3'>
-                    <div className='space-y-2'>
-                      <label className='block text-sm font-medium text-slate-700'>
-                        RUT
-                      </label>
-                      <input
-                        type='text'
-                        placeholder='Buscar RUT...'
-                        className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
-                        value={rut}
-                        onChange={e => setRUT(e.target.value)}
-                      />
-                    </div>
-
-                    <div className='space-y-2'>
-                      <label className='block text-sm font-medium text-slate-700'>
-                        Nombres
-                      </label>
-                      <input
-                        type='text'
-                        placeholder='Buscar nombres...'
-                        className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
-                        value={localNombres}
-                        onChange={e => setLocalNombres(e.target.value)}
-                      />
-                    </div>
-
-                    <div className='space-y-2'>
-                      <label className='block text-sm font-medium text-slate-700'>
-                        Apellidos
-                      </label>
-                      <input
-                        type='text'
-                        placeholder='Buscar apellidos...'
-                        className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
-                        value={localApellidos}
-                        onChange={e => setLocalApellidos(e.target.value)}
-                      />
-                    </div>
-
-                    <div className='space-y-2'>
-                      <label className='block text-sm font-medium text-slate-700'>
-                        Observación
-                      </label>
-                      <input
-                        type='text'
-                        placeholder='Buscar observación...'
-                        className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
-                        value={localObservacion}
-                        onChange={e => setLocalObservacion(e.target.value)}
-                      />
-                    </div>
-
-                    <div className='space-y-2'>
-                      <label className='block text-sm font-medium text-slate-700'>
-                        Columnas
-                      </label>
-                      <select
-                        className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
-                        value=''
-                        onChange={e => {
-                          if (e.target.value === 'mostrar-todas') {
-                            mostrarTodasLasColumnas();
-                          } else if (e.target.value) {
-                            toggleColumna(e.target.value);
-                          }
-                          e.target.value = ''; // Reset select
-                        }}
-                      >
-                        <option value=''>Configurar...</option>
-                        {Object.entries({
-                          estado: 'Estado',
-                          rut: 'RUT',
-                          nombres: 'Nombres',
-                          apellidos: 'Apellidos',
-                          asiste: 'Confirmación',
-                          observacion: 'Observación',
-                        }).map(([key, label]) => (
-                          <option key={key} value={key}>
-                            {columnasVisibles[key] ? '❌' : '✅'} {label}
-                          </option>
-                        ))}
-                        <option value='mostrar-todas'>🔄 Todas</option>
-                      </select>
-                      <div className='text-xs text-slate-500'>
-                        {Object.values(columnasVisibles).filter(Boolean).length}
-                        /{Object.keys(columnasVisibles).length}
-                      </div>
-                    </div>
+          {filtrosAbiertos && (
+            <div
+              className='overflow-hidden'
+            >
+              <div className='p-4 border-t border-slate-200'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-3'>
+                  <div className='space-y-2'>
+                    <label className='block text-sm font-medium text-slate-700'>
+                      RUT
+                    </label>
+                    <input
+                      type='text'
+                      placeholder='Buscar RUT...'
+                      className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                      value={rut}
+                      onChange={e => setRUT(e.target.value)}
+                    />
                   </div>
 
-                  <div className='flex justify-end'>
-                    <motion.button
-                      onClick={() => {
-                        setRUT('');
-                        setLocalNombres('');
-                        setLocalApellidos('');
-                        setLocalObservacion('');
-                        if (setSoloPresentes) setSoloPresentes('');
-                        mostrarTodasLasColumnas();
+                  <div className='space-y-2'>
+                    <label className='block text-sm font-medium text-slate-700'>
+                      Nombres
+                    </label>
+                    <input
+                      type='text'
+                      placeholder='Buscar nombres...'
+                      className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                      value={localNombres}
+                      onChange={e => setLocalNombres(e.target.value)}
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <label className='block text-sm font-medium text-slate-700'>
+                      Apellidos
+                    </label>
+                    <input
+                      type='text'
+                      placeholder='Buscar apellidos...'
+                      className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                      value={localApellidos}
+                      onChange={e => setLocalApellidos(e.target.value)}
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <label className='block text-sm font-medium text-slate-700'>
+                      Observación
+                    </label>
+                    <input
+                      type='text'
+                      placeholder='Buscar observación...'
+                      className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                      value={localObservacion}
+                      onChange={e => setLocalObservacion(e.target.value)}
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <label className='block text-sm font-medium text-slate-700'>
+                      Columnas
+                    </label>
+                    <select
+                      className='w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent transition-all duration-200'
+                      value=''
+                      onChange={e => {
+                        if (e.target.value === 'mostrar-todas') {
+                          mostrarTodasLasColumnas();
+                        } else if (e.target.value) {
+                          toggleColumna(e.target.value);
+                        }
+                        e.target.value = ''; // Reset select
                       }}
-                      className='px-4 py-2 bg-slate-100 text-slate-700 rounded-lg border border-slate-300 text-sm hover:bg-slate-200 transition-all duration-200 flex items-center gap-2'
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
                     >
-                      <svg
-                        className='w-4 h-4'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M6 18L18 6M6 6l12 12'
-                        />
-                      </svg>
-                      Limpiar Filtros
-                    </motion.button>
+                      <option value=''>Configurar...</option>
+                      {Object.entries({
+                        estado: 'Estado',
+                        rut: 'RUT',
+                        nombres: 'Nombres',
+                        apellidos: 'Apellidos',
+                        asiste: 'Confirmación',
+                        observacion: 'Observación',
+                      }).map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {columnasVisibles[key] ? '❌' : '✅'} {label}
+                        </option>
+                      ))}
+                      <option value='mostrar-todas'>🔄 Todas</option>
+                    </select>
+                    <div className='text-xs text-slate-500'>
+                      {Object.values(columnasVisibles).filter(Boolean).length}
+                      /{Object.keys(columnasVisibles).length}
+                    </div>
                   </div>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+
+                <div className='flex justify-end'>
+                  <button
+                    onClick={() => {
+                      setRUT('');
+                      setLocalNombres('');
+                      setLocalApellidos('');
+                      setLocalObservacion('');
+                      if (setSoloPresentes) setSoloPresentes('');
+                      mostrarTodasLasColumnas();
+                    }}
+                    className='px-4 py-2 bg-slate-100 text-slate-700 rounded-lg border border-slate-300 text-sm hover:bg-slate-200 transition-all duration-200 flex items-center gap-2'
+                  >
+                    <svg
+                      className='w-4 h-4'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M6 18L18 6M6 6l12 12'
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      </motion.div>
+      </div>
 
       {/* Tabla Simplificada */}
       <div className='w-full flex justify-center'>
-        <motion.div
-          className='w-full max-w-full sm:max-w-4xl md:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-lg border border-slate-200 bg-white'
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
+        <div
+          className='w-full mx-auto overflow-hidden rounded-xl shadow-lg border border-slate-200 bg-white'
         >
           <div className='overflow-x-auto'>
             <table className='w-full text-sm table-auto'>
@@ -480,10 +463,7 @@ const TrabajadoresLista = ({
                       }
                       className='py-16 text-center'
                     >
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3 }}
+                      <div
                         className='flex flex-col items-center gap-4'
                       >
                         <div className='relative'>
@@ -517,7 +497,7 @@ const TrabajadoresLista = ({
                             </span>
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -529,11 +509,10 @@ const TrabajadoresLista = ({
                       {columnasVisibles.asiste && (
                         <td className='py-4 px-4 text-center min-w-24'>
                           <div
-                            className={`w-3 h-3 rounded-full mx-auto cursor-help transition-transform duration-200 hover:scale-110 ${
-                              trabajador.asiste
-                                ? 'bg-green-500 shadow-green-200 shadow-md'
-                                : 'bg-gray-300 hover:bg-gray-400'
-                            }`}
+                            className={`w-3 h-3 rounded-full mx-auto cursor-help transition-transform duration-200 hover:scale-110 ${trabajador.asiste
+                              ? 'bg-green-500 shadow-green-200 shadow-md'
+                              : 'bg-gray-300 hover:bg-gray-400'
+                              }`}
                             title={`${trabajador.asiste ? '✅ Confirma asistencia previa' : '❌ No confirma asistencia previa'}`}
                           ></div>
                         </td>
@@ -578,18 +557,18 @@ const TrabajadoresLista = ({
                               trabajador.apellidos ??
                               (trabajador.nombre
                                 ? trabajador.nombre
-                                    .split(' ')
-                                    .slice(1)
-                                    .join(' ')
+                                  .split(' ')
+                                  .slice(1)
+                                  .join(' ')
                                 : '-')
                             }
                           >
                             {trabajador.apellidos ??
                               (trabajador.nombre
                                 ? trabajador.nombre
-                                    .split(' ')
-                                    .slice(1)
-                                    .join(' ')
+                                  .split(' ')
+                                  .slice(1)
+                                  .join(' ')
                                 : '-')}
                           </div>
                         </td>
@@ -641,7 +620,7 @@ const TrabajadoresLista = ({
               </div>
             </div>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );

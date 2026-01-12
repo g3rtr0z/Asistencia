@@ -1,6 +1,6 @@
 import React from 'react';
 // eslint-disable-next-line no-unused-vars
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 
 function EventoInfo({ eventoActivo, totalAlumnos }) {
 
@@ -43,11 +43,8 @@ function EventoInfo({ eventoActivo, totalAlumnos }) {
   };
 
   return (
-    <motion.div
-      className='bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-sm max-w-full sm:max-w-4xl md:max-w-5xl mx-auto'
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+    <div
+      className='bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-sm w-full mx-auto'
     >
       {/* Header con título y estado */}
       <div className='flex items-center justify-between mb-4'>
@@ -146,7 +143,7 @@ function EventoInfo({ eventoActivo, totalAlumnos }) {
           </span>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

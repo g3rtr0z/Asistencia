@@ -53,13 +53,13 @@ function mapFirestoreData(doc) {
     asiento: data['asiento'] ?? null,
     grupo: data['grupo'] ?? null,
     numeroLista: (() => {
-      const valor = data['numeroLista'] ?? 
-                    data['N° de Lista'] ?? 
-                    data['N de Lista'] ?? 
-                    data['numero de lista'] ?? 
-                    data['nro de lista'] ?? 
-                    data['N° de lista'] ?? 
-                    data['N de lista'];
+      const valor = data['numeroLista'] ??
+        data['N° de Lista'] ??
+        data['N de Lista'] ??
+        data['numero de lista'] ??
+        data['nro de lista'] ??
+        data['N° de lista'] ??
+        data['N de lista'];
       return valor != null ? String(valor) : null;
     })(),
     fechaRegistro: data.fechaRegistro ?? null,
@@ -83,13 +83,49 @@ export const getAlumnos = async () => {
     for (const evento of eventos) {
       const alumnosRef = collection(db, `eventos/${evento.id}/alumnos`);
       const alumnosSnapshot = await getDocs(alumnosRef);
-      const alumnos = alumnosSnapshot.docs.map(mapFirestoreData);
+      const alumnos = alumnosSnapshot.docs.map(doc => ({
+        ...mapFirestoreData(doc),
+        eventoId: evento.id, // Importante para poder actualizar/eliminar
+      }));
       todosLosAlumnos.push(...alumnos);
     }
 
     return todosLosAlumnos;
   } catch (error) {
     console.error('Error al obtener todos los alumnos:', error);
+    throw error;
+  }
+};
+
+// Actualizar un alumno
+export const updateAlumno = async (eventoId, alumnoId, data) => {
+  try {
+    const alumnoRef = doc(db, `eventos/${eventoId}/alumnos`, alumnoId);
+
+    // Mapear los campos a los nombres que espera Firestore (Capitalizados o como estén en tu BD)
+    // Ojo: mapFirestoreData lee 'Nombres', 'Apellidos', etc.
+    // Dependiendo de cómo guardes, deberías respetar la estructura.
+    // Si guardas con minúsculas, asegurate que mapFirestoreData lo lea.
+    // Asumiremos que se guardan como los lee mapFirestoreData o usamos un standard.
+    // Pero para editar, lo ideal es mantener consistencia.
+    // Si miramos mapFirestoreData, lee 'Nombres', 'Apellidos', etc.
+
+    const updateData = {};
+    if (data.nombres !== undefined) updateData['Nombres'] = data.nombres;
+    if (data.apellidos !== undefined) updateData['Apellidos'] = data.apellidos;
+    if (data.rut !== undefined) updateData['RUT'] = data.rut;
+    if (data.carrera !== undefined) updateData['Carrera'] = data.carrera;
+    if (data.institucion !== undefined) updateData['Institución'] = data.institucion;
+    if (data.grupo !== undefined) updateData['grupo'] = data.grupo;
+    if (data.asiento !== undefined) updateData['asiento'] = data.asiento;
+    if (data.presente !== undefined) updateData['presente'] = data.presente;
+
+    updateData['ultimaActualizacion'] = new Date().toISOString();
+
+    await updateDoc(alumnoRef, updateData);
+    return true;
+  } catch (error) {
+    console.error('Error al actualizar alumno:', error);
     throw error;
   }
 };
@@ -133,7 +169,10 @@ export const getAlumnosEventoActivo = async () => {
     try {
       const alumnosRef = collection(db, `eventos/${eventoId}/alumnos`);
       const alumnosSnapshot = await getDocs(alumnosRef);
-      const alumnos = alumnosSnapshot.docs.map(mapFirestoreData);
+      const alumnos = alumnosSnapshot.docs.map(doc => ({
+        ...mapFirestoreData(doc),
+        eventoId: eventoId,
+      }));
       return alumnos;
     } catch (subError) {
       // Si la subcolección no existe, retornar array vacío en lugar de lanzar error
@@ -188,7 +227,10 @@ export const subscribeToAlumnos = (callback, errorCallback) => {
         for (const evento of eventos) {
           const alumnosRef = collection(db, `eventos/${evento.id}/alumnos`);
           const alumnosSnapshot = await getDocs(alumnosRef);
-          const alumnos = alumnosSnapshot.docs.map(mapFirestoreData);
+          const alumnos = alumnosSnapshot.docs.map(doc => ({
+            ...mapFirestoreData(doc),
+            eventoId: evento.id,
+          }));
           todosLosAlumnos.push(...alumnos);
         }
 
@@ -221,7 +263,10 @@ export const subscribeToAlumnosPorEvento = (
     const unsubscribe = onSnapshot(
       alumnosRef,
       querySnapshot => {
-        const alumnos = querySnapshot.docs.map(mapFirestoreData);
+        const alumnos = querySnapshot.docs.map(doc => ({
+          ...mapFirestoreData(doc),
+          eventoId: eventoId,
+        }));
         callback(alumnos);
       },
       error => {
@@ -271,7 +316,10 @@ export const subscribeToAlumnosEventoActivo = (callback, errorCallback) => {
         const unsubscribeAlumnos = onSnapshot(
           alumnosRef,
           alumnosSnapshot => {
-            const alumnos = alumnosSnapshot.docs.map(mapFirestoreData);
+            const alumnos = alumnosSnapshot.docs.map(doc => ({
+              ...mapFirestoreData(doc),
+              eventoId: eventoId,
+            }));
             callback(alumnos);
           },
           error => {
@@ -409,8 +457,8 @@ export const agregarAlumno = async (alumno, eventoId) => {
       Apellidos: alumno.apellidos ?? null,
       'Nombre Completo': alumno.nombre,
       RUT: alumno.rut,
-      Carrera: alumno.carrera,
-      Institución: alumno.institucion,
+      Carrera: alumno.carrera ?? null,
+      Institución: alumno.institucion ?? null,
       Departamento: alumno.departamento ?? null,
       Observación: alumno.observacion ?? null,
       asiste: parseBooleanField(alumno.asiste) ?? false,
@@ -722,8 +770,17 @@ export const importarAlumnosDesdeExcel = async (
 
     const esEventoTrabajadores = tipoEvento === 'trabajadores';
 
+    // Obtener alumnos existentes para verificar duplicados
+    const alumnosExistentes = await getAlumnosPorEvento(eventoId);
+    const rutsExistentes = new Set(
+      alumnosExistentes
+        .map(a => a.rut && String(a.rut).trim().toLowerCase())
+        .filter(Boolean)
+    );
+
     let successCount = 0;
     let errorCount = 0;
+    let skippedCount = 0;
 
     for (const alumno of jsonData) {
       try {
@@ -814,6 +871,12 @@ export const importarAlumnosDesdeExcel = async (
           continue;
         }
 
+        const rutNormalizado = String(rut).trim().toLowerCase();
+        if (rutsExistentes.has(rutNormalizado)) {
+          skippedCount++;
+          continue;
+        }
+
         // Guardar el RUT tal como viene (sin puntos ni guión)
         await agregarAlumno(
           {
@@ -852,7 +915,7 @@ export const importarAlumnosDesdeExcel = async (
     return {
       successCount,
       errorCount,
-      message: `Importación completada: ${successCount} exitosos, ${errorCount} errores`,
+      message: `Importación completada: ${successCount} agregados, ${skippedCount} duplicados omitidos, ${errorCount} errores`,
     };
   } catch (error) {
     console.error('Error en importarAlumnosDesdeExcel:', error);

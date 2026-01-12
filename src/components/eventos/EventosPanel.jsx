@@ -190,15 +190,12 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
           </div>
         </div>
         <div className='flex flex-wrap items-center justify-center gap-2 sm:gap-3'>
-          <motion.button
+          <button
             onClick={() => setFiltroTipo('alumnos')}
-            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm md:text-base ${
-              filtroTipo === 'alumnos'
-                ? 'bg-green-800 text-white shadow-lg'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm md:text-base ${filtroTipo === 'alumnos'
+              ? 'bg-green-800 text-white shadow-lg'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
           >
             <svg
               className='w-3 h-3 sm:w-4 sm:h-4'
@@ -215,16 +212,13 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
             </svg>
             <span className='hidden sm:inline'>Alumnos</span>
             <span className='sm:hidden'>Alumnos</span>
-          </motion.button>
-          <motion.button
+          </button>
+          <button
             onClick={() => setFiltroTipo('trabajadores')}
-            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm md:text-base ${
-              filtroTipo === 'trabajadores'
-                ? 'bg-blue-800 text-white shadow-lg'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm md:text-base ${filtroTipo === 'trabajadores'
+              ? 'bg-blue-800 text-white shadow-lg'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
           >
             <svg
               className='w-3 h-3 sm:w-4 sm:h-4'
@@ -241,13 +235,11 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
             </svg>
             <span className='hidden sm:inline'>Funcionarios</span>
             <span className='sm:hidden'>Funcionarios</span>
-          </motion.button>
+          </button>
         </div>
-        <motion.button
+        <button
           onClick={() => setShowModal(true)}
           className='w-full sm:w-auto bg-gradient-to-r from-green-800 to-emerald-600 text-white px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 flex items-center justify-center gap-2 font-semibold shadow-lg hover:shadow-xl text-xs sm:text-sm md:text-base'
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
         >
           <svg
             className='w-4 h-4 sm:w-5 sm:h-5'
@@ -263,20 +255,16 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
             />
           </svg>
           Crear Evento
-        </motion.button>
+        </button>
       </div>
 
       {/* Mensaje de estado mejorado */}
       {mensaje && (
-        <motion.div
-          className={`p-3 sm:p-4 rounded-lg sm:rounded-xl mb-6 border-l-4 ${
-            mensaje.includes('Error')
-              ? 'bg-red-50 text-red-700 border-red-500'
-              : 'bg-green-50 text-green-700 border-green-500'
-          }`}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
+        <div
+          className={`p-3 sm:p-4 rounded-lg sm:rounded-xl mb-6 border-l-4 ${mensaje.includes('Error')
+            ? 'bg-red-50 text-red-700 border-red-500'
+            : 'bg-green-50 text-green-700 border-green-500'
+            }`}
         >
           <div className='flex items-center gap-2'>
             <svg
@@ -298,7 +286,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
             </svg>
             <span className='font-medium text-sm sm:text-base'>{mensaje}</span>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Lista de eventos optimizada para móviles */}
@@ -309,17 +297,12 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
             return tipoEvento === filtroTipo;
           })
           .map(evento => (
-            <motion.div
+            <div
               key={evento.id}
-              className={`p-3 sm:p-4 md:p-6 rounded-lg sm:rounded-xl border shadow-sm transition-all duration-300 hover:shadow-md ${
-                evento.activo
-                  ? 'border-green-500 bg-white'
-                  : 'border-slate-200 bg-white'
-              }`}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
-              whileHover={{ scale: 1.01, y: -2 }}
+              className={`p-3 sm:p-4 md:p-6 rounded-lg sm:rounded-xl border shadow-sm transition-all duration-300 hover:shadow-md ${evento.activo
+                ? 'border-green-500 bg-white'
+                : 'border-slate-200 bg-white'
+                }`}
             >
               <div className='flex flex-col sm:flex-row justify-between items-start gap-4'>
                 <div className='flex-1 w-full'>
@@ -328,11 +311,10 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
                       {evento.nombre}
                     </h3>
                     <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                        evento.tipo === 'trabajadores'
-                          ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                          : 'bg-green-100 text-green-800 border border-green-200'
-                      }`}
+                      className={`px-3 py-1 text-xs font-semibold rounded-full ${evento.tipo === 'trabajadores'
+                        ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                        : 'bg-green-100 text-green-800 border border-green-200'
+                        }`}
                     >
                       {evento.tipo === 'trabajadores'
                         ? 'Funcionarios'
@@ -390,25 +372,21 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
                     <span className='text-xs text-slate-500 font-medium'>
                       {evento.activo ? 'Activo' : 'Inactivo'}
                     </span>
-                    <motion.button
+                    <button
                       onClick={() => handleActivar(evento.id)}
                       title={
                         evento.activo ? 'Desactivar evento' : 'Activar evento'
                       }
-                      className={`relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2 ${
-                        evento.activo ? 'bg-green-800' : 'bg-slate-200'
-                      }`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      className={`relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2 ${evento.activo ? 'bg-green-800' : 'bg-slate-200'
+                        }`}
                     >
                       <span
-                        className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform shadow-sm ${
-                          evento.activo
-                            ? 'translate-x-5 sm:translate-x-6'
-                            : 'translate-x-1'
-                        }`}
+                        className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform shadow-sm ${evento.activo
+                          ? 'translate-x-5 sm:translate-x-6'
+                          : 'translate-x-1'
+                          }`}
                       />
-                    </motion.button>
+                    </button>
                   </div>
 
                   {/* Botones de acción */}
@@ -434,11 +412,9 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
                         />
                       </svg>
                     </motion.button>
-                    <motion.button
+                    <button
                       onClick={() => handleEliminar(evento.id)}
                       className='flex-1 sm:flex-none bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center'
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
                       title='Eliminar evento'
                     >
                       <svg
@@ -454,11 +430,11 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
                           d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
                         />
                       </svg>
-                    </motion.button>
+                    </button>
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
       </div>
 
@@ -472,10 +448,10 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
         >
           <motion.div
             className='bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-lg max-h-[90vh] overflow-hidden'
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.1 }}
           >
             {/* Header del Modal */}
             <div className='bg-gradient-to-r from-green-500 to-emerald-600 px-4 sm:px-6 py-3 sm:py-4 text-white'>
@@ -511,11 +487,9 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
                     </p>
                   </div>
                 </div>
-                <motion.button
+                <button
                   onClick={handleCerrarModal}
                   className='w-6 h-6 sm:w-8 sm:h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors'
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
                 >
                   <svg
                     className='w-3 h-3 sm:w-5 sm:h-5'
@@ -530,7 +504,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
                       d='M6 18L18 6M6 6l12 12'
                     />
                   </svg>
-                </motion.button>
+                </button>
               </div>
             </div>
 
@@ -636,12 +610,10 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
                           Agrega alumnos desde un archivo Excel
                         </p>
                       </div>
-                      <motion.button
+                      <button
                         type='button'
                         onClick={() => setShowImportModal(true)}
                         className='bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center gap-2'
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
                       >
                         <svg
                           className='w-4 h-4'
@@ -657,29 +629,25 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
                           />
                         </svg>
                         Importar Excel
-                      </motion.button>
+                      </button>
                     </div>
                   </div>
                 )}
 
                 <div className='flex gap-3 pt-4'>
-                  <motion.button
+                  <button
                     type='button'
                     onClick={handleCerrarModal}
                     className='flex-1 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm hover:bg-slate-200 transition-colors'
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
                   >
                     Cancelar
-                  </motion.button>
-                  <motion.button
+                  </button>
+                  <button
                     type='submit'
                     className='flex-1 bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors'
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
                   >
                     {editingEvento ? 'Actualizar' : 'Crear'}
-                  </motion.button>
+                  </button>
                 </div>
               </form>
             </div>
