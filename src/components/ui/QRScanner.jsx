@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const QRScanner = ({ isOpen, onClose, onScan }) => {
     const scannerRef = useRef(null);
     const html5QrCodeRef = useRef(null);
+    const videoTrackRef = useRef(null);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -20,20 +21,11 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                     qrbox: { width: 250, height: 250 },
                     aspectRatio: 1.0,
                     disableFlip: false,
-                    videoConstraints: {
-                        facingMode: "environment",
-                        focusMode: "continuous",
-                        advanced: [{ zoom: 2.0 }]
-                    }
                 };
 
                 await html5QrCode.start(
                     {
-                        facingMode: "environment",
-                        advanced: [
-                            { focusMode: "continuous" },
-                            { focusMode: "auto" }
-                        ]
+                        facingMode: "environment"
                     },
                     config,
                     (decodedText) => {
@@ -57,6 +49,41 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                         // Scanning errors are normal, ignore them
                     }
                 );
+
+                // Apply continuous autofocus after scanner starts
+                setTimeout(async () => {
+                    try {
+                        const videoElement = document.querySelector('#qr-reader video');
+                        if (videoElement && videoElement.srcObject) {
+                            const stream = videoElement.srcObject;
+                            const videoTrack = stream.getVideoTracks()[0];
+                            videoTrackRef.current = videoTrack;
+
+                            const capabilities = videoTrack.getCapabilities();
+
+                            // Apply focus mode if supported
+                            if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                                await videoTrack.applyConstraints({
+                                    advanced: [{ focusMode: 'continuous' }]
+                                });
+                            }
+
+                            // Apply zoom if supported
+                            if (capabilities.zoom) {
+                                const maxZoom = capabilities.zoom.max;
+                                const minZoom = capabilities.zoom.min;
+                                const optimalZoom = Math.min(2.0, maxZoom);
+
+                                await videoTrack.applyConstraints({
+                                    advanced: [{ zoom: optimalZoom }]
+                                });
+                            }
+                        }
+                    } catch (err) {
+                        console.log('Could not apply advanced camera settings:', err);
+                    }
+                }, 500);
+
             } catch (err) {
                 setError('No se pudo acceder a la cámara');
                 console.error('Scanner error:', err);
