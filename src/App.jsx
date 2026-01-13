@@ -333,6 +333,7 @@ function App() {
                       eventoActivo={eventoActivo}
                       onInfoClick={() => setShowAlumnosModal(true)}
                       onAdminClick={handleAdminClick}
+                      showButtons={!showAlumnosModal}
                     />
                   </motion.div>
                 }
