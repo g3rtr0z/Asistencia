@@ -26,6 +26,13 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
   }, [result]);
 
   useEffect(() => {
+    // Focus only on desktop
+    if (window.innerWidth >= 768 && rutInputRef.current) {
+      rutInputRef.current.focus();
+    }
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
     };
@@ -265,7 +272,6 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                           }`}
                         maxLength={12}
                         disabled={!eventoActivo || loading}
-                        autoFocus
                         autoComplete='off'
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setTimeout(() => setIsFocused(false), 200)}
@@ -400,7 +406,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
       </div>
 
       {/* Footer info button - bottom right on all screens */}
-      <div className='hidden md:block fixed bottom-4 right-4 z-40'>
+      <div className={`fixed bottom-4 right-4 z-40 transition-opacity duration-200 ${isFocused ? 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto' : 'opacity-100'}`}>
         <button
           onClick={() => setShowCredits(true)}
           className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm hover:shadow-md text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center"
