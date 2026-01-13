@@ -118,7 +118,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
   const InfoRow = ({ label, value, border = true, highlight = false }) => {
     if (!value) return null;
     return (
-      <div className={`flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 gap-1 ${border ? 'border-b border-gray-100' : ''}`}>
+      <div className={`flex flex-col sm:flex-row sm:justify-between sm:items-center py-3.5 gap-1 ${border ? 'border-b border-gray-100' : ''}`}>
         <span className='text-sm text-gray-500 font-medium tracking-wide uppercase'>{label}</span>
         <span className={`text-gray-900 font-semibold text-lg text-right ${highlight ? 'text-st-verde' : ''}`}>
           {value}
@@ -128,291 +128,267 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
   };
 
   return (
-    <div className='min-h-screen w-full flex items-center justify-center p-0 md:p-10 bg-slate-50 font-sans'>
+    <div className='min-h-screen w-full flex items-center justify-center p-4 md:p-6 bg-slate-50'>
+      <div className='w-full max-w-6xl bg-white rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden min-h-[auto] md:min-h-[600px] flex flex-col md:flex-row'>
 
-      {/* --- MOBILE MINIMALIST PORTAL (LIGHT) --- */}
-      <div className='md:hidden fixed inset-0 bg-slate-50 overflow-hidden flex flex-col items-center justify-center p-6'>
-        {/* Subtle Background Accents */}
-        <div className='absolute top-[-20%] right-[-20%] w-96 h-96 bg-st-verde/5 rounded-full blur-[120px] pointer-events-none'></div>
-        <div className='absolute bottom-[-10%] left-[-20%] w-80 h-80 bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none'></div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className='w-full max-w-sm z-10'
-        >
-          {/* Main Focused Card */}
-          <div className='bg-white border border-slate-100 rounded-[3rem] p-8 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.08)] relative overflow-hidden'>
-            <div className='relative z-10 flex flex-col items-center'>
-              {/* Logo Area */}
-              <div className='w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center p-4 mb-8 border border-slate-100 shadow-sm'>
-                <img src={Logo} alt="Logo" className="w-full h-full object-contain" />
-              </div>
-
-              <AnimatePresence mode='wait'>
-                {!result ? (
-                  <motion.div
-                    key="mobile-portal-form"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className='w-full text-center'
-                  >
-                    <h2 className='text-3xl font-black text-slate-900 mb-2 tracking-tight'>Portal de Acceso</h2>
-                    <p className='text-slate-400 text-sm font-medium mb-8'>Ingresa tu RUT para registrar asistencia</p>
-
-                    <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
-                      <div className='relative group'>
-                        <input
-                          ref={rutInputRef}
-                          type='text'
-                          value={rut}
-                          onChange={handleInput}
-                          placeholder='RUT SIN PUNTOS'
-                          className='w-full bg-slate-50 border border-slate-200 rounded-2xl py-5 px-6 text-center text-2xl font-black text-slate-800 placeholder:text-slate-300 focus:bg-white focus:border-st-verde/50 outline-none transition-all tracking-[0.1em]'
-                          maxLength={12}
-                          disabled={!eventoActivo || loading}
-                          autoFocus
-                          autoComplete='off'
-                        />
-                        {/* Focus line decoration */}
-                        <div className='absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[2px] bg-st-verde group-focus-within:w-full transition-all duration-500 rounded-full'></div>
-                      </div>
-
-                      <div className='flex gap-3'>
-                        <button
-                          type='submit'
-                          disabled={loading || !rut.trim() || !eventoActivo}
-                          className={`flex-1 h-16 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg ${loading || !rut.trim() || !eventoActivo
-                            ? 'bg-slate-100 text-slate-400 border border-slate-100 shadow-none'
-                            : 'bg-st-verde text-white hover:bg-emerald-600 shadow-emerald-500/20 active:scale-95'
-                            }`}
-                        >
-                          {loading ? 'Confirmando...' : 'Confirmar'}
-                          {!loading && <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>}
-                        </button>
-
-                        <button
-                          type='button'
-                          onClick={() => setShowScanner(true)}
-                          className='w-16 h-16 rounded-2xl bg-white border border-slate-200 text-slate-400 flex items-center justify-center active:scale-90 transition-all hover:bg-slate-50 hover:text-st-verde'
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </form>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="mobile-portal-success"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className='w-full text-center'
-                  >
-                    <div className='w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-500/20'>
-                      <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path d="M5 13l4 4L19 7" /></svg>
-                    </div>
-                    <h2 className='text-3xl font-black text-slate-900 mb-2'>¡Registrado!</h2>
-
-                    <div className='mt-8 text-left bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-3 mb-8'>
-                      <div className='flex flex-col'>
-                        <span className='text-[10px] text-slate-400 uppercase font-black tracking-widest'>Asistente</span>
-                        <span className='text-lg font-black text-slate-800 truncate'>{result.data.nombre ?? `${result.data.nombres ?? ''} ${result.data.apellidos ?? ''}`}</span>
-                      </div>
-                      <div className='flex flex-col'>
-                        <span className='text-[10px] text-slate-400 uppercase font-black tracking-widest'>RUT</span>
-                        <span className='text-base font-bold text-slate-600'>{result.rut}</span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => { setResult(null); setRut(''); setTimeout(() => rutInputRef.current?.focus(), 100); }}
-                      className='w-full py-4 rounded-xl bg-st-verde text-white text-base font-bold active:scale-95 transition-all mb-4 shadow-lg shadow-st-verde/20'
-                    >
-                      Nuevo Registro
-                    </button>
-
-                    <div className='px-4'>
-                      <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
-                        <motion.div className="h-full bg-st-verde" initial={{ width: "100%" }} animate={{ width: "0%" }} transition={{ duration: 30, ease: "linear" }} />
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* --- MOBILE NAVIGATION DOCK (LIGHT) --- */}
-        {(showButtons && !showScanner && !showCredits) && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            className='fixed bottom-10 left-1/2 -translate-x-1/2 z-30'
-          >
-            <div className='flex items-center gap-2 bg-white/90 backdrop-blur-xl border border-slate-100 p-2 rounded-full shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)]'>
-              <button
-                onClick={(e) => { e.stopPropagation(); onInfoClick(); }}
-                className='flex items-center gap-3 px-5 py-3 rounded-full text-slate-400 hover:text-st-verde hover:bg-slate-50 transition-all font-bold text-sm'
-              >
-                <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={2} stroke='currentColor' className='w-5 h-5'>
-                  <path strokeLinecap="round" strokeLinejoin="round" d='M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z' />
-                </svg>
-                Lista
-              </button>
-              <div className='w-px h-6 bg-slate-100'></div>
-              <button
-                onClick={(e) => { e.stopPropagation(); onAdminClick(); }}
-                className='flex items-center gap-3 px-5 py-3 rounded-full text-slate-400 hover:text-st-verde hover:bg-slate-50 transition-all font-bold text-sm'
-              >
-                <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={2} stroke='currentColor' className='w-5 h-5'>
-                  <path strokeLinecap="round" strokeLinejoin="round" d='M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z' />
-                </svg>
-                Admin
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Global Error (Mobile Light) */}
-        <AnimatePresence>
-          {errorVisual && (
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              className="fixed bottom-32 left-6 right-6 z-50 pointer-events-none"
-            >
-              <div className='bg-white text-red-500 p-4 rounded-2xl shadow-xl flex items-center justify-center gap-3 border border-red-100 pointer-events-auto'>
-                <div className='w-2 h-2 bg-red-500 rounded-full animate-pulse'></div>
-                <p className='text-sm font-black uppercase tracking-wider'>{errorVisual}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* --- DESKTOP SPLIT SCREEN LAYOUT --- */}
-      <div className='hidden md:flex w-full max-w-6xl h-[650px] bg-white rounded-[3rem] shadow-2xl shadow-slate-200 overflow-hidden'>
-        {/* Left Branding */}
-        <div className='w-5/12 bg-st-verde p-12 text-white flex flex-col justify-between relative overflow-hidden'>
+        {/* Left Section - Information */}
+        <div className='bg-st-verde p-4 md:p-12 text-white flex flex-row md:flex-col justify-between items-center md:items-start relative overflow-hidden shrink-0 md:w-5/12'>
           <div className='absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 pointer-events-none'></div>
           <div className='absolute bottom-0 left-0 w-48 h-48 bg-black/20 rounded-full blur-2xl transform -translate-x-1/2 translate-y-1/2 pointer-events-none'></div>
 
-          <div className='relative z-10'>
-            <div className='w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-12'>
-              <span className='font-bold text-2xl'>ST</span>
+          <div className='relative z-10 flex items-center gap-4 md:block'>
+            <div className='w-10 h-10 md:w-16 md:h-16 bg-white/20 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center mb-0 md:mb-8'>
+              <span className='font-bold text-lg md:text-2xl'>ST</span>
             </div>
-            <h1 className='text-5xl font-black leading-[1.1] mb-6 tracking-tight'>Panel de Asistencia</h1>
-            <p className='text-white/70 text-lg font-medium leading-relaxed max-w-xs'>
-              Gestiona el registro institucional con un solo toque.
-            </p>
+            <div className='hidden md:block'>
+              <h1 className='text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-3 md:mb-4'>
+                Bienvenido
+              </h1>
+              <p className='text-white/80 text-base md:text-lg font-light max-w-sm'>
+                Sistema de registro de asistencia digital institucional.
+              </p>
+            </div>
           </div>
 
-          <div className='relative z-10'>
-            <div className='flex items-center gap-4 bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20'>
-              <div className='w-12 h-12 bg-white rounded-full flex items-center justify-center text-st-verde shadow-lg'>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-9 6c0 4.418 7 11 9 11s9-6.582 9-11a6 6 0 00-9-6z" /></svg>
+          <div className='relative z-10 mt-0 md:mt-12'>
+            <div className='flex items-center gap-3 md:gap-4 bg-white/10 backdrop-blur-md p-2 md:p-4 rounded-lg md:rounded-xl border border-white/20'>
+              <div className='w-8 h-8 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-st-verde font-bold shadow-lg shrink-0'>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-6 md:w-6" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
               </div>
-              <div>
-                <span className='text-[10px] font-black text-white/50 uppercase tracking-widest block mb-0.5'>Evento Activo</span>
-                <span className='text-base font-bold text-white'>{eventoActivo?.nombre || 'Cargando...'}</span>
+              <div className='min-w-0 max-w-[120px] md:max-w-none'>
+                <div className='text-[8px] md:text-xs text-white/60 uppercase tracking-wider font-semibold'>Evento Activo</div>
+                <div className='font-bold text-xs md:text-base truncate'>
+                  {eventoActivo?.nombre || 'Cargando...'}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Form */}
-        <div className='flex-1 p-16 flex flex-col justify-center relative bg-white'>
-          {/* Desktop Actions */}
+        {/* Right Section - Form */}
+        <div className='md:w-7/12 p-6 md:p-16 flex flex-col justify-center bg-gradient-to-b from-white via-white to-slate-50/50 relative'>
+
+          {/* Error Message - Fixed top on mobile, absolute on desktop */}
+          <AnimatePresence>
+            {errorVisual && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, type: "spring", stiffness: 100 }}
+                className="fixed md:absolute top-5 left-4 right-32 md:right-auto md:top-10 md:left-8 z-10 md:max-w-sm pointer-events-none"
+              >
+                <div className='bg-red-50 border-l-4 border-red-500 p-2 md:p-4 rounded-lg shadow-lg pointer-events-auto'>
+                  {/* Horizontal layout on all screen sizes */}
+                  <div className='flex flex-row items-center gap-2 md:gap-3'>
+                    <div className='w-5 h-5 md:w-5 md:h-5 rounded-full bg-red-500 flex items-center justify-center shrink-0'>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" className="w-3 h-3 md:w-3 md:h-3">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className='text-[10px] md:text-sm font-medium text-red-800 text-left flex-1 leading-tight'>{errorVisual}</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Top Actions - Fixed on mobile, absolute on desktop */}
           {(showButtons && !showScanner && !showCredits) && (
-            <div className='absolute top-10 right-10 flex items-center gap-4 z-30'>
-              <button onClick={onInfoClick} className='w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-st-verde hover:border-st-verde/30 transition-all active:scale-95' title='Lista de asistentes'>
-                <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={2} stroke='currentColor' className='w-5 h-5'><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+            <div className='fixed md:absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-2 md:gap-4 z-30'>
+              {/* Info Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInfoClick();
+                }}
+                className='w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white/90 md:bg-slate-50 text-slate-500 md:text-slate-400 border border-slate-200 shadow-lg md:shadow-sm hover:text-st-verde hover:border-st-verde/30 hover:shadow-md transition-all duration-300 flex items-center justify-center active:scale-95 pointer-events-auto'
+                title='Ver lista'
+              >
+                <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-5 h-5 md:w-6 md:h-6'>
+                  <path strokeLinecap='round' strokeLinejoin='round' d='M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z' />
+                </svg>
               </button>
-              <button onClick={onAdminClick} className='w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-st-verde hover:border-st-verde/30 transition-all active:scale-95' title='Administración'>
-                <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={2} stroke='currentColor' className='w-5 h-5'><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z" /></svg>
+
+              {/* Admin Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdminClick();
+                }}
+                className='w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white/90 md:bg-slate-50 text-slate-500 md:text-slate-400 border border-slate-200 shadow-lg md:shadow-sm hover:text-st-verde hover:border-st-verde/30 hover:shadow-md transition-all duration-300 flex items-center justify-center active:scale-95 pointer-events-auto'
+                title='Administración'
+              >
+                <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-5 h-5 md:w-6 md:h-6'>
+                  <path strokeLinecap='round' strokeLinejoin='round' d='M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z' />
+                </svg>
               </button>
-              <div className="w-px h-8 bg-slate-100 mx-1"></div>
-              <img src={Logo} alt="Logo" className="w-16 h-16 object-contain" />
+
+              <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block"></div>
+
+              <img src={Logo} alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain opacity-90 hover:opacity-100 transition-all duration-500 hidden md:block" />
             </div>
           )}
 
           <AnimatePresence mode='wait'>
             {!result ? (
-              <motion.div key="desktop-form" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className='max-w-md w-full mx-auto'>
-                <h2 className='text-4xl font-black text-slate-900 mb-4 tracking-tight'>Identifícate</h2>
-                <p className='text-slate-500 text-lg font-medium mb-10'>Ingresa tu RUT institucional para registrar asistencia.</p>
+              <motion.div
+                key="login-form-split"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.4 }}
+                className='max-w-md mx-auto w-full mt-2 md:mt-0 relative'
+              >
+                <h2 className='text-xl md:text-3xl font-bold text-slate-800 mb-1 md:mb-2 tracking-tight text-center md:text-left'>Registra tu llegada</h2>
+                <p className='text-slate-500 mb-5 md:mb-8 text-xs md:text-base font-medium opacity-80 text-center md:text-left'>Ingresa tu RUT para confirmar tu asistencia.</p>
 
-                <form onSubmit={handleSubmit} className='flex flex-col gap-8'>
-                  <div className='relative'>
-                    <label className='text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1'>Identificación Estudiantil / RUT</label>
-                    <input
-                      ref={rutInputRef}
-                      type='text'
-                      value={rut}
-                      onChange={handleInput}
-                      placeholder='12345678-K'
-                      className='w-full h-20 px-8 bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] text-3xl font-black text-slate-800 placeholder:text-slate-200 focus:bg-white focus:border-st-verde focus:ring-8 focus:ring-st-verde/5 outline-none transition-all tracking-wider'
-                      maxLength={12}
-                      disabled={!eventoActivo || loading}
-                      autoFocus
-                      autoComplete='off'
-                    />
+                <form onSubmit={handleSubmit} className='flex flex-col gap-4 md:gap-6'>
+                  <div className='group'>
+                    <label className='block text-xs md:text-sm font-semibold text-slate-700 mb-1.5 md:mb-3 ml-1'>
+                      RUT
+                    </label>
+                    <div className='relative'>
+                      <input
+                        ref={rutInputRef}
+                        type='text'
+                        value={rut}
+                        onChange={handleInput}
+                        placeholder='12345678K'
+                        className={`w-full h-12 md:h-16 px-4 md:px-6 pr-20 md:pr-24 bg-slate-50 border-2 rounded-xl md:rounded-2xl text-base md:text-2xl font-bold tracking-wider text-slate-800 outline-none transition-all duration-300
+                            ${!eventoActivo
+                            ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200'
+                            : 'border-st-verde hover:border-st-verde focus:bg-white focus:border-st-verde focus:shadow-2xl focus:shadow-st-verde/5'
+                          }`}
+                        maxLength={12}
+                        disabled={!eventoActivo || loading}
+                        autoFocus
+                        autoComplete='off'
+                      />
+                      <div className='absolute right-3 md:right-5 top-1/2 transform -translate-y-1/2 flex items-center gap-2'>
+                        <button
+                          type='button'
+                          onClick={() => setShowScanner(true)}
+                          disabled={!eventoActivo || loading}
+                          className='w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-st-verde/10 hover:bg-st-verde/20 text-st-verde flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed'
+                          title='Escanear QR'
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 md:w-5 md:h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   <button
                     type='submit'
                     disabled={loading || !rut.trim() || !eventoActivo}
-                    className={`w-full h-20 rounded-[1.5rem] font-bold text-xl flex items-center justify-center gap-4 transition-all shadow-xl ${loading || !rut.trim() || !eventoActivo
-                      ? 'bg-slate-100 text-slate-400 shadow-none'
-                      : 'bg-st-verde text-white hover:bg-emerald-600 shadow-emerald-500/20 active:scale-[0.98]'
-                      }`}
+                    className={`
+                        w-full h-12 md:h-16 rounded-xl md:rounded-2xl font-bold text-sm md:text-lg transition-all duration-300
+                        flex items-center justify-center gap-3 shadow-lg
+                        ${loading || !rut.trim() || !eventoActivo
+                        ? 'bg-slate-100 text-slate-400 shadow-none cursor-not-allowed'
+                        : 'bg-st-verde text-white shadow-st-verde/20 hover:bg-[#004b30] hover:shadow-xl hover:shadow-st-verde/30 transform hover:-translate-y-1'
+                      }
+                      `}
                   >
-                    {loading ? 'Procesando...' : 'Confirmar Registro'}
-                    {!loading && <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>}
+                    {loading ? 'Verificando...' : 'Confirmar Asistencia'}
+                    {!loading && (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    )}
                   </button>
                 </form>
+
+
+                {/* Mobile Footer inside form area - removed, now using floating button */}
+
+
               </motion.div>
             ) : (
-              <motion.div key="desktop-success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className='max-w-md w-full mx-auto text-center'>
-                <div className='w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-green-500/20'>
-                  <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path d="M5 13l4 4L19 7" /></svg>
-                </div>
-                <h2 className='text-5xl font-black text-st-verde mb-3 tracking-tight'>¡Bienvenido!</h2>
-                <p className='text-slate-500 text-xl font-bold mb-10'>Tu asistencia ha sido confirmada</p>
-
-                <div className='bg-slate-50 rounded-[2rem] p-10 border border-slate-100 text-left mb-10'>
-                  <span className='text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2'>Datos del Asistente</span>
-                  <h3 className='text-2xl font-black text-slate-900 leading-tight mb-4'>{result.data.nombre ?? `${result.data.nombres ?? ''} ${result.data.apellidos ?? ''}`}</h3>
-                  <div className='h-px bg-slate-200 w-full mb-4'></div>
-                  <div className='grid grid-cols-2 gap-4'>
-                    <div>
-                      <span className='text-[10px] font-bold text-slate-300 uppercase block'>RUT</span>
-                      <span className='font-bold text-slate-600'>{result.rut}</span>
-                    </div>
-                    {result.data.carrera && (
-                      <div>
-                        <span className='text-[10px] font-bold text-slate-300 uppercase block'>Carrera</span>
-                        <span className='font-bold text-slate-600 truncate block'>{result.data.carrera}</span>
-                      </div>
-                    )}
+              <motion.div
+                key="success-card-split"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.4 }}
+                className='max-w-md mx-auto w-full md:mt-0'
+              >
+                <div className='flex flex-col items-center mb-10 md:mb-8'>
+                  <div className='w-24 h-24 md:w-28 md:h-28 bg-green-50 rounded-full flex items-center justify-center mb-6 ring-8 ring-green-50/50'>
+                    <svg className="w-12 h-12 md:w-14 md:h-14 text-st-verde" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
                   </div>
+                  <h2 className='text-2xl md:text-3xl font-bold text-st-verde text-center'>
+                    ¡Bienvenido!
+                  </h2>
+
+                  <p className='text-st-verde/80 text-center mt-2 font-medium text-sm md:text-base'>
+                    Asistencia registrada correctamente
+                  </p>
                 </div>
 
-                <button
-                  onClick={() => { setResult(null); setRut(''); setTimeout(() => rutInputRef.current?.focus(), 100); }}
-                  className='w-full h-16 rounded-2xl bg-white border-2 border-slate-200 text-st-verde text-lg font-bold hover:bg-st-verde/5 transition-all mb-8 active:scale-95'
-                >
-                  Nuevo Registro
-                </button>
+                <div className='bg-slate-50 rounded-2xl p-5 md:p-6 border border-slate-100 space-y-1 mb-6'>
+                  {esEventoFuncionarios ? (
+                    <>
+                      <InfoRow label="Funcionario" value={`${result.data.nombres || ''} ${result.data.apellidos || ''}`} highlight />
+                      <InfoRow label="RUT" value={result.rut} />
+                      <div className='pt-2 mt-2 border-t border-slate-200'>
+                        <InfoRow label="Confirmación" value={result.data.asiste ? 'Pre-Confirmada' : 'En Puerta'} border={false} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <InfoRow
+                        label="Nombre Completo"
+                        value={result.data.nombre ?? `${result.data.nombres ?? ''} ${result.data.apellidos ?? ''}`}
+                        highlight
+                      />
+                      <InfoRow label="RUT" value={result.rut} />
+                      <InfoRow label="Carrera" value={result.data.carrera} />
+                      <InfoRow label="Grupo" value={result.data.grupo || 'No asignado'} />
+                      <InfoRow label="Asiento" value={result.data.asiento || 'No asignado'} border={false} />
+                    </>
+                  )}
+                </div>
 
-                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <motion.div className="h-full bg-st-verde" initial={{ width: "100%" }} animate={{ width: "0%" }} transition={{ duration: 30, ease: "linear" }} />
+
+                <div className='mb-6'>
+                  <button
+                    onClick={() => {
+                      setResult(null);
+                      setRut('');
+                      setTimeout(() => {
+                        if (rutInputRef.current) rutInputRef.current.focus();
+                      }, 100);
+                    }}
+                    className='w-full py-3 md:py-4 rounded-xl bg-white border-2 border-slate-100 text-st-verde font-bold text-base md:text-lg hover:border-st-verde hover:bg-green-50/50 transition-all duration-200 flex items-center justify-center gap-2 group'
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Ingresar otro asistente
+                  </button>
+                </div>
+
+                <div className='text-center'>
+                  <p className='text-xs text-slate-400 font-medium mb-3 uppercase tracking-wider'>
+                    Cierre automático
+                  </p>
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-st-verde"
+                      initial={{ width: "100%" }}
+                      animate={{ width: "0%" }}
+                      transition={{ duration: 30, ease: "linear" }}
+                    />
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -420,13 +396,16 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
         </div>
       </div>
 
-      {/* Persistent Information Button (Common) */}
-      <div className='fixed top-6 right-6 md:top-auto md:bottom-10 md:right-10 z-50'>
+      {/* Footer info button - bottom right on all screens */}
+      <div className='fixed bottom-4 right-4 z-40'>
         <button
           onClick={() => setShowCredits(true)}
-          className="w-14 h-14 rounded-full bg-white border border-slate-100 shadow-xl flex items-center justify-center text-slate-300 hover:text-st-verde transition-all group"
+          className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm hover:shadow-md text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center"
+          title="Información del sistema"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 group-hover:scale-110 transition-transform"><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
         </button>
       </div>
 
