@@ -10,6 +10,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
   const [result, setResult] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
+  const [isFocused, setIsFocused] = useState(false); // Track input focus
   const rutInputRef = useRef(null);
   const scanTimeoutRef = useRef(null);
 
@@ -197,7 +198,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
 
           {/* Top Actions - Fixed on mobile, absolute on desktop */}
           {(showButtons && !showScanner && !showCredits) && (
-            <div className='fixed md:absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-2 md:gap-4 z-30'>
+            <div className={`fixed md:absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-2 md:gap-4 z-30 transition-opacity duration-200 ${isFocused ? 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto' : 'opacity-100'}`}>
               {/* Info Button */}
               <button
                 onClick={(e) => {
@@ -266,6 +267,8 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                         disabled={!eventoActivo || loading}
                         autoFocus
                         autoComplete='off'
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => setTimeout(() => setIsFocused(false), 200)}
                       />
                       <div className='absolute right-3 md:right-5 top-1/2 transform -translate-y-1/2 flex items-center gap-2'>
                         <button
@@ -397,7 +400,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
       </div>
 
       {/* Footer info button - bottom right on all screens */}
-      <div className='fixed bottom-4 right-4 z-40'>
+      <div className='hidden md:block fixed bottom-4 right-4 z-40'>
         <button
           onClick={() => setShowCredits(true)}
           className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm hover:shadow-md text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center"
