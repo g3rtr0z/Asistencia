@@ -66,6 +66,7 @@ const AlumnosLista = ({
   const [ordenAlfabetico, setOrdenAlfabetico] = useState('asc');
   const [ordenCampo, setOrdenCampo] = useState('nombre');
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -428,40 +429,46 @@ const AlumnosLista = ({
             )}
           </button>
 
-          <div className="relative group">
-            <button className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 md:py-3 rounded-2xl font-bold text-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition-all shadow-sm" title="Exportar">
+          <div className="relative">
+            <button
+              onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
+              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 md:py-3 rounded-2xl font-bold text-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition-all shadow-sm"
+              title="Exportar"
+            >
               <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span className="hidden md:inline text-xs md:text-sm">Exportar</span>
-              <svg className="hidden md:block w-4 h-4 text-slate-400 group-hover:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`hidden md:block w-4 h-4 text-slate-400 transition-transform ${exportDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 scale-95 group-hover:scale-100">
-              <p className='px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1'>Formato Excel</p>
-              <button
-                onClick={() => exportarAExcel(alumnosParaStats, eventoNombre, tipoEvento, '')}
-                className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
-              >
-                <div className="w-2 h-2 rounded-full bg-st-verde"></div>
-                Todos ({alumnosParaStats.length})
-              </button>
-              <button
-                onClick={() => exportarAExcel(alumnosParaStats, eventoNombre, tipoEvento, 'presentes')}
-                className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
-              >
-                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                Presentes ({totalPresentes})
-              </button>
-              <button
-                onClick={() => exportarAExcel(alumnosParaStats, eventoNombre, tipoEvento, 'ausentes')}
-                className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
-              >
-                <div className="w-2 h-2 rounded-full bg-rose-500"></div>
-                Ausentes ({totalAusentes})
-              </button>
-            </div>
+            {exportDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-20">
+                <p className='px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1'>Formato Excel</p>
+                <button
+                  onClick={() => { exportarAExcel(alumnosParaStats, eventoNombre, tipoEvento, ''); setExportDropdownOpen(false); }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                >
+                  <div className="w-2 h-2 rounded-full bg-st-verde"></div>
+                  Todos ({alumnosParaStats.length})
+                </button>
+                <button
+                  onClick={() => { exportarAExcel(alumnosParaStats, eventoNombre, tipoEvento, 'presentes'); setExportDropdownOpen(false); }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                >
+                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  Presentes ({totalPresentes})
+                </button>
+                <button
+                  onClick={() => { exportarAExcel(alumnosParaStats, eventoNombre, tipoEvento, 'ausentes'); setExportDropdownOpen(false); }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                >
+                  <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+                  Ausentes ({totalAusentes})
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
