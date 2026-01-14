@@ -455,35 +455,35 @@ function AdminPanel({ onSalir }) {
 
       {/* Mobile Bottom Navigation */}
       <nav className='md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30 safe-area-inset-bottom'>
-        <div className='flex items-center justify-around h-14 px-4 gap-2'>
+        <div className='flex items-center justify-around h-16 px-2'>
           <button
             onClick={() => setTab('eventos')}
-            className={`flex items-center justify-center flex-1 h-10 px-3 gap-2 rounded-xl transition-all ${tab === 'eventos' ? 'bg-st-verde text-white shadow-sm' : 'text-slate-400 hover:bg-slate-50'}`}
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${tab === 'eventos' ? 'text-st-verde' : 'text-slate-400'}`}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className='text-xs font-bold'>Eventos</span>
+            <span className='text-xs font-medium'>Eventos</span>
           </button>
 
           <button
             onClick={() => setTab('alumnos')}
-            className={`flex items-center justify-center flex-1 h-10 px-3 gap-2 rounded-xl transition-all ${tab === 'alumnos' ? 'bg-st-verde text-white shadow-sm' : 'text-slate-400 hover:bg-slate-50'}`}
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${tab === 'alumnos' ? 'text-st-verde' : 'text-slate-400'}`}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
-            <span className='text-xs font-bold'>Participantes</span>
+            <span className='text-xs font-medium'>Participantes</span>
           </button>
 
           <button
             onClick={onSalir}
-            className='flex items-center justify-center w-10 h-10 rounded-xl text-red-400 hover:bg-red-50 hover:text-red-500 transition-all shrink-0'
-            title="Salir"
+            className='flex flex-col items-center justify-center flex-1 h-full gap-1 text-red-400 hover:text-red-500 transition-colors'
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
+            <span className='text-xs font-medium'>Salir</span>
           </button>
         </div>
       </nav>
