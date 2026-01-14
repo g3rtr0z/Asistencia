@@ -354,9 +354,9 @@ const AlumnosLista = ({
 
         <button
           onClick={() => setSoloPresentes && setSoloPresentes('presentes')}
-          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${soloPresentes === 'presentes' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'}`}
+          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${soloPresentes === 'presentes' ? 'bg-st-verde text-white border-st-verde shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'}`}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${soloPresentes === 'presentes' ? 'bg-white/20' : 'bg-emerald-50 text-emerald-600'}`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${soloPresentes === 'presentes' ? 'bg-white/20' : 'bg-st-pastel text-st-verde'}`}>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
