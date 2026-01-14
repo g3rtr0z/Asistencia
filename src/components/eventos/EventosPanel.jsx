@@ -162,475 +162,343 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
 
   return (
     <div className='w-full'>
-      {/* Header Optimizado para móviles */}
-      <div className='flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between'>
-        <div className='flex items-center gap-3'>
-          <div className='w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-800 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg'>
-            <svg
-              className='w-4 h-4 sm:w-6 sm:h-6 text-white'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
-              />
-            </svg>
-          </div>
-          <div>
-            <h2 className='text-xl sm:text-2xl font-bold text-slate-800'>
-              Gestión de Eventos
-            </h2>
-            <p className='text-xs sm:text-sm text-slate-500'>
-              Crea y administra tus eventos
-            </p>
+      {/* Stats Header */}
+      <div className='grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6'>
+        <div className='bg-white rounded-xl p-4 border border-slate-200'>
+          <div className='flex items-center gap-3'>
+            <div className='w-10 h-10 bg-st-verde/10 rounded-lg flex items-center justify-center'>
+              <svg className='w-5 h-5 text-st-verde' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' />
+              </svg>
+            </div>
+            <div>
+              <p className='text-2xl font-bold text-slate-900'>{eventos.length}</p>
+              <p className='text-xs text-slate-500'>Total Eventos</p>
+            </div>
           </div>
         </div>
-        <div className='flex flex-wrap items-center justify-center gap-2 sm:gap-3'>
-          <button
-            onClick={() => setFiltroTipo('alumnos')}
-            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm md:text-base ${filtroTipo === 'alumnos'
-              ? 'bg-green-800 text-white shadow-lg'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-          >
-            <svg
-              className='w-3 h-3 sm:w-4 sm:h-4'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'
-              />
-            </svg>
-            <span className='hidden sm:inline'>Alumnos</span>
-            <span className='sm:hidden'>Alumnos</span>
-          </button>
-          <button
-            onClick={() => setFiltroTipo('trabajadores')}
-            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm md:text-base ${filtroTipo === 'trabajadores'
-              ? 'bg-blue-800 text-white shadow-lg'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-          >
-            <svg
-              className='w-3 h-3 sm:w-4 sm:h-4'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
-              />
-            </svg>
-            <span className='hidden sm:inline'>Funcionarios</span>
-            <span className='sm:hidden'>Funcionarios</span>
-          </button>
+        <div className='bg-white rounded-xl p-4 border border-slate-200'>
+          <div className='flex items-center gap-3'>
+            <div className='w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center'>
+              <svg className='w-5 h-5 text-green-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
+              </svg>
+            </div>
+            <div>
+              <p className='text-2xl font-bold text-slate-900'>{eventos.filter(e => e.activo).length}</p>
+              <p className='text-xs text-slate-500'>Activos</p>
+            </div>
+          </div>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className='w-full sm:w-auto bg-gradient-to-r from-green-800 to-emerald-600 text-white px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 flex items-center justify-center gap-2 font-semibold shadow-lg hover:shadow-xl text-xs sm:text-sm md:text-base'
-        >
-          <svg
-            className='w-4 h-4 sm:w-5 sm:h-5'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M12 6v6m0 0v6m0-6h6m-6 0H6'
-            />
-          </svg>
-          Crear Evento
-        </button>
+        <div className='bg-white rounded-xl p-4 border border-slate-200'>
+          <div className='flex items-center gap-3'>
+            <div className='w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
+              <svg className='w-5 h-5 text-blue-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' />
+              </svg>
+            </div>
+            <div>
+              <p className='text-2xl font-bold text-slate-900'>{eventos.filter(e => (e.tipo || 'alumnos') === 'alumnos').length}</p>
+              <p className='text-xs text-slate-500'>Alumnos</p>
+            </div>
+          </div>
+        </div>
+        <div className='bg-white rounded-xl p-4 border border-slate-200'>
+          <div className='flex items-center gap-3'>
+            <div className='w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center'>
+              <svg className='w-5 h-5 text-purple-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' />
+              </svg>
+            </div>
+            <div>
+              <p className='text-2xl font-bold text-slate-900'>{eventos.filter(e => e.tipo === 'trabajadores').length}</p>
+              <p className='text-xs text-slate-500'>Funcionarios</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Mensaje de estado mejorado */}
-      {mensaje && (
-        <div
-          className={`p-3 sm:p-4 rounded-lg sm:rounded-xl mb-6 border-l-4 ${mensaje.includes('Error')
-            ? 'bg-red-50 text-red-700 border-red-500'
-            : 'bg-green-50 text-green-700 border-green-500'
-            }`}
-        >
-          <div className='flex items-center gap-2'>
-            <svg
-              className={`w-4 h-4 sm:w-5 sm:h-5 ${mensaje.includes('Error') ? 'text-red-500' : 'text-green-500'}`}
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d={
-                  mensaje.includes('Error')
-                    ? 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                    : 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
-                }
-              />
-            </svg>
-            <span className='font-medium text-sm sm:text-base'>{mensaje}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Lista de eventos optimizada para móviles */}
-      <div className='grid gap-3 sm:gap-4 md:gap-6'>
-        {eventos
-          .filter(evento => {
-            const tipoEvento = evento.tipo || 'alumnos';
-            return tipoEvento === filtroTipo;
-          })
-          .map(evento => (
-            <div
-              key={evento.id}
-              className={`p-3 sm:p-4 md:p-6 rounded-lg sm:rounded-xl border shadow-sm transition-all duration-300 hover:shadow-md ${evento.activo
-                ? 'border-green-500 bg-white'
-                : 'border-slate-200 bg-white'
+      {/* Toolbar */}
+      <div className='bg-white rounded-xl border border-slate-200 p-4 mb-6'>
+        <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
+          {/* Filter Tabs */}
+          <div className='flex bg-slate-100 rounded-lg p-1'>
+            <button
+              onClick={() => setFiltroTipo('alumnos')}
+              className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${filtroTipo === 'alumnos'
+                ? 'bg-white text-st-verde shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
                 }`}
             >
-              <div className='flex flex-col sm:flex-row justify-between items-start gap-4'>
-                <div className='flex-1 w-full'>
-                  <div className='flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3'>
-                    <h3 className='text-lg sm:text-xl font-bold text-slate-800'>
-                      {evento.nombre}
-                    </h3>
-                    <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full ${evento.tipo === 'trabajadores'
-                        ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                        : 'bg-green-100 text-green-800 border border-green-200'
-                        }`}
-                    >
-                      {evento.tipo === 'trabajadores'
-                        ? 'Funcionarios'
-                        : 'Alumnos'}
-                    </span>
-                  </div>
-                  <p className='text-sm sm:text-base text-slate-600 mb-3 sm:mb-4 leading-relaxed'>
-                    {evento.descripcion}
-                  </p>
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4'>
-                    <div className='flex items-center gap-2 text-xs sm:text-sm text-slate-500'>
-                      <svg
-                        className='w-3 h-3 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
-                        />
-                      </svg>
-                      <span>
-                        <strong>Inicio:</strong>{' '}
-                        {formatDate(evento.fechaInicio)}
-                      </span>
-                    </div>
-                    <div className='flex items-center gap-2 text-xs sm:text-sm text-slate-500'>
-                      <svg
-                        className='w-3 h-3 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
-                        />
-                      </svg>
-                      <span>
-                        <strong>Fin:</strong> {formatDate(evento.fechaFin)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+              Alumnos
+            </button>
+            <button
+              onClick={() => setFiltroTipo('trabajadores')}
+              className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${filtroTipo === 'trabajadores'
+                ? 'bg-white text-st-verde shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+                }`}
+            >
+              Funcionarios
+            </button>
+          </div>
 
-                {/* Controles optimizados para móviles */}
-                <div className='flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto'>
-                  {/* Toggle para activar/desactivar evento */}
-                  <div className='flex items-center gap-2'>
-                    <span className='text-xs text-slate-500 font-medium'>
-                      {evento.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                    <button
-                      onClick={() => handleActivar(evento.id)}
-                      title={
-                        evento.activo ? 'Desactivar evento' : 'Activar evento'
-                      }
-                      className={`relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2 ${evento.activo ? 'bg-green-800' : 'bg-slate-200'
-                        }`}
-                    >
-                      <span
-                        className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform shadow-sm ${evento.activo
-                          ? 'translate-x-5 sm:translate-x-6'
-                          : 'translate-x-1'
-                          }`}
-                      />
-                    </button>
-                  </div>
+          {/* Create Button */}
+          <button
+            onClick={() => setShowModal(true)}
+            className='flex items-center justify-center gap-2 bg-st-verde text-white px-5 py-2.5 rounded-lg hover:bg-[#004b30] transition-colors font-medium text-sm shadow-sm'
+          >
+            <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+            </svg>
+            Nuevo Evento
+          </button>
+        </div>
+      </div>
 
-                  {/* Botones de acción */}
-                  <div className='flex gap-2 w-full sm:w-auto'>
-                    <motion.button
-                      onClick={() => handleEdit(evento)}
-                      className='flex-1 sm:flex-none bg-slate-600 text-white p-2 rounded-lg hover:bg-slate-700 transition-colors flex items-center justify-center'
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      title='Editar evento'
-                    >
-                      <svg
-                        className='w-4 h-4 sm:w-5 sm:h-5'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
-                        />
-                      </svg>
-                    </motion.button>
-                    <button
-                      onClick={() => handleEliminar(evento.id)}
-                      className='flex-1 sm:flex-none bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center'
-                      title='Eliminar evento'
-                    >
-                      <svg
-                        className='w-4 h-4 sm:w-5 sm:h-5'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                        />
-                      </svg>
-                    </button>
-                  </div>
+      {/* Message Toast */}
+      {mensaje && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${mensaje.includes('Error')
+            ? 'bg-red-50 border border-red-200 text-red-700'
+            : 'bg-green-50 border border-green-200 text-green-700'
+            }`}
+        >
+          <svg className={`w-5 h-5 ${mensaje.includes('Error') ? 'text-red-500' : 'text-green-500'}`} fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d={mensaje.includes('Error') ? 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' : 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'} />
+          </svg>
+          <span className='text-sm font-medium'>{mensaje}</span>
+        </motion.div>
+      )}
+
+      {/* Events Grid */}
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+        {eventos
+          .filter(evento => (evento.tipo || 'alumnos') === filtroTipo)
+          .map(evento => (
+            <motion.div
+              key={evento.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`bg-white rounded-xl border-2 overflow-hidden transition-all hover:shadow-lg ${evento.activo ? 'border-st-verde' : 'border-slate-200'
+                }`}
+            >
+              {/* Event Header with Status */}
+              <div className={`px-5 py-3 ${evento.activo ? 'bg-st-verde' : 'bg-slate-100'}`}>
+                <div className='flex items-center justify-between'>
+                  <span className={`text-sm font-bold ${evento.activo ? 'text-white' : 'text-slate-600'}`}>
+                    {evento.activo ? '● EVENTO ACTIVO' : '○ Inactivo'}
+                  </span>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${evento.tipo === 'trabajadores'
+                    ? 'bg-blue-100 text-blue-700'
+                    : evento.activo ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'
+                    }`}>
+                    {evento.tipo === 'trabajadores' ? 'Funcionarios' : 'Alumnos'}
+                  </span>
                 </div>
               </div>
-            </div>
+
+              {/* Event Content */}
+              <div className='p-5'>
+                <h3 className='text-lg font-bold text-slate-900 mb-2'>{evento.nombre}</h3>
+                <p className='text-sm text-slate-600 mb-4 line-clamp-2'>{evento.descripcion}</p>
+
+                {/* Dates */}
+                <div className='flex items-center gap-3 mb-5 text-sm text-slate-500'>
+                  <div className='flex items-center gap-1.5'>
+                    <svg className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' />
+                    </svg>
+                    <span>{formatDate(evento.fechaInicio)}</span>
+                  </div>
+                  <span className='text-slate-300'>→</span>
+                  <span>{formatDate(evento.fechaFin)}</span>
+                </div>
+
+                {/* Actions */}
+                <div className='flex gap-2'>
+                  <button
+                    onClick={() => handleActivar(evento.id)}
+                    className={`flex-1 py-2.5 rounded-lg font-medium text-sm transition-colors ${evento.activo
+                      ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      : 'bg-st-verde text-white hover:bg-[#004b30]'
+                      }`}
+                  >
+                    {evento.activo ? 'Desactivar' : 'Activar'}
+                  </button>
+                  <button
+                    onClick={() => handleEdit(evento)}
+                    className='p-2.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors'
+                    title='Editar'
+                  >
+                    <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleEliminar(evento.id)}
+                    className='p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors'
+                    title='Eliminar'
+                  >
+                    <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           ))}
       </div>
 
-      {/* Modal optimizado para móviles */}
+      {/* Empty State */}
+      {eventos.filter(evento => (evento.tipo || 'alumnos') === filtroTipo).length === 0 && (
+        <div className='bg-white rounded-xl border border-slate-200 p-12 text-center'>
+          <div className='w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+            <svg className='w-8 h-8 text-slate-400' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' />
+            </svg>
+          </div>
+          <h3 className='text-lg font-semibold text-slate-900 mb-1'>No hay eventos</h3>
+          <p className='text-slate-500 text-sm mb-4'>Crea tu primer evento para comenzar</p>
+          <button
+            onClick={() => setShowModal(true)}
+            className='inline-flex items-center gap-2 bg-st-verde text-white px-4 py-2 rounded-lg hover:bg-[#004b30] transition-colors text-sm font-medium'
+          >
+            <svg className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+            </svg>
+            Crear Evento
+          </button>
+        </div>
+      )}
+
+      {/* Create/Edit Modal */}
       {showModal && (
         <motion.div
           className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4'
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={handleCerrarModal}
         >
           <motion.div
-            className='bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-lg max-h-[90vh] overflow-hidden'
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.1 }}
+            className='bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden'
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            onClick={e => e.stopPropagation()}
           >
-            {/* Header del Modal */}
-            <div className='bg-gradient-to-r from-green-500 to-emerald-600 px-4 sm:px-6 py-3 sm:py-4 text-white'>
+            {/* Modal Header */}
+            <div className='bg-st-verde px-6 py-4 text-white'>
               <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-2 sm:gap-3'>
-                  <div className='w-6 h-6 sm:w-8 sm:h-8 bg-white/20 rounded-lg flex items-center justify-center'>
-                    <svg
-                      className='w-3 h-3 sm:w-5 sm:h-5'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d={
-                          editingEvento
-                            ? 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
-                            : 'M12 6v6m0 0v6m0-6h6m-6 0H6'
-                        }
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className='text-lg sm:text-xl font-bold'>
-                      {editingEvento ? 'Editar Evento' : 'Crear Evento'}
-                    </h3>
-                    <p className='text-xs sm:text-sm text-green-100'>
-                      {editingEvento
-                        ? 'Modifica los datos del evento'
-                        : 'Crea un nuevo evento'}
-                    </p>
-                  </div>
+                <div>
+                  <h3 className='text-lg font-bold'>
+                    {editingEvento ? 'Editar Evento' : 'Nuevo Evento'}
+                  </h3>
+                  <p className='text-green-100 text-sm'>
+                    {editingEvento ? 'Modifica los datos del evento' : 'Completa los datos para crear un evento'}
+                  </p>
                 </div>
                 <button
                   onClick={handleCerrarModal}
-                  className='w-6 h-6 sm:w-8 sm:h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors'
+                  className='w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors'
                 >
-                  <svg
-                    className='w-3 h-3 sm:w-5 sm:h-5'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M6 18L18 6M6 6l12 12'
-                    />
+                  <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
                   </svg>
                 </button>
               </div>
             </div>
 
-            {/* Contenido del Modal */}
-            <div className='p-4 sm:p-6 overflow-y-auto max-h-[60vh]'>
-              <form onSubmit={handleSubmit} className='space-y-4'>
+            {/* Modal Content */}
+            <div className='p-6 max-h-[60vh] overflow-y-auto'>
+              <form onSubmit={handleSubmit} className='space-y-5'>
                 <div>
-                  <label className='block text-sm font-medium text-slate-700 mb-2'>
-                    Nombre del Evento
-                  </label>
+                  <label className='block text-sm font-medium text-slate-700 mb-1.5'>Nombre del Evento</label>
                   <input
                     type='text'
                     value={formData.nombre}
-                    onChange={e =>
-                      setFormData({ ...formData, nombre: e.target.value })
-                    }
-                    className='w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm'
-                    placeholder='Ingresa el nombre del evento'
+                    onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+                    className='w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-st-verde focus:ring-1 focus:ring-st-verde outline-none transition-colors text-sm'
+                    placeholder='Ej: Ceremonia de Graduación'
                     required
                   />
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-slate-700 mb-2'>
-                    Tipo de Evento
-                  </label>
-                  <select
-                    value={formData.tipo}
-                    onChange={e =>
-                      setFormData({ ...formData, tipo: e.target.value })
-                    }
-                    className='w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm'
-                  >
-                    <option value='alumnos'>Alumnos</option>
-                    <option value='trabajadores'>
-                      Funcionarios Santo Tomás
-                    </option>
-                  </select>
+                  <label className='block text-sm font-medium text-slate-700 mb-1.5'>Descripción</label>
+                  <textarea
+                    value={formData.descripcion}
+                    onChange={e => setFormData({ ...formData, descripcion: e.target.value })}
+                    rows={3}
+                    className='w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-st-verde focus:ring-1 focus:ring-st-verde outline-none transition-colors text-sm resize-none'
+                    placeholder='Describe el evento...'
+                  />
                 </div>
 
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-sm font-medium text-slate-700 mb-2'>
-                      Fecha de Inicio
-                    </label>
+                    <label className='block text-sm font-medium text-slate-700 mb-1.5'>Fecha Inicio</label>
                     <input
                       type='datetime-local'
                       value={formData.fechaInicio}
-                      onChange={e =>
-                        setFormData({
-                          ...formData,
-                          fechaInicio: e.target.value,
-                        })
-                      }
-                      className='w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm'
+                      onChange={e => setFormData({ ...formData, fechaInicio: e.target.value })}
+                      className='w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-st-verde focus:ring-1 focus:ring-st-verde outline-none transition-colors text-sm'
                       required
                     />
                   </div>
-
                   <div>
-                    <label className='block text-sm font-medium text-slate-700 mb-2'>
-                      Fecha de Fin
-                    </label>
+                    <label className='block text-sm font-medium text-slate-700 mb-1.5'>Fecha Fin</label>
                     <input
                       type='datetime-local'
                       value={formData.fechaFin}
-                      onChange={e =>
-                        setFormData({ ...formData, fechaFin: e.target.value })
-                      }
-                      className='w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 text-sm'
+                      onChange={e => setFormData({ ...formData, fechaFin: e.target.value })}
+                      className='w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-st-verde focus:ring-1 focus:ring-st-verde outline-none transition-colors text-sm'
                       required
                     />
                   </div>
                 </div>
 
-                <div className='flex items-center gap-3'>
-                  <input
-                    type='checkbox'
-                    id='activo'
-                    checked={formData.activo}
-                    onChange={e =>
-                      setFormData({ ...formData, activo: e.target.checked })
-                    }
-                    className='w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500'
-                  />
-                  <label
-                    htmlFor='activo'
-                    className='text-sm font-medium text-slate-700'
-                  >
-                    Activar evento inmediatamente
-                  </label>
+                <div>
+                  <label className='block text-sm font-medium text-slate-700 mb-1.5'>Tipo de Evento</label>
+                  <div className='flex gap-3'>
+                    <button
+                      type='button'
+                      onClick={() => setFormData({ ...formData, tipo: 'alumnos' })}
+                      className={`flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${formData.tipo === 'alumnos'
+                        ? 'border-st-verde bg-st-verde/10 text-st-verde'
+                        : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`}
+                    >
+                      Alumnos
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => setFormData({ ...formData, tipo: 'trabajadores' })}
+                      className={`flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${formData.tipo === 'trabajadores'
+                        ? 'border-st-verde bg-st-verde/10 text-st-verde'
+                        : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`}
+                    >
+                      Funcionarios
+                    </button>
+                  </div>
                 </div>
 
-                {/* Botón de Importar Excel - solo visible al editar */}
                 {editingEvento && (
-                  <div className='border-t border-slate-200 pt-4'>
-                    <div className='flex items-center justify-between'>
-                      <div>
-                        <h4 className='text-sm font-medium text-slate-700 mb-1'>
-                          Importar Alumnos
-                        </h4>
-                        <p className='text-xs text-slate-500'>
-                          Agrega alumnos desde un archivo Excel
-                        </p>
-                      </div>
-                      <button
-                        type='button'
-                        onClick={() => setShowImportModal(true)}
-                        className='bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center gap-2'
-                      >
-                        <svg
-                          className='w-4 h-4'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10'
-                          />
-                        </svg>
-                        Importar Excel
-                      </button>
-                    </div>
+                  <div className='pt-2'>
+                    <button
+                      type='button'
+                      onClick={() => setShowImportModal(true)}
+                      className='w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-st-verde hover:text-st-verde transition-colors text-sm'
+                    >
+                      <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10' />
+                      </svg>
+                      Importar desde Excel
+                    </button>
                   </div>
                 )}
 
@@ -638,15 +506,15 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
                   <button
                     type='button'
                     onClick={handleCerrarModal}
-                    className='flex-1 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm hover:bg-slate-200 transition-colors'
+                    className='flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition-colors text-sm'
                   >
                     Cancelar
                   </button>
                   <button
                     type='submit'
-                    className='flex-1 bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors'
+                    className='flex-1 py-2.5 bg-st-verde text-white rounded-lg font-medium hover:bg-[#004b30] transition-colors text-sm'
                   >
-                    {editingEvento ? 'Actualizar' : 'Crear'}
+                    {editingEvento ? 'Guardar Cambios' : 'Crear Evento'}
                   </button>
                 </div>
               </form>
@@ -655,7 +523,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
         </motion.div>
       )}
 
-      {/* Modal de Importación - movido dentro del modal de editar */}
+      {/* Import Modal */}
       {showModal && showImportModal && (
         <motion.div
           className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4'

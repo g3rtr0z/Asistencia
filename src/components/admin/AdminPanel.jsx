@@ -3,7 +3,6 @@ import AlumnosLista from '../alumnos/AlumnosLista';
 import EstadisticasPanel from '../alumnos/EstadisticasPanel';
 import EventosPanel from '../eventos/EventosPanel';
 import EventoActivoInfo from '../eventos/EventoActivoInfo';
-import EventoInfo from '../eventos/EventoInfo';
 import {
   agregarAlumno,
   deleteAlumnoPorRut,
@@ -257,10 +256,8 @@ function AdminPanel({ onSalir }) {
               </>
             ) : (
               <>
-                <EventoInfo
-                  eventoActivo={eventoActivo}
-                  totalAlumnos={alumnos.length}
-                  alumnos={alumnosFiltrados}
+                <EventoActivoInfo
+                  evento={eventoActivo}
                 />
 
                 {/* Toolbar Minimalista */}
@@ -357,20 +354,21 @@ function AdminPanel({ onSalir }) {
   return (
     <div className='min-h-screen w-full bg-slate-50 flex'>
 
-      {/* Sidebar - Desktop only */}
+      {/* Sidebar Desktop */}
+      {/* Sidebar Desktop */}
       <aside
-        className={`hidden md:flex md:relative inset-y-0 left-0 z-40 flex-col bg-st-verde text-white shadow-2xl transition-all duration-300 ${sidebarOpen ? 'w-72' : 'w-20'
+        className={`hidden md:flex flex-col bg-st-verde text-white shadow-2xl z-20 transition-all duration-300 ${sidebarOpen ? 'w-72' : 'w-20'
           }`}
       >
         <div className='p-4 flex flex-col gap-4'>
           {/* Header & Toggle */}
           <div className={`flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
             {sidebarOpen && (
-              <div className='flex items-center gap-2 md:gap-3 overflow-hidden'>
-                <div className='h-7 w-7 md:h-8 md:w-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0'>
-                  <span className='font-bold text-white text-xs md:text-sm'>ST</span>
+              <div className='flex items-center gap-3 overflow-hidden'>
+                <div className='h-8 w-8 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0'>
+                  <span className='font-bold text-white text-sm'>ST</span>
                 </div>
-                <div className='whitespace-nowrap hidden md:block'>
+                <div className='whitespace-nowrap'>
                   <h1 className='text-sm font-bold leading-tight'>Panel Admin</h1>
                   <p className='text-white/60 text-[10px]'>Santo Tomás</p>
                 </div>
@@ -400,7 +398,7 @@ function AdminPanel({ onSalir }) {
         <nav className='flex-1 px-3 space-y-2 mt-4'>
           <button
             onClick={() => setTab('eventos')}
-            className={`w-full flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2.5 md:py-3 rounded-lg transition-all text-xs md:text-sm font-medium ${tab === 'eventos'
+            className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-sm font-medium ${tab === 'eventos'
               ? 'bg-white/15 text-white shadow-sm'
               : 'text-white/70 hover:bg-white/10 hover:text-white'
               } ${!sidebarOpen && 'justify-center'}`}
@@ -409,14 +407,14 @@ function AdminPanel({ onSalir }) {
             <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className={`whitespace-nowrap transition-opacity duration-300 text-xs md:text-sm ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
+            <span className={`whitespace-nowrap transition-opacity duration-300 ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
               Eventos
             </span>
           </button>
 
           <button
             onClick={() => setTab('alumnos')}
-            className={`w-full flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2.5 md:py-3 rounded-lg transition-all text-xs md:text-sm font-medium ${tab === 'alumnos'
+            className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-sm font-medium ${tab === 'alumnos'
               ? 'bg-white/15 text-white shadow-sm'
               : 'text-white/70 hover:bg-white/10 hover:text-white'
               } ${!sidebarOpen && 'justify-center'}`}
@@ -425,7 +423,7 @@ function AdminPanel({ onSalir }) {
             <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
-            <span className={`whitespace-nowrap transition-opacity duration-300 text-xs md:text-sm ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
+            <span className={`whitespace-nowrap transition-opacity duration-300 ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
               Participantes
             </span>
           </button>
@@ -434,13 +432,13 @@ function AdminPanel({ onSalir }) {
         <div className='p-3 mt-auto border-t border-white/10'>
           <button
             onClick={onSalir}
-            className={`w-full flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2.5 md:py-3 text-red-100 hover:bg-white/10 rounded-lg transition text-xs md:text-sm font-medium ${!sidebarOpen && 'justify-center'}`}
+            className={`w-full flex items-center gap-3 px-3 py-3 text-red-100 hover:bg-white/10 rounded-lg transition text-sm font-medium ${!sidebarOpen && 'justify-center'}`}
             title={!sidebarOpen ? 'Cerrar Sesión' : ''}
           >
             <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            <span className={`whitespace-nowrap transition-opacity duration-300 text-xs md:text-sm ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
+            <span className={`whitespace-nowrap transition-opacity duration-300 ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
               Cerrar Sesión
             </span>
           </button>
@@ -449,9 +447,8 @@ function AdminPanel({ onSalir }) {
 
       {/* Main Content */}
       <main className='flex-1 h-screen overflow-hidden flex flex-col'>
-
         {/* Content Scrollable - with bottom padding on mobile for nav bar */}
-        <div className='flex-1 overflow-y-auto p-3 pb-20 md:pb-4 md:p-4 lg:p-8'>
+        <div className='flex-1 overflow-y-auto p-4 pb-20 md:pb-8 md:p-8'>
           <div className='max-w-[1400px] mx-auto'>
             {/* Header Simplified */}
             <div className='mb-8'>
@@ -466,42 +463,40 @@ function AdminPanel({ onSalir }) {
             {renderContent()}
           </div>
         </div>
-
-        {/* Mobile Bottom Navigation */}
-        <nav className='md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30'>
-          <div className='flex items-center justify-around h-16 px-2'>
-            <button
-              onClick={() => setTab('eventos')}
-              className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${tab === 'eventos' ? 'text-st-verde' : 'text-slate-400'
-                }`}
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className='text-xs font-medium'>Eventos</span>
-            </button>
-            <button
-              onClick={() => setTab('alumnos')}
-              className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${tab === 'alumnos' ? 'text-st-verde' : 'text-slate-400'
-                }`}
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              <span className='text-xs font-medium'>Participantes</span>
-            </button>
-            <button
-              onClick={onSalir}
-              className='flex flex-col items-center justify-center flex-1 h-full gap-1 text-red-400 hover:text-red-500 transition-colors'
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span className='text-xs font-medium'>Salir</span>
-            </button>
-          </div>
-        </nav>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className='md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30 safe-area-inset-bottom'>
+        <div className='flex items-center justify-around h-16 px-2'>
+          <button
+            onClick={() => setTab('eventos')}
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${tab === 'eventos' ? 'text-st-verde' : 'text-slate-400'}`}
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className='text-xs font-medium'>Eventos</span>
+          </button>
+          <button
+            onClick={() => setTab('alumnos')}
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${tab === 'alumnos' ? 'text-st-verde' : 'text-slate-400'}`}
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <span className='text-xs font-medium'>Participantes</span>
+          </button>
+          <button
+            onClick={onSalir}
+            className='flex flex-col items-center justify-center flex-1 h-full gap-1 text-red-400 hover:text-red-500 transition-colors'
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span className='text-xs font-medium'>Salir</span>
+          </button>
+        </div>
+      </nav>
 
       {/* Modal para agregar y eliminar alumnos */}
       {showAdminModal && (
