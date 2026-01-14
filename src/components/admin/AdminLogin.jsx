@@ -31,7 +31,7 @@ function AdminLogin({ onAuth, onSalir }) {
         {/* Simple decorative element */}
         <div className='absolute inset-0 bg-gradient-to-br from-st-verde to-[#004b30] opacity-50'></div>
 
-        <div className='relative z-10 flex flex-col justify-start items-center w-full p-16 pt-50 text-white'>
+        <div className='relative z-10 flex flex-col justify-center items-center w-full p-16 text-white'>
           <div className='text-center max-w-md'>
             <div className='w-24 h-24 bg-white rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-xl p-5'>
               <img src={Logo} alt="Logo Santo Tomás" className='w-full h-full object-contain' />
@@ -133,21 +133,13 @@ function AdminLogin({ onAuth, onSalir }) {
             <button
               type='button'
               onClick={onSalir}
-              className='w-full py-2.5 text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors flex items-center justify-center gap-2'
+              className='w-full py-2.5 text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors'
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-              </svg>
               Volver al inicio
             </button>
           </form>
 
-          {/* Footer */}
-          <div className='mt-5 lg:mt-6 pt-4 border-t border-slate-200 text-center'>
-            <p className='text-slate-400 text-[10px] lg:text-xs'>
-              © {new Date().getFullYear()} Santo Tomás • Sistema de Asistencia
-            </p>
-          </div>
+
         </div>
       </div>
     </div>
