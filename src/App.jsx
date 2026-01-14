@@ -254,22 +254,14 @@ function App() {
                   : 'Lista de Alumnos'}
               </h2>
               {esEventoTrabajadores ? (
-                <>
-                  <TrabajadoresResumen
-                    trabajadores={alumnos}
-                    soloPresentes={soloPresentes}
-                    setSoloPresentes={setSoloPresentes}
-                    trabajadoresCompletos={alumnos}
-                    eventoActivo={eventoActivo}
-                  />
-                  <div className='mt-6'>
-                    <TrabajadoresLista
-                      trabajadores={alumnos}
-                      soloPresentes={soloPresentes}
-                      setSoloPresentes={setSoloPresentes}
-                    />
-                  </div>
-                </>
+                <TrabajadoresLista
+                  trabajadores={alumnos}
+                  trabajadoresCompletos={alumnos}
+                  soloPresentes={soloPresentes}
+                  setSoloPresentes={setSoloPresentes}
+                  eventoNombre={eventoActivo?.nombre}
+                  tipoEvento={eventoActivo?.tipo}
+                />
               ) : (
                 <>
                   <AlumnosLista

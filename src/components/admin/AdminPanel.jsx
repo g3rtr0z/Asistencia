@@ -223,17 +223,18 @@ function AdminPanel({ onSalir }) {
                 </div>
 
                 <div className="space-y-6">
-                  <TrabajadoresResumen
-                    trabajadores={alumnos}
-                    soloPresentes={soloPresentes}
-                    setSoloPresentes={setSoloPresentes}
-                    trabajadoresCompletos={alumnos}
-                    eventoActivo={eventoActivo}
-                  />
                   <TrabajadoresLista
                     trabajadores={alumnos}
+                    trabajadoresCompletos={alumnos}
                     soloPresentes={soloPresentes}
                     setSoloPresentes={setSoloPresentes}
+                    esAdmin={true}
+                    eventoNombre={eventoActivo?.nombre || 'Evento'}
+                    tipoEvento={eventoActivo?.tipo || 'trabajadores'}
+                    updateTrabajador={async (eventoId, trabajadorId, data) => {
+                      const { updateAlumno } = await import('../../services/alumnosService');
+                      return updateAlumno(eventoId, trabajadorId, data);
+                    }}
                   />
                 </div>
               </>

@@ -397,7 +397,7 @@ const AlumnosLista = ({
 
       {/* Toolbar Unificado */}
       <div className="flex flex-row items-center gap-2 md:gap-4 mb-6">
-        <div className="flex-1 relative group">
+        <div className="flex-1 min-w-0 relative group">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
             <svg className="w-4 h-4 md:w-5 md:h-5 text-slate-400 group-focus-within:text-st-verde transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -412,10 +412,10 @@ const AlumnosLista = ({
           />
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
           <button
             onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
-            className={`flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 md:py-3 rounded-2xl font-bold text-sm transition-all border ${filtrosAbiertos ? 'bg-st-verde text-white border-st-verde shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 shadow-sm'}`}
+            className={`flex items-center justify-center gap-1.5 md:gap-2 px-2.5 md:px-5 py-2.5 md:py-3 rounded-2xl font-bold text-sm transition-all border ${filtrosAbiertos ? 'bg-st-verde text-white border-st-verde shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 shadow-sm'}`}
             title="Filtros"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
