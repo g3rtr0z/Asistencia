@@ -756,9 +756,9 @@ const AlumnosLista = ({
       {/* Edit Modal */}
       {
         alumnoAEditar && createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
-              <div className="bg-st-verde px-6 py-4 flex justify-between items-center">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8 max-h-[90vh] flex flex-col overflow-hidden">
+              <div className="bg-st-verde px-6 py-4 flex justify-between items-center flex-shrink-0">
                 <h3 className="text-xl font-bold text-white">Editar Participante</h3>
                 <button onClick={() => setAlumnoAEditar(null)} className="text-white/80 hover:text-white transition-colors">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -767,58 +767,72 @@ const AlumnosLista = ({
                 </button>
               </div>
 
-              <form onSubmit={handleGuardarEdicion} className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <form onSubmit={handleGuardarEdicion} className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto flex-1">
+                {/* RUT - Always visible as it's the identifier */}
                 <div className="flex flex-col gap-1.5 sm:col-span-2">
                   <label className="text-sm font-semibold text-slate-700">RUT</label>
                   <input type="text" required value={editFormData.rut} onChange={e => setEditFormData({ ...editFormData, rut: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all bg-slate-50" />
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Nombres</label>
-                  <input type="text" value={editFormData.nombres} onChange={e => setEditFormData({ ...editFormData, nombres: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Apellidos</label>
-                  <input type="text" value={editFormData.apellidos} onChange={e => setEditFormData({ ...editFormData, apellidos: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                </div>
+                {/* Nombres - Only if visible */}
+                {columnasVisibles.nombres && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Nombres</label>
+                    <input type="text" value={editFormData.nombres} onChange={e => setEditFormData({ ...editFormData, nombres: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  </div>
+                )}
 
-                <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <label className="text-sm font-semibold text-slate-700">Nombre Completo</label>
-                  <input
-                    type="text"
-                    value={editFormData.nombre}
-                    onChange={e => setEditFormData({ ...editFormData, nombre: e.target.value })}
-                    className="px-3 py-2 border border-blue-200 bg-blue-50/30 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all"
-                  />
-                </div>
+                {/* Apellidos - Only if visible */}
+                {columnasVisibles.apellidos && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Apellidos</label>
+                    <input type="text" value={editFormData.apellidos} onChange={e => setEditFormData({ ...editFormData, apellidos: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  </div>
+                )}
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Carrera</label>
-                  <input type="text" value={editFormData.carrera} onChange={e => setEditFormData({ ...editFormData, carrera: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                </div>
+                {/* Carrera - Only if visible */}
+                {columnasVisibles.carrera && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Carrera</label>
+                    <input type="text" value={editFormData.carrera} onChange={e => setEditFormData({ ...editFormData, carrera: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  </div>
+                )}
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Institución</label>
-                  <select value={editFormData.institucion} onChange={e => setEditFormData({ ...editFormData, institucion: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all">
-                    <option value="">Seleccionar...</option>
-                    {INSTITUCIONES.map(inst => <option key={inst.value} value={inst.value}>{inst.label}</option>)}
-                  </select>
-                </div>
+                {/* Institución - Only if visible */}
+                {columnasVisibles.institucion && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Institución</label>
+                    <select value={editFormData.institucion} onChange={e => setEditFormData({ ...editFormData, institucion: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all">
+                      <option value="">Seleccionar...</option>
+                      {INSTITUCIONES.map(inst => <option key={inst.value} value={inst.value}>{inst.label}</option>)}
+                    </select>
+                  </div>
+                )}
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">N° de Lista</label>
-                  <input type="text" value={editFormData.numeroLista} onChange={e => setEditFormData({ ...editFormData, numeroLista: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                </div>
+                {/* N° de Lista - Only if visible */}
+                {columnasVisibles.numeroLista && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">N° de Lista</label>
+                    <input type="text" value={editFormData.numeroLista} onChange={e => setEditFormData({ ...editFormData, numeroLista: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  </div>
+                )}
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Grupo</label>
-                  <input type="text" value={editFormData.grupo} onChange={e => setEditFormData({ ...editFormData, grupo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                </div>
+                {/* Grupo - Only if visible */}
+                {columnasVisibles.grupo && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Grupo</label>
+                    <input type="text" value={editFormData.grupo} onChange={e => setEditFormData({ ...editFormData, grupo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  </div>
+                )}
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Asiento</label>
-                  <input type="text" value={editFormData.asiento} onChange={e => setEditFormData({ ...editFormData, asiento: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                </div>
+                {/* Asiento - Only if visible */}
+                {columnasVisibles.asiento && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Asiento</label>
+                    <input type="text" value={editFormData.asiento} onChange={e => setEditFormData({ ...editFormData, asiento: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  </div>
+                )}
+
                 <div className="sm:col-span-2 pt-4 flex gap-3 justify-end border-t border-slate-100 mt-2">
                   <button type="button" onClick={() => setAlumnoAEditar(null)} className="px-4 py-2 text-slate-700 font-medium hover:bg-slate-100 rounded-lg transition-colors">
                     Cancelar
