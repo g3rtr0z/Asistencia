@@ -19,7 +19,7 @@ function ImportExcel({
     if (selectedFile) {
       if (
         selectedFile.type ===
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
         selectedFile.type === 'application/vnd.ms-excel'
       ) {
         setFile(selectedFile);
@@ -95,7 +95,7 @@ function ImportExcel({
                   Sube tu archivo Excel con los datos de alumnos
                 </p>
                 <p className='text-blue-50 text-xs mt-1'>
-                  Columnas esperadas: RUT, Asiento, Grupo, Numero de Lista, Nombres, Apellidos, Carrera, Institución
+                  Formato esperado: RUT, Nombres, Apellidos, Carrera, Institución, N° de Lista
                 </p>
               </div>
             </div>

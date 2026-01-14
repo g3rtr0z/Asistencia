@@ -348,6 +348,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                     <>
                       <InfoRow label="Funcionario" value={`${result.data.nombres || ''} ${result.data.apellidos || ''}`} highlight />
                       <InfoRow label="RUT" value={result.rut} />
+                      <InfoRow label="Departamento" value={result.data.departamento} />
                       <div className='pt-2 mt-2 border-t border-slate-200'>
                         <InfoRow label="Confirmación" value={result.data.asiste ? 'Pre-Confirmada' : 'En Puerta'} border={false} />
                       </div>
@@ -361,8 +362,9 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                       />
                       <InfoRow label="RUT" value={result.rut} />
                       <InfoRow label="Carrera" value={result.data.carrera} />
-                      <InfoRow label="Grupo" value={result.data.grupo || 'No asignado'} />
-                      <InfoRow label="Asiento" value={result.data.asiento || 'No asignado'} border={false} />
+                      <InfoRow label="N° de Lista" value={result.data.numeroLista} />
+                      <InfoRow label="Grupo" value={result.data.grupo} />
+                      <InfoRow label="Asiento" value={result.data.asiento} border={false} />
                     </>
                   )}
                 </div>

@@ -113,11 +113,28 @@ export const updateAlumno = async (eventoId, alumnoId, data) => {
     const updateData = {};
     if (data.nombres !== undefined) updateData['Nombres'] = data.nombres;
     if (data.apellidos !== undefined) updateData['Apellidos'] = data.apellidos;
+
+    // Sincronizar campo Nombre Completo si se editan nombres o apellidos
+    if (data.nombres !== undefined || data.apellidos !== undefined) {
+      const nombres = data.nombres ?? (data.originalData?.nombres || '');
+      const apellidos = data.apellidos ?? (data.originalData?.apellidos || '');
+      const nombreCompleto = `${nombres} ${apellidos}`.trim();
+      if (nombreCompleto) {
+        updateData['Nombre Completo'] = nombreCompleto;
+        updateData['nombre'] = nombreCompleto; // Mantener versión en minúsculas consistente
+      }
+    } else if (data.nombre !== undefined) {
+      // Si se edita directamente el nombre completo (caso fallback)
+      updateData['Nombre Completo'] = data.nombre;
+      updateData['nombre'] = data.nombre;
+    }
+
     if (data.rut !== undefined) updateData['RUT'] = data.rut;
     if (data.carrera !== undefined) updateData['Carrera'] = data.carrera;
     if (data.institucion !== undefined) updateData['Institución'] = data.institucion;
     if (data.grupo !== undefined) updateData['grupo'] = data.grupo;
     if (data.asiento !== undefined) updateData['asiento'] = data.asiento;
+    if (data.numeroLista !== undefined) updateData['numeroLista'] = data.numeroLista;
     if (data.presente !== undefined) updateData['presente'] = data.presente;
 
     updateData['ultimaActualizacion'] = new Date().toISOString();
@@ -817,7 +834,10 @@ export const importarAlumnosDesdeExcel = async (
           continue;
         }
 
-        const rut = obtenerValorCampo(filaNormalizada, aliasCampos.rut);
+        const rutRaw = obtenerValorCampo(filaNormalizada, aliasCampos.rut);
+        const rut = rutRaw != null
+          ? String(rutRaw).replace(/[.-]/g, '').trim().toUpperCase()
+          : null;
 
         // Validar campos obligatorios
         if (estaVacio(rut)) {
@@ -871,7 +891,7 @@ export const importarAlumnosDesdeExcel = async (
           continue;
         }
 
-        const rutNormalizado = String(rut).trim().toLowerCase();
+        const rutNormalizado = String(rut).toLowerCase();
         if (rutsExistentes.has(rutNormalizado)) {
           skippedCount++;
           continue;
@@ -883,7 +903,7 @@ export const importarAlumnosDesdeExcel = async (
             nombres,
             apellidos,
             nombre: nombreCompleto,
-            rut: String(rut),
+            rut: rut,
             carrera: carreraFinal || 'Sin definir',
             institucion: esEventoTrabajadores
               ? null

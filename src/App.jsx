@@ -17,7 +17,6 @@ import { Inicio, Footer } from './components/ui';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminPanel from './components/admin/AdminPanel';
 import AlumnosLista from './components/alumnos/AlumnosLista';
-import EstadisticasPanel from './components/alumnos/EstadisticasPanel';
 import TrabajadoresLista from './components/trabajadores/TrabajadoresLista';
 import TrabajadoresResumen from './components/trabajadores/TrabajadoresResumen';
 
@@ -273,15 +272,11 @@ function App() {
                 </>
               ) : (
                 <>
-                  <EstadisticasPanel
-                    alumnos={alumnosFiltradosModal}
-                    soloPresentes={soloPresentes}
-                    setSoloPresentes={setSoloPresentes}
-                    alumnosCompletos={alumnos}
-                    eventoActivo={eventoActivo}
-                  />
                   <AlumnosLista
                     alumnos={alumnos}
+                    alumnosCompletos={alumnos}
+                    eventoNombre={eventoActivo?.nombre}
+                    tipoEvento={eventoActivo?.tipo}
                     soloPresentes={soloPresentes}
                     setSoloPresentes={setSoloPresentes}
                     filtroCarrera={filtroCarrera}

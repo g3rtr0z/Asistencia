@@ -57,64 +57,78 @@ export const exportarAExcel = (
       }
     }
 
-    // Preparar los datos para exportar
-    const datosParaExportar = esFuncionarios
+    // Preparar los datos mapeados primero
+    const todosLosDatosMapeados = esFuncionarios
       ? alumnosFiltrados.map(alumno => ({
-          'Asiste (Pre confirmación)': formatearSiNo(alumno.asiste),
-          Presente: alumno.presente ? 'Sí' : 'No',
-          RUT: alumno.rut || '',
-          Nombres: alumno.nombres || '',
-          Apellidos: alumno.apellidos || '',
-          Observación: alumno.observacion || '',
-          'Fecha y Hora de Registro':
-            formatearFecha(alumno.fechaRegistro) ||
-            formatearFecha(alumno.ultimaActualizacion) ||
-            '',
-        }))
+        'Asiste (Pre confirmación)': formatearSiNo(alumno.asiste),
+        Presente: alumno.presente ? 'Sí' : 'No',
+        RUT: alumno.rut || '',
+        Nombres: alumno.nombres || '',
+        Apellidos: alumno.apellidos || '',
+        Observación: alumno.observacion || '',
+        'Fecha y Hora de Registro':
+          formatearFecha(alumno.fechaRegistro) ||
+          formatearFecha(alumno.ultimaActualizacion) ||
+          '',
+      }))
       : alumnosFiltrados.map(alumno => ({
-          RUT: alumno.rut || '',
-          Nombres: alumno.nombres || '',
-          Apellidos: alumno.apellidos || '',
-          'Nombre Completo': alumno.nombre || '',
-          Carrera: alumno.carrera || '',
-          Institución: alumno.institucion || '',
-          Asiento: alumno.asiento || '',
-          'N° de Lista': alumno.grupo || '',
-          Presente: alumno.presente ? 'Sí' : 'No',
-          'Fecha y Hora de Registro':
-            formatearFecha(alumno.fechaRegistro) ||
-            formatearFecha(alumno.ultimaActualizacion) ||
-            '',
-        }));
+        RUT: alumno.rut || '',
+        Nombres: alumno.nombres || '',
+        Apellidos: alumno.apellidos || '',
+        Carrera: alumno.carrera || '',
+        Institución: alumno.institucion || '',
+        Asiento: alumno.asiento || '',
+        Grupo: alumno.grupo || '',
+        'N° de Lista': alumno.numeroLista || '',
+        Presente: alumno.presente ? 'Sí' : 'No',
+        'Fecha y Hora de Registro':
+          formatearFecha(alumno.fechaRegistro) ||
+          formatearFecha(alumno.ultimaActualizacion) ||
+          '',
+      }));
+
+    // Identificar columnas que tienen al menos un dato no vacío
+    if (todosLosDatosMapeados.length === 0) return false;
+
+    const columnasConDatos = Object.keys(todosLosDatosMapeados[0]).filter(columna => {
+      // Siempre mantener algunas columnas clave
+      const columnasClave = ['RUT', 'Nombres', 'Apellidos', 'Presente'];
+      if (columnasClave.includes(columna)) return true;
+
+      // Para las demás, verificar si hay algún dato
+      return todosLosDatosMapeados.some(fila => fila[columna] !== null && String(fila[columna]).trim() !== '');
+    });
+
+    // Crear nuevos objetos solo con las columnas que tienen datos
+    const datosParaExportar = todosLosDatosMapeados.map(fila => {
+      const nuevaFila = {};
+      columnasConDatos.forEach(col => {
+        nuevaFila[col] = fila[col];
+      });
+      return nuevaFila;
+    });
 
     // Crear el workbook
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(datosParaExportar);
 
-    // Ajustar el ancho de las columnas
-    const columnWidths = esFuncionarios
-      ? [
-          { wch: 20 }, // Asiste (Pre confirmación)
-          { wch: 10 }, // Presente
-          { wch: 15 }, // RUT
-          { wch: 20 }, // Nombres
-          { wch: 20 }, // Apellidos
-          { wch: 30 }, // Observación
-          { wch: 25 }, // Fecha y Hora de Registro
-        ]
-      : [
-          { wch: 15 }, // RUT
-          { wch: 20 }, // Nombres
-          { wch: 20 }, // Apellidos
-          { wch: 30 }, // Nombre Completo
-          { wch: 25 }, // Carrera
-          { wch: 20 }, // Institución
-          { wch: 10 }, // Asiento
-          { wch: 12 }, // N° de Lista
-          { wch: 10 }, // Presente
-          { wch: 25 }, // Fecha y Hora de Registro
-        ];
-    worksheet['!cols'] = columnWidths;
+    // Ajustar el ancho de las columnas dinámicamente
+    const widthsConfig = {
+      'RUT': 15,
+      'Nombres': 20,
+      'Apellidos': 20,
+      'Carrera': 25,
+      'Institución': 20,
+      'Asiento': 10,
+      'Grupo': 10,
+      'N° de Lista': 12,
+      'Presente': 10,
+      'Fecha y Hora de Registro': 25,
+      'Asiste (Pre confirmación)': 20,
+      'Observación': 30
+    };
+
+    worksheet['!cols'] = columnasConDatos.map(col => ({ wch: widthsConfig[col] || 15 }));
 
     // Agregar la hoja al workbook
     XLSX.utils.book_append_sheet(

@@ -44,6 +44,7 @@ const AlumnosLista = ({
   const [localAsiento, setLocalAsiento] = useState('');
   const [localNombres, setLocalNombres] = useState('');
   const [localApellidos, setLocalApellidos] = useState('');
+  const [busqueda, setBusqueda] = useState('');
 
   const carrera = filtroCarrera !== undefined ? filtroCarrera : localCarrera;
   const setCarrera = setFiltroCarrera || setLocalCarrera;
@@ -73,7 +74,7 @@ const AlumnosLista = ({
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [carrera, institucion, grupo, rut, numeroLista, asiento, nombres, apellidos, soloPresentes]);
+  }, [carrera, institucion, grupo, rut, numeroLista, asiento, nombres, apellidos, soloPresentes, busqueda]);
 
   // Edit states
   const [alumnoAEditar, setAlumnoAEditar] = useState(null);
@@ -84,11 +85,19 @@ const AlumnosLista = ({
     setEditFormData({
       nombres: alumno.nombres || '',
       apellidos: alumno.apellidos || '',
+      nombre: alumno.nombre || '', // Cargar nombre completo
       rut: alumno.rut || '',
       carrera: alumno.carrera || '',
       institucion: alumno.institucion || '',
+      numeroLista: alumno.numeroLista || '',
       grupo: alumno.grupo || '',
       asiento: alumno.asiento || '',
+      // Guardar datos originales para sincronización en alumnosService
+      originalData: {
+        nombres: alumno.nombres,
+        apellidos: alumno.apellidos,
+        nombre: alumno.nombre
+      }
     });
     setAlumnoAEditar(alumno);
   };
@@ -108,32 +117,26 @@ const AlumnosLista = ({
     }
   };
 
-  // Detect which columns have data
+  // Detect which columns have data - Hide empty columns but keep basic ones
   const columnasConDatos = useMemo(() => {
     if (alumnos.length === 0) {
       return {
-        estado: true,
-        grupo: false,
-        numeroLista: true,
-        asiento: false,
-        nombres: true,
-        apellidos: true,
-        carrera: true,
-        rut: true,
-        institucion: true,
+        estado: true, rut: true, nombres: true, apellidos: true,
+        carrera: true, institucion: true, numeroLista: true,
+        grupo: true, asiento: true,
       };
     }
 
     return {
-      estado: true,
-      grupo: alumnos.some(a => a.grupo != null && a.grupo !== ''),
-      numeroLista: true,
-      asiento: alumnos.some(a => a.asiento != null && a.asiento !== ''),
-      nombres: alumnos.some(a => (a.nombres != null && a.nombres !== '') || (a.nombre != null && a.nombre !== '')),
-      apellidos: alumnos.some(a => a.apellidos != null && a.apellidos !== ''),
-      carrera: alumnos.some(a => a.carrera != null && a.carrera !== ''),
-      rut: alumnos.some(a => a.rut != null && a.rut !== ''),
-      institucion: alumnos.some(a => a.institucion != null && a.institucion !== ''),
+      estado: true, // Siempre visible
+      rut: alumnos.some(a => a.rut != null && String(a.rut).trim() !== ''),
+      nombres: alumnos.some(a => (a.nombres != null && String(a.nombres).trim() !== '') || (a.nombre != null && String(a.nombre).trim() !== '')),
+      apellidos: alumnos.some(a => a.apellidos != null && String(a.apellidos).trim() !== ''),
+      carrera: alumnos.some(a => a.carrera != null && String(a.carrera).trim() !== ''),
+      institucion: alumnos.some(a => a.institucion != null && String(a.institucion).trim() !== ''),
+      numeroLista: alumnos.some(a => a.numeroLista != null && String(a.numeroLista).trim() !== ''),
+      grupo: alumnos.some(a => a.grupo != null && String(a.grupo).trim() !== ''),
+      asiento: alumnos.some(a => a.asiento != null && String(a.asiento).trim() !== ''),
     };
   }, [alumnos]);
 
@@ -143,11 +146,19 @@ const AlumnosLista = ({
     rut: true,
     nombres: true,
     apellidos: true,
-    asiento: true,
-    grupo: true,
     carrera: true,
     institucion: true,
+    numeroLista: true,
+    asiento: false,
+    grupo: false,
   });
+
+  // Sync visibility with presence of data
+  useEffect(() => {
+    if (alumnos.length > 0) {
+      setColumnasVisibles(columnasConDatos);
+    }
+  }, [columnasConDatos, alumnos.length]);
 
   // Reset group filter when career/institution changes
   useEffect(() => {
@@ -169,8 +180,9 @@ const AlumnosLista = ({
 
   function mostrarTodasLasColumnas() {
     setColumnasVisibles({
-      estado: true, grupo: true, asiento: true, nombres: true,
-      apellidos: true, carrera: true, rut: true, institucion: true,
+      estado: true, rut: true, nombres: true, apellidos: true,
+      carrera: true, institucion: true, numeroLista: true,
+      asiento: true, grupo: true,
     });
   }
 
@@ -183,6 +195,7 @@ const AlumnosLista = ({
     setAsiento('');
     setNombres('');
     setApellidos('');
+    setBusqueda('');
     if (setSoloPresentes) setSoloPresentes('');
     mostrarTodasLasColumnas();
   }
@@ -227,9 +240,16 @@ const AlumnosLista = ({
   // Filtered students
   const alumnosFiltrados = useMemo(() => {
     return alumnos.filter(alumno => {
+      const searchLower = busqueda.toLowerCase();
+      const cumpleBusqueda = !busqueda ||
+        (alumno.rut && alumno.rut.toLowerCase().startsWith(searchLower)) ||
+        (alumno.nombres && alumno.nombres.toLowerCase().includes(searchLower)) ||
+        (alumno.nombre && alumno.nombre.toLowerCase().includes(searchLower)) ||
+        (alumno.apellidos && alumno.apellidos.toLowerCase().includes(searchLower));
+
       const cumplePresente = !soloPresentes || (soloPresentes === 'presentes' ? alumno.presente : !alumno.presente);
       const cumpleCarrera = !carrera || alumno.carrera === carrera;
-      const cumpleRut = !rut || alumno.rut.toLowerCase().includes(rut.toLowerCase());
+      const cumpleRut = !rut || alumno.rut.toLowerCase().startsWith(rut.toLowerCase());
       const cumpleInstitucion = !institucion || alumno.institucion === institucion;
       const grupoAlumno = alumno.grupo ? String(alumno.grupo).trim() : '';
       const grupoFiltro = grupo ? String(grupo).trim() : '';
@@ -237,9 +257,9 @@ const AlumnosLista = ({
       const cumpleAsiento = !asiento || String(alumno.asiento).trim() === String(asiento).trim();
       const cumpleNombres = !nombres || (alumno.nombres && alumno.nombres.toLowerCase().includes(nombres.toLowerCase())) || (alumno.nombre && alumno.nombre.toLowerCase().includes(nombres.toLowerCase()));
       const cumpleApellidos = !apellidos || (alumno.apellidos && alumno.apellidos.toLowerCase().includes(apellidos.toLowerCase()));
-      return cumplePresente && cumpleCarrera && cumpleRut && cumpleInstitucion && cumpleGrupo && cumpleAsiento && cumpleNombres && cumpleApellidos;
+      return cumpleBusqueda && cumplePresente && cumpleCarrera && cumpleRut && cumpleInstitucion && cumpleGrupo && cumpleAsiento && cumpleNombres && cumpleApellidos;
     });
-  }, [alumnos, soloPresentes, carrera, rut, institucion, grupo, asiento, nombres, apellidos]);
+  }, [alumnos, soloPresentes, carrera, rut, institucion, grupo, asiento, nombres, apellidos, busqueda]);
 
   // Sorted students
   const alumnosOrdenados = useMemo(() => {
@@ -262,9 +282,9 @@ const AlumnosLista = ({
 
   // Pagination component
   const PaginationControls = () => (
-    <div className="px-4 py-3 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-200">
-      <div className="flex items-center gap-2 text-sm text-slate-600">
-        <span>Mostrar</span>
+    <div className="px-4 py-3 bg-slate-50 flex items-center justify-between gap-3 border-b border-slate-200">
+      <div className="flex items-center gap-2 text-sm text-slate-600 shrink-0">
+        <span className="hidden xs:inline">Mostrar</span>
         <select
           value={itemsPerPage}
           onChange={(e) => setItemsPerPage(Number(e.target.value))}
@@ -274,29 +294,34 @@ const AlumnosLista = ({
           <option value={50}>50</option>
           <option value={100}>100</option>
         </select>
-        <span>por página</span>
+        <span className="hidden sm:inline">por página</span>
       </div>
+
       <div className="flex items-center gap-4">
-        <span className="text-sm text-slate-600 hidden sm:inline">
-          {itemsPerPage * (currentPage - 1) + 1} - {Math.min(itemsPerPage * currentPage, alumnosOrdenados.length)} de {alumnosOrdenados.length}
+        <span className="text-sm text-slate-600 hidden md:inline">
+          {itemsPerPage * (currentPage - 1) + 1}-{Math.min(itemsPerPage * currentPage, alumnosOrdenados.length)} de {alumnosOrdenados.length}
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="p-2 rounded-lg hover:bg-white disabled:opacity-50 transition-colors text-slate-600"
+            className="p-1.5 rounded-lg hover:bg-white disabled:opacity-30 transition-colors text-slate-600 border border-transparent hover:border-slate-200"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <span className="text-sm font-medium text-slate-700 px-2">
-            {currentPage} / {Math.max(1, Math.ceil(alumnosOrdenados.length / itemsPerPage))}
-          </span>
+
+          <div className="flex items-center bg-white border border-slate-200 rounded-lg px-2.5 py-1">
+            <span className="text-xs font-bold text-st-verde">{currentPage}</span>
+            <span className="text-xs font-medium text-slate-400 mx-1">/</span>
+            <span className="text-xs font-bold text-slate-500">{Math.max(1, Math.ceil(alumnosOrdenados.length / itemsPerPage))}</span>
+          </div>
+
           <button
             onClick={() => setCurrentPage(p => Math.min(Math.ceil(alumnosOrdenados.length / itemsPerPage), p + 1))}
             disabled={currentPage >= Math.ceil(alumnosOrdenados.length / itemsPerPage)}
-            className="p-2 rounded-lg hover:bg-white disabled:opacity-50 transition-colors text-slate-600"
+            className="p-1.5 rounded-lg hover:bg-white disabled:opacity-30 transition-colors text-slate-600 border border-transparent hover:border-slate-200"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -309,234 +334,234 @@ const AlumnosLista = ({
 
   return (
     <div className="w-full">
-      {/* Stats Header */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <div className="bg-white rounded-xl p-4 border border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-st-verde/10 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-st-verde" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{alumnosParaStats.length}</p>
-              <p className="text-xs text-slate-500">Total Participantes</p>
-            </div>
+      {/* Tarjetas de Estadísticas Simplificadas */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <button
+          onClick={() => setSoloPresentes && setSoloPresentes('')}
+          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${soloPresentes === '' ? 'bg-st-verde text-white border-st-verde shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'}`}
+        >
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${soloPresentes === '' ? 'bg-white/20' : 'bg-st-pastel text-st-verde'}`}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{totalPresentes}</p>
-              <p className="text-xs text-slate-500">Presentes</p>
-            </div>
+          <div>
+            <p className={`text-2xl font-bold leading-none mb-1 ${soloPresentes === '' ? 'text-white' : 'text-slate-800'}`}>{alumnosParaStats.length}</p>
+            <p className={`text-[10px] uppercase font-bold tracking-wider ${soloPresentes === '' ? 'text-white/70' : 'text-slate-400'}`}>Total</p>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{totalAusentes}</p>
-              <p className="text-xs text-slate-500">Ausentes</p>
-            </div>
+        </button>
+
+        <button
+          onClick={() => setSoloPresentes && setSoloPresentes('presentes')}
+          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${soloPresentes === 'presentes' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'}`}
+        >
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${soloPresentes === 'presentes' ? 'bg-white/20' : 'bg-emerald-50 text-emerald-600'}`}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{[...new Set(alumnosParaStats.map(a => a.institucion))].length}</p>
-              <p className="text-xs text-slate-500">Instituciones</p>
-            </div>
+          <div>
+            <p className={`text-2xl font-bold leading-none mb-1 ${soloPresentes === 'presentes' ? 'text-white' : 'text-slate-800'}`}>{totalPresentes}</p>
+            <p className={`text-[10px] uppercase font-bold tracking-wider ${soloPresentes === 'presentes' ? 'text-white/70' : 'text-slate-400'}`}>Presentes</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => setSoloPresentes && setSoloPresentes('ausentes')}
+          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${soloPresentes === 'ausentes' ? 'bg-rose-500 text-white border-rose-500 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'}`}
+        >
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${soloPresentes === 'ausentes' ? 'bg-white/20' : 'bg-rose-50 text-rose-600'}`}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className={`text-2xl font-bold leading-none mb-1 ${soloPresentes === 'ausentes' ? 'text-white' : 'text-slate-800'}`}>{totalAusentes}</p>
+            <p className={`text-[10px] uppercase font-bold tracking-wider ${soloPresentes === 'ausentes' ? 'text-white/70' : 'text-slate-400'}`}>Ausentes</p>
+          </div>
+        </button>
+
+        <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-slate-800 leading-none mb-1">{[...new Set(alumnosParaStats.map(a => a.institucion))].length}</p>
+            <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Instituciones</p>
           </div>
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          {/* Presence Filter Tabs */}
-          <div className="flex bg-slate-100 rounded-lg p-1">
-            <button
-              onClick={() => setSoloPresentes && setSoloPresentes('')}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${!soloPresentes ? 'bg-white text-st-verde shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-            >
-              Todos
-            </button>
-            <button
-              onClick={() => setSoloPresentes && setSoloPresentes('presentes')}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${soloPresentes === 'presentes' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-            >
-              Presentes
-            </button>
-            <button
-              onClick={() => setSoloPresentes && setSoloPresentes('ausentes')}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${soloPresentes === 'ausentes' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-            >
-              Ausentes
-            </button>
+      {/* Toolbar Unificado */}
+      <div className="flex flex-row items-center gap-2 md:gap-4 mb-6">
+        <div className="flex-1 relative group">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <svg className="w-4 h-4 md:w-5 md:h-5 text-slate-400 group-focus-within:text-st-verde transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
+          <input
+            type="text"
+            placeholder="Buscar..."
+            className="w-full bg-white border border-slate-200 rounded-2xl pl-10 md:pl-11 pr-4 py-2.5 md:py-3 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm"
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+          />
+        </div>
 
-          {/* Filters Button */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${filtrosAbiertos ? 'bg-st-verde text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+            className={`flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 md:py-3 rounded-2xl font-bold text-sm transition-all border ${filtrosAbiertos ? 'bg-st-verde text-white border-st-verde shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 shadow-sm'}`}
+            title="Filtros"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
             </svg>
-            Filtros Avanzados
-            <span className={`px-2 py-0.5 rounded text-xs ${filtrosAbiertos ? 'bg-white/20' : 'bg-st-verde text-white'}`}>
-              {alumnosFiltrados.length}
-            </span>
+            <span className="hidden md:inline text-xs md:text-sm">Filtros</span>
+            {alumnosFiltrados.length !== alumnos.length && (
+              <span className={`flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[10px] ${filtrosAbiertos ? 'bg-white/20' : 'bg-st-verde text-white'}`}>
+                {alumnosFiltrados.length}
+              </span>
+            )}
           </button>
 
-          {/* Export Dropdown */}
           <div className="relative group">
-            <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 md:py-3 rounded-2xl font-bold text-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition-all shadow-sm" title="Exportar">
+              <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Exportar Excel
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <span className="hidden md:inline text-xs md:text-sm">Exportar</span>
+              <svg className="hidden md:block w-4 h-4 text-slate-400 group-hover:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20">
+            <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 scale-95 group-hover:scale-100">
+              <p className='px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1'>Formato Excel</p>
               <button
                 onClick={() => exportarAExcel(alumnosParaStats, eventoNombre, tipoEvento, '')}
-                className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
               >
                 <div className="w-2 h-2 rounded-full bg-st-verde"></div>
                 Todos ({alumnosParaStats.length})
               </button>
               <button
                 onClick={() => exportarAExcel(alumnosParaStats, eventoNombre, tipoEvento, 'presentes')}
-                className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
               >
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                 Presentes ({totalPresentes})
               </button>
               <button
                 onClick={() => exportarAExcel(alumnosParaStats, eventoNombre, tipoEvento, 'ausentes')}
-                className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
               >
-                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <div className="w-2 h-2 rounded-full bg-rose-500"></div>
                 Ausentes ({totalAusentes})
               </button>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Expanded Filters */}
-        {filtrosAbiertos && (
-          <div className="mt-4 pt-4 border-t border-slate-200">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">RUT</label>
-                <input
-                  type="text"
-                  placeholder="Buscar RUT..."
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde"
-                  value={rut}
-                  onChange={e => setRUT(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Nombres</label>
-                <input
-                  type="text"
-                  placeholder="Buscar nombres..."
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde"
-                  value={nombres}
-                  onChange={e => setNombres(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Apellidos</label>
-                <input
-                  type="text"
-                  placeholder="Buscar apellidos..."
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde"
-                  value={apellidos}
-                  onChange={e => setApellidos(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Carrera</label>
+      {/* Filtros Expandidos Simplificados */}
+      {filtrosAbiertos && (
+        <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-5 mb-6 animate-in fade-in slide-in-from-top-2 shadow-inner">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Carrera / Área</label>
+              <div className="relative">
                 <select
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
                   value={carrera}
                   onChange={e => setCarrera(e.target.value)}
                 >
-                  <option value="">Todas</option>
+                  <option value="">Todas las áreas</option>
                   {Object.entries(carrerasPorInstitucion).map(([inst, carreras]) => (
                     <optgroup key={inst} label={getInstitucionLabel(inst)}>
                       {carreras.map(c => <option key={c} value={c}>{c}</option>)}
                     </optgroup>
                   ))}
                 </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Institución</label>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Institución</label>
+              <div className="relative">
                 <select
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
                   value={institucion}
                   onChange={e => setInstitucion(e.target.value)}
                 >
-                  <option value="">Todas</option>
+                  <option value="">Cualquier institución</option>
                   {opcionesInstituciones.map(inst => (
                     <option key={inst} value={inst}>{getInstitucionLabel(inst)}</option>
                   ))}
                 </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
               </div>
-              {columnasConDatos.grupo && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Grupo</label>
+            </div>
+
+            {columnasConDatos.grupo && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Grupo</label>
+                <div className="relative">
                   <select
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
                     value={grupo}
                     onChange={e => setGrupo(e.target.value)}
                   >
-                    <option value="">Todos</option>
+                    <option value="">Todos los grupos</option>
                     {gruposUnicos.map(gr => <option key={gr} value={gr}>{gr}</option>)}
                   </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
-              )}
-              {columnasConDatos.asiento && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Asiento</label>
+              </div>
+            )}
+
+            {columnasConDatos.asiento && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Asiento</label>
+                <div className="relative">
                   <select
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
                     value={asiento}
                     onChange={e => setAsiento(e.target.value)}
                   >
-                    <option value="">Todos</option>
-                    {asientosUnicos.map(asi => <option key={asi} value={asi}>{asi}</option>)}
+                    <option value="">Todos los asientos</option>
+                    {asientosUnicos.map(as => <option key={as} value={as}>{as}</option>)}
                   </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Columnas</label>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Visualización</label>
+              <div className="relative">
                 <select
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-st-verde"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
                   value=""
                   onChange={e => {
                     if (e.target.value === 'mostrar-todas') mostrarTodasLasColumnas();
@@ -544,28 +569,39 @@ const AlumnosLista = ({
                     e.target.value = '';
                   }}
                 >
-                  <option value="">Configurar...</option>
-                  {Object.entries({ estado: 'Estado', grupo: 'Grupo', asiento: 'Asiento', nombres: 'Nombres', apellidos: 'Apellidos', carrera: 'Carrera', rut: 'RUT', institucion: 'Institución' }).map(([key, label]) => (
-                    <option key={key} value={key}>{columnasVisibles[key] ? '❌' : '✅'} {label}</option>
+                  <option value="">Configurar columnas...</option>
+                  {Object.entries({
+                    estado: 'Estado', rut: 'RUT', nombres: 'Nombres', apellidos: 'Apellidos',
+                    carrera: 'Carrera', institucion: 'Institución', numeroLista: 'N° de Lista',
+                    grupo: 'Grupo', asiento: 'Asiento'
+                  }).map(([key, label]) => (
+                    <option key={key} value={key}>{columnasVisibles[key] ? '❌ Ocultar' : '✅ Mostrar'} {label}</option>
                   ))}
-                  <option value="mostrar-todas">🔄 Todas</option>
+                  <option value="mostrar-todas" className="font-bold border-t border-slate-100 mt-1">🔄 Restaurar todas</option>
                 </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
               </div>
             </div>
-            <div className="flex justify-end">
-              <button
-                onClick={limpiarFiltros}
-                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200 transition-colors flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Limpiar Filtros
-              </button>
-            </div>
           </div>
-        )}
-      </div>
+
+          <div className="flex items-center justify-end mt-4 pt-4 border-t border-slate-100">
+            <button
+              onClick={limpiarFiltros}
+              className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Limpiar todos los filtros
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Table Section */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -600,10 +636,11 @@ const AlumnosLista = ({
                     </div>
                   </th>
                 )}
-                {columnasVisibles.asiento && <th className="py-3 px-4 text-center font-semibold">Asiento</th>}
-                {columnasVisibles.grupo && <th className="py-3 px-4 text-center font-semibold">Grupo</th>}
                 {columnasVisibles.carrera && <th className="py-3 px-4 text-left font-semibold">Carrera</th>}
                 {columnasVisibles.institucion && <th className="py-3 px-4 text-left font-semibold">Institución</th>}
+                {columnasVisibles.numeroLista && <th className="py-3 px-4 text-center font-semibold text-xs leading-tight">N° de<br />Lista</th>}
+                {columnasVisibles.asiento && <th className="py-3 px-4 text-center font-semibold">Asiento</th>}
+                {columnasVisibles.grupo && <th className="py-3 px-4 text-center font-semibold">Grupo</th>}
                 {esAdmin && <th className="py-3 px-4 text-center font-semibold">Acciones</th>}
               </tr>
             </thead>
@@ -628,8 +665,8 @@ const AlumnosLista = ({
                       {columnasVisibles.estado && (
                         <td className="py-3 px-4 text-center">
                           {alumno.presente ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700">
-                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-st-verde/10 text-st-verde">
+                              <div className="w-1.5 h-1.5 bg-st-verde rounded-full"></div>
                               Presente
                             </span>
                           ) : (
@@ -655,6 +692,23 @@ const AlumnosLista = ({
                           </div>
                         </td>
                       )}
+                      {columnasVisibles.carrera && (
+                        <td className="py-3 px-4 text-slate-600 text-xs">
+                          <div className="truncate max-w-[120px]" title={alumno.carrera ?? '-'}>{alumno.carrera ?? '-'}</div>
+                        </td>
+                      )}
+                      {columnasVisibles.institucion && (
+                        <td className="py-3 px-4 text-slate-600 text-xs">
+                          <div className="truncate max-w-[100px]" title={alumno.institucion ?? '-'}>{alumno.institucion ?? '-'}</div>
+                        </td>
+                      )}
+                      {columnasVisibles.numeroLista && (
+                        <td className="py-3 px-4 text-center">
+                          <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                            {alumno.numeroLista ?? '-'}
+                          </span>
+                        </td>
+                      )}
                       {columnasVisibles.asiento && (
                         <td className="py-3 px-4 text-center">
                           <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
@@ -667,16 +721,6 @@ const AlumnosLista = ({
                           <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-xs font-bold">
                             {alumno.grupo ?? '-'}
                           </span>
-                        </td>
-                      )}
-                      {columnasVisibles.carrera && (
-                        <td className="py-3 px-4 text-slate-600 text-xs">
-                          <div className="truncate max-w-[120px]" title={alumno.carrera ?? '-'}>{alumno.carrera ?? '-'}</div>
-                        </td>
-                      )}
-                      {columnasVisibles.institucion && (
-                        <td className="py-3 px-4 text-slate-600 text-xs">
-                          <div className="truncate max-w-[100px]" title={alumno.institucion ?? '-'}>{alumno.institucion ?? '-'}</div>
                         </td>
                       )}
                       {esAdmin && (
@@ -703,72 +747,94 @@ const AlumnosLista = ({
       </div>
 
       {/* Edit Modal */}
-      {alumnoAEditar && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
-            <div className="bg-gradient-to-r from-st-verde to-emerald-600 px-6 py-4 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-white">Editar Participante</h3>
-              <button onClick={() => setAlumnoAEditar(null)} className="text-white/80 hover:text-white transition-colors">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      {
+        alumnoAEditar && createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+              <div className="bg-st-verde px-6 py-4 flex justify-between items-center">
+                <h3 className="text-xl font-bold text-white">Editar Participante</h3>
+                <button onClick={() => setAlumnoAEditar(null)} className="text-white/80 hover:text-white transition-colors">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-            <form onSubmit={handleGuardarEdicion} className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">Nombres</label>
-                <input type="text" required value={editFormData.nombres} onChange={e => setEditFormData({ ...editFormData, nombres: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">Apellidos</label>
-                <input type="text" required value={editFormData.apellidos} onChange={e => setEditFormData({ ...editFormData, apellidos: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-              </div>
-              <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <label className="text-sm font-semibold text-slate-700">RUT</label>
-                <input type="text" required value={editFormData.rut} onChange={e => setEditFormData({ ...editFormData, rut: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all bg-slate-50" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">Carrera</label>
-                <input type="text" value={editFormData.carrera} onChange={e => setEditFormData({ ...editFormData, carrera: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">Institución</label>
-                <select value={editFormData.institucion} onChange={e => setEditFormData({ ...editFormData, institucion: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all">
-                  <option value="">Seleccionar...</option>
-                  {INSTITUCIONES.map(inst => <option key={inst.value} value={inst.value}>{inst.label}</option>)}
-                </select>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">Grupo</label>
-                <input type="text" value={editFormData.grupo} onChange={e => setEditFormData({ ...editFormData, grupo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">Asiento</label>
-                <input type="text" value={editFormData.asiento} onChange={e => setEditFormData({ ...editFormData, asiento: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-              </div>
-              <div className="sm:col-span-2 pt-4 flex gap-3 justify-end border-t border-slate-100 mt-2">
-                <button type="button" onClick={() => setAlumnoAEditar(null)} className="px-4 py-2 text-slate-700 font-medium hover:bg-slate-100 rounded-lg transition-colors">
-                  Cancelar
-                </button>
-                <button type="submit" disabled={isSaving} className="px-6 py-2 bg-st-verde text-white font-bold rounded-lg hover:bg-[#004b30] transition-all shadow-md disabled:opacity-50 flex items-center gap-2">
-                  {isSaving ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Guardando...
-                    </>
-                  ) : 'Guardar Cambios'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
-    </div>
+              <form onSubmit={handleGuardarEdicion} className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <label className="text-sm font-semibold text-slate-700">RUT</label>
+                  <input type="text" required value={editFormData.rut} onChange={e => setEditFormData({ ...editFormData, rut: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all bg-slate-50" />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Nombres</label>
+                  <input type="text" value={editFormData.nombres} onChange={e => setEditFormData({ ...editFormData, nombres: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Apellidos</label>
+                  <input type="text" value={editFormData.apellidos} onChange={e => setEditFormData({ ...editFormData, apellidos: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                </div>
+
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <label className="text-sm font-semibold text-slate-700">Nombre Completo</label>
+                  <input
+                    type="text"
+                    value={editFormData.nombre}
+                    onChange={e => setEditFormData({ ...editFormData, nombre: e.target.value })}
+                    className="px-3 py-2 border border-blue-200 bg-blue-50/30 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Carrera</label>
+                  <input type="text" value={editFormData.carrera} onChange={e => setEditFormData({ ...editFormData, carrera: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Institución</label>
+                  <select value={editFormData.institucion} onChange={e => setEditFormData({ ...editFormData, institucion: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all">
+                    <option value="">Seleccionar...</option>
+                    {INSTITUCIONES.map(inst => <option key={inst.value} value={inst.value}>{inst.label}</option>)}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-slate-700">N° de Lista</label>
+                  <input type="text" value={editFormData.numeroLista} onChange={e => setEditFormData({ ...editFormData, numeroLista: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Grupo</label>
+                  <input type="text" value={editFormData.grupo} onChange={e => setEditFormData({ ...editFormData, grupo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Asiento</label>
+                  <input type="text" value={editFormData.asiento} onChange={e => setEditFormData({ ...editFormData, asiento: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                </div>
+                <div className="sm:col-span-2 pt-4 flex gap-3 justify-end border-t border-slate-100 mt-2">
+                  <button type="button" onClick={() => setAlumnoAEditar(null)} className="px-4 py-2 text-slate-700 font-medium hover:bg-slate-100 rounded-lg transition-colors">
+                    Cancelar
+                  </button>
+                  <button type="submit" disabled={isSaving} className="px-6 py-2 bg-st-verde text-white font-bold rounded-lg hover:bg-[#004b30] transition-all shadow-md disabled:opacity-50 flex items-center gap-2">
+                    {isSaving ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Guardando...
+                      </>
+                    ) : 'Guardar Cambios'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )
+      }
+    </div >
   );
 };
 
