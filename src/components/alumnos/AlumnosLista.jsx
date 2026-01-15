@@ -198,7 +198,7 @@ const AlumnosLista = ({
     setApellidos('');
     setBusqueda('');
     if (setSoloPresentes) setSoloPresentes('');
-    mostrarTodasLasColumnas();
+    // No llamamos a mostrarTodasLasColumnas() para mantener la visibilidad basada en datos
   }
 
   // Filter base for options

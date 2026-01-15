@@ -314,13 +314,22 @@ export const subscribeToAlumnosEventoActivo = (callback, errorCallback) => {
       throw new Error('Firestore no está inicializado');
     }
 
+    // Variable para almacenar la suscripción a alumnos y limpiarla cuando cambie el evento
+    let unsubscribeAlumnos = null;
+
     // Suscribirse a cambios en eventos activos
     const eventosRef = collection(db, 'eventos');
     const qEvento = query(eventosRef, where('activo', '==', true));
 
     const unsubscribeEventos = onSnapshot(
       qEvento,
-      async eventoSnapshot => {
+      eventoSnapshot => {
+        // Limpiar suscripción anterior de alumnos si existe
+        if (unsubscribeAlumnos) {
+          unsubscribeAlumnos();
+          unsubscribeAlumnos = null;
+        }
+
         if (eventoSnapshot.empty) {
           callback([]);
           return;
@@ -328,9 +337,10 @@ export const subscribeToAlumnosEventoActivo = (callback, errorCallback) => {
 
         const eventoActivo = eventoSnapshot.docs[0];
         const eventoId = eventoActivo.id;
+
         // Suscribirse a cambios en alumnos de la colección específica de ese evento
         const alumnosRef = collection(db, `eventos/${eventoId}/alumnos`);
-        const unsubscribeAlumnos = onSnapshot(
+        unsubscribeAlumnos = onSnapshot(
           alumnosRef,
           alumnosSnapshot => {
             const alumnos = alumnosSnapshot.docs.map(doc => ({
@@ -355,11 +365,6 @@ export const subscribeToAlumnosEventoActivo = (callback, errorCallback) => {
             if (errorCallback) errorCallback(error);
           }
         );
-
-        // Retornar función para cancelar ambas suscripciones
-        return () => {
-          unsubscribeAlumnos();
-        };
       },
       error => {
         console.error('Error en onSnapshot evento activo:', error);
@@ -367,7 +372,13 @@ export const subscribeToAlumnosEventoActivo = (callback, errorCallback) => {
       }
     );
 
-    return unsubscribeEventos;
+    // Retornar función para cancelar AMBAS suscripciones
+    return () => {
+      if (unsubscribeAlumnos) {
+        unsubscribeAlumnos();
+      }
+      unsubscribeEventos();
+    };
   } catch (error) {
     if (errorCallback) errorCallback(error);
   }

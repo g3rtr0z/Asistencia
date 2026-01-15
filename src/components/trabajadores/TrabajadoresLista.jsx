@@ -479,7 +479,7 @@ const TrabajadoresLista = ({
                 setLocalObservacion('');
                 setBusqueda('');
                 if (setSoloPresentes) setSoloPresentes('');
-                mostrarTodasLasColumnas();
+                // No llamamos a mostrarTodasLasColumnas() para mantener la visibilidad basada en datos
               }}
               className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl border border-slate-300 text-sm hover:bg-slate-200 transition-all flex items-center gap-2 font-medium"
             >

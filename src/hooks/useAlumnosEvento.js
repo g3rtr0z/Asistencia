@@ -14,11 +14,15 @@ export default function useAlumnosEvento(eventoId = null) {
 
     const setupSubscription = () => {
       try {
+        setLoading(true);
+
         if (eventoId) {
           // Si se proporciona un eventoId específico, suscribirse a ese evento
+          console.log('[useAlumnosEvento] Suscribiendo a evento específico:', eventoId);
           unsubscribe = subscribeToAlumnosPorEvento(
             eventoId,
             alumnosData => {
+              console.log('[useAlumnosEvento] Datos recibidos para evento', eventoId, ':', alumnosData.length, 'alumnos');
               setAlumnos(alumnosData);
               setLoading(false);
             },
@@ -33,8 +37,10 @@ export default function useAlumnosEvento(eventoId = null) {
           );
         } else {
           // Si no se proporciona eventoId, suscribirse al evento activo
+          console.log('[useAlumnosEvento] Suscribiendo a evento activo');
           unsubscribe = subscribeToAlumnosEventoActivo(
             alumnosData => {
+              console.log('[useAlumnosEvento] Datos recibidos del evento activo:', alumnosData.length, 'alumnos');
               setAlumnos(alumnosData);
               setLoading(false);
             },
@@ -58,6 +64,7 @@ export default function useAlumnosEvento(eventoId = null) {
     setupSubscription();
 
     return () => {
+      console.log('[useAlumnosEvento] Limpiando suscripción para eventoId:', eventoId || 'activo');
       if (unsubscribe) {
         unsubscribe();
       }
