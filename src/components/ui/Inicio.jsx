@@ -137,18 +137,18 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
 
   return (
     <div className='min-h-screen w-full flex items-center justify-center p-4 md:p-6 bg-slate-50'>
-      <div className='w-full max-w-6xl bg-white rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden min-h-[auto] md:min-h-[600px] flex flex-col md:flex-row'>
+      <div className='w-full max-w-xl xl:max-w-6xl bg-white rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden min-h-[auto] xl:min-h-[600px] flex flex-col xl:flex-row'>
 
         {/* Left Section - Information */}
-        <div className='bg-st-verde p-4 md:p-12 text-white flex flex-row md:flex-col justify-between items-center md:items-start relative overflow-hidden shrink-0 md:w-5/12'>
+        <div className='bg-st-verde p-6 md:p-8 xl:p-12 text-white flex flex-row xl:flex-col justify-between items-center xl:items-start relative overflow-hidden shrink-0 xl:w-5/12'>
           <div className='absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 pointer-events-none'></div>
           <div className='absolute bottom-0 left-0 w-48 h-48 bg-black/20 rounded-full blur-2xl transform -translate-x-1/2 translate-y-1/2 pointer-events-none'></div>
 
-          <div className='relative z-10 flex items-center gap-4 md:block'>
-            <div className='w-10 h-10 md:w-16 md:h-16 bg-white/20 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center mb-0 md:mb-8'>
+          <div className='relative z-10 flex items-center gap-4 xl:block'>
+            <div className='w-10 h-10 md:w-16 md:h-16 bg-white/20 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center mb-0 xl:mb-8'>
               <span className='font-bold text-lg md:text-2xl'>ST</span>
             </div>
-            <div className='hidden md:block'>
+            <div className='hidden xl:block'>
               <h1 className='text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-3 md:mb-4'>
                 Bienvenido
               </h1>
@@ -158,7 +158,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
             </div>
           </div>
 
-          <div className='relative z-10 mt-0 md:mt-12'>
+          <div className='relative z-10 mt-0 xl:mt-12'>
             <div className='flex items-center gap-3 md:gap-4 bg-white/10 backdrop-blur-md p-2 md:p-4 rounded-lg md:rounded-xl border border-white/20'>
               <div className='w-8 h-8 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-st-verde font-bold shadow-lg shrink-0'>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-6 md:w-6" viewBox="0 0 20 20" fill="currentColor">
@@ -176,7 +176,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
         </div>
 
         {/* Right Section - Form */}
-        <div className='md:w-7/12 p-6 md:p-16 flex flex-col justify-center bg-gradient-to-b from-white via-white to-slate-50/50 relative'>
+        <div className='xl:w-7/12 p-6 md:p-10 xl:p-16 flex flex-col justify-center bg-gradient-to-b from-white via-white to-slate-50/50 relative'>
 
           {/* Error Message - Fixed top on mobile, absolute on desktop */}
           <AnimatePresence>
@@ -186,7 +186,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3, type: "spring", stiffness: 100 }}
-                className="fixed md:absolute top-5 left-4 right-32 md:right-auto md:top-10 md:left-8 z-10 md:max-w-sm pointer-events-none"
+                className="fixed xl:absolute top-5 left-4 right-32 xl:right-auto xl:top-10 xl:left-8 z-10 xl:max-w-sm pointer-events-none"
               >
                 <div className='bg-red-50 border-l-4 border-red-500 p-2 md:p-4 rounded-lg shadow-lg pointer-events-auto'>
                   {/* Horizontal layout on all screen sizes */}
@@ -205,7 +205,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
 
           {/* Top Actions - Fixed on mobile, absolute on desktop */}
           {(showButtons && !showScanner && !showCredits) && (
-            <div className={`fixed md:absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-2 md:gap-4 z-30 transition-opacity duration-200 ${isFocused ? 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto' : 'opacity-100'}`}>
+            <div className={`fixed xl:absolute top-4 right-4 xl:top-8 xl:right-8 flex items-center gap-2 md:gap-4 z-30 transition-opacity duration-200 ${isFocused ? 'opacity-0 pointer-events-none xl:opacity-100 xl:pointer-events-auto' : 'opacity-100'}`}>
               {/* Info Button */}
               <button
                 onClick={(e) => {
@@ -234,9 +234,9 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                 </svg>
               </button>
 
-              <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block"></div>
+              <div className="w-px h-8 bg-slate-200 mx-1 hidden xl:block"></div>
 
-              <img src={Logo} alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain opacity-90 hover:opacity-100 transition-all duration-500 hidden md:block" />
+              <img src={Logo} alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain opacity-90 hover:opacity-100 transition-all duration-500 hidden xl:block" />
             </div>
           )}
 
@@ -250,8 +250,8 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                 transition={{ duration: 0.4 }}
                 className='max-w-md mx-auto w-full mt-2 md:mt-0 relative'
               >
-                <h2 className='text-xl md:text-3xl font-bold text-slate-800 mb-1 md:mb-2 tracking-tight text-center md:text-left'>Registra tu llegada</h2>
-                <p className='text-slate-500 mb-5 md:mb-8 text-xs md:text-base font-medium opacity-80 text-center md:text-left'>Ingresa tu RUT para confirmar tu asistencia.</p>
+                <h2 className='text-xl md:text-3xl font-bold text-slate-800 mb-1 md:mb-2 tracking-tight text-center xl:text-left'>Registra tu llegada</h2>
+                <p className='text-slate-500 mb-5 md:mb-8 text-xs md:text-base font-medium opacity-80 text-center xl:text-left'>Ingresa tu RUT para confirmar tu asistencia.</p>
 
                 <form onSubmit={handleSubmit} className='flex flex-col gap-4 md:gap-6'>
                   <div className='group'>
@@ -408,7 +408,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
       </div>
 
       {/* Footer info button - bottom right on all screens */}
-      <div className={`fixed bottom-4 right-4 z-40 transition-opacity duration-200 ${isFocused ? 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto' : 'opacity-100'}`}>
+      <div className={`fixed bottom-4 right-4 z-40 transition-opacity duration-200 ${isFocused ? 'opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto' : 'opacity-100'}`}>
         <button
           onClick={() => setShowCredits(true)}
           className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm hover:shadow-md text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center"
