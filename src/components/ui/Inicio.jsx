@@ -65,15 +65,11 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
         return;
       }
 
+      // No bloqueamos si ya está presente, permitimos que vea su info de nuevo
       const alumno = await buscarAlumnoPorRutEnEvento(
         rutValue.trim(),
         eventoActivo.id
       );
-
-      if (alumno && alumno.presente) {
-        setErrorVisual('Su RUT ya se encuentra registrado');
-        return;
-      }
 
       const res = await onLogin(rutValue.trim());
       if (res && res.nombre) {
