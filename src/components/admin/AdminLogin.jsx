@@ -1,20 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../connection/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '../../assets/logo3.png';
+
+// Claves para localStorage
+const STORAGE_KEY_EMAIL = 'admin_remembered_email';
+const STORAGE_KEY_REMEMBER = 'admin_remember_me';
 
 function AdminLogin({ onAuth, onSalir }) {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Cargar credenciales guardadas al montar el componente
+  useEffect(() => {
+    const savedEmail = localStorage.getItem(STORAGE_KEY_EMAIL);
+    const savedRemember = localStorage.getItem(STORAGE_KEY_REMEMBER);
+
+    if (savedRemember === 'true' && savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async e => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
+      // Guardar o eliminar email según la opción "Recordarme"
+      if (rememberMe) {
+        localStorage.setItem(STORAGE_KEY_EMAIL, email);
+        localStorage.setItem(STORAGE_KEY_REMEMBER, 'true');
+      } else {
+        localStorage.removeItem(STORAGE_KEY_EMAIL);
+        localStorage.removeItem(STORAGE_KEY_REMEMBER);
+      }
+
       await signInWithEmailAndPassword(auth, email, pass);
       onAuth();
     } catch (_err) {
@@ -95,6 +120,20 @@ function AdminLogin({ onAuth, onSalir }) {
                 className='w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-lg focus:border-st-verde focus:outline-none transition-colors text-slate-900'
                 autoComplete='current-password'
               />
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className='flex items-center gap-2'>
+              <input
+                type='checkbox'
+                id='rememberMe'
+                checked={rememberMe}
+                onChange={e => setRememberMe(e.target.checked)}
+                className='w-4 h-4 text-st-verde bg-white border-2 border-slate-300 rounded focus:ring-st-verde focus:ring-2 cursor-pointer accent-st-verde'
+              />
+              <label htmlFor='rememberMe' className='text-sm text-slate-600 cursor-pointer select-none'>
+                Recordar mi correo
+              </label>
             </div>
 
             {/* Error Message */}

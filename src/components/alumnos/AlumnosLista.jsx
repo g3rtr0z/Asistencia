@@ -267,13 +267,15 @@ const AlumnosLista = ({
     return [...alumnosFiltrados].sort((a, b) => {
       let campoA, campoB;
       if (ordenCampo === 'apellidos') {
-        campoA = (a.apellidos ?? (a.nombre ? a.nombre.split(' ').slice(1).join(' ') : '')).toLowerCase();
-        campoB = (b.apellidos ?? (b.nombre ? b.nombre.split(' ').slice(1).join(' ') : '')).toLowerCase();
+        campoA = (a.apellidos ?? (a.nombre ? a.nombre.split(' ').slice(1).join(' ') : '')).trim().toLowerCase();
+        campoB = (b.apellidos ?? (b.nombre ? b.nombre.split(' ').slice(1).join(' ') : '')).trim().toLowerCase();
       } else {
-        campoA = (a.nombres ?? a.nombre ?? '').toLowerCase();
-        campoB = (b.nombres ?? b.nombre ?? '').toLowerCase();
+        campoA = (a.nombres ?? a.nombre ?? '').trim().toLowerCase();
+        campoB = (b.nombres ?? b.nombre ?? '').trim().toLowerCase();
       }
-      return ordenAlfabetico === 'asc' ? campoA.localeCompare(campoB) : campoB.localeCompare(campoA);
+      return ordenAlfabetico === 'asc'
+        ? campoA.localeCompare(campoB, 'es', { sensitivity: 'accent' })
+        : campoB.localeCompare(campoA, 'es', { sensitivity: 'accent' });
     });
   }, [alumnosFiltrados, ordenCampo, ordenAlfabetico]);
 
