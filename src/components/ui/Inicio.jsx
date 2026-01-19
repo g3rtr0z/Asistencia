@@ -60,6 +60,8 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
     setResult(null);
     setErrorVisual(''); // Limpiar errores previos
 
+    let resultadoEstablecido = false; // Variable para rastrear si ya se estableció el resultado
+
     try {
       if (!eventoActivo?.id) {
         setErrorVisual('No hay un evento activo disponible.');
@@ -82,39 +84,39 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
       // Intentar actualizar la presencia (incluso si ya está presente)
       const res = await onLogin(rutValue.trim());
       
-      // Si onLogin retorna el alumno, mostrar la información de asistencia
-      if (res) {
-        // Usar los datos del alumno encontrado si onLogin no retorna nombre completo
-        const datosAlumno = res.nombre || res.nombres || alumno.nombre || alumno.nombres 
-          ? res 
-          : { ...alumno, presente: true };
-        
-        setResult({ data: datosAlumno, rut: rutValue });
-      } else {
-        // Si onLogin no retorna nada pero el alumno existe, mostrar su información
-        setResult({ data: { ...alumno, presente: true }, rut: rutValue });
-      }
+      // Preparar los datos del alumno para mostrar
+      // Usar los datos de onLogin si están disponibles, sino usar los del alumno encontrado
+      const datosAlumno = res && (res.nombre || res.nombres) 
+        ? { ...res, presente: true }
+        : { ...alumno, presente: true };
+      
+      // Establecer el resultado una sola vez
+      setResult({ data: datosAlumno, rut: rutValue });
+      resultadoEstablecido = true;
 
       setRut('');
       if (rutInputRef.current) rutInputRef.current.focus();
 
     } catch (error) {
       console.error('Error en handleSubmit:', error);
-      // Si hay un error pero el alumno existe, mostrar su información de todas formas
-      try {
-        const alumno = await buscarAlumnoPorRutEnEvento(
-          rutValue.trim(),
-          eventoActivo.id
-        );
-        if (alumno) {
-          setResult({ data: { ...alumno, presente: true }, rut: rutValue });
-          setRut('');
-          if (rutInputRef.current) rutInputRef.current.focus();
-        } else {
+      // Solo mostrar error si no se estableció el resultado previamente
+      if (!resultadoEstablecido) {
+        // Si hay un error pero el alumno existe, mostrar su información de todas formas
+        try {
+          const alumnoError = await buscarAlumnoPorRutEnEvento(
+            rutValue.trim(),
+            eventoActivo.id
+          );
+          if (alumnoError) {
+            setResult({ data: { ...alumnoError, presente: true }, rut: rutValue });
+            setRut('');
+            if (rutInputRef.current) rutInputRef.current.focus();
+          } else {
+            setErrorVisual('Error al procesar el login. Inténtalo de nuevo.');
+          }
+        } catch (err) {
           setErrorVisual('Error al procesar el login. Inténtalo de nuevo.');
         }
-      } catch (err) {
-        setErrorVisual('Error al procesar el login. Inténtalo de nuevo.');
       }
     } finally {
       setLoading(false);

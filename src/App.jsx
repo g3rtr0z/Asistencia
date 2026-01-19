@@ -131,7 +131,7 @@ function App() {
         await actualizarPresencia(alumno.id, true, eventoActivo.id);
         const actualizado = { ...alumno, presente: true };
         setUsuario(actualizado);
-        setShowConfirm(true);
+        // No usar setShowConfirm aquí, Inicio.jsx maneja la visualización
         return actualizado;
       } else {
         // No establecer error aquí, dejar que Inicio.jsx lo maneje
