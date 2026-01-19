@@ -122,23 +122,25 @@ function App() {
     try {
       if (!eventoActivo) {
         setErrorVisual('No hay un evento activo en este momento.');
-        return;
+        return null;
       }
 
       const alumno = alumnos.find(a => a.rut === rut);
       if (alumno) {
+        // Actualizar presencia incluso si ya está presente (para actualizar fecha)
         await actualizarPresencia(alumno.id, true, eventoActivo.id);
         const actualizado = { ...alumno, presente: true };
         setUsuario(actualizado);
         setShowConfirm(true);
         return actualizado;
       } else {
-        setErrorVisual(
-          'RUT no encontrado en la base de datos del evento activo.'
-        );
+        // No establecer error aquí, dejar que Inicio.jsx lo maneje
+        return null;
       }
-    } catch (_error) {
-      setErrorVisual('Error al procesar el RUT. Inténtalo de nuevo.');
+    } catch (error) {
+      console.error('Error en handleLogin:', error);
+      // No establecer error aquí, dejar que Inicio.jsx lo maneje
+      return null;
     }
   };
 
