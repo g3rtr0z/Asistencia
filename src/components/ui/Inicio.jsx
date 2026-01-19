@@ -20,6 +20,13 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
       const timer = setTimeout(() => {
         setResult(null);
         setRut('');
+        setErrorVisual(''); // Limpiar errores
+        // Enfocar el input después del auto-reset para poder escanear inmediatamente
+        setTimeout(() => {
+          if (rutInputRef.current) {
+            rutInputRef.current.focus();
+          }
+        }, 100);
       }, 30000); // 30s auto-reset
       return () => clearTimeout(timer);
     }
@@ -128,15 +135,19 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
     const formatted = formatRut(value);
     setRut(formatted);
 
+    // Limpiar timeout anterior
     if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
 
+    // Auto-enviar cuando el RUT está completo (8 o 9 caracteres) y ha pasado tiempo sin escribir
+    // Los RUTs chilenos pueden tener 7-8 dígitos + 1 dígito verificador = 8-9 caracteres totales
     if (formatted.length >= 8 && formatted.length <= 9) {
       scanTimeoutRef.current = setTimeout(() => {
         const currentValue = formatRut(rutInputRef.current?.value || '');
-        if (currentValue.length >= 8 && currentValue === formatted && !loading) {
+        // Solo enviar si el RUT sigue siendo completo (8 o 9 caracteres) y no cambió
+        if (currentValue.length >= 8 && currentValue.length <= 9 && currentValue === formatted && !loading) {
           handleSubmit(e);
         }
-      }, 300);
+      }, 1500); // 1.5 segundos para dar tiempo de completar el RUT
     }
   };
 
@@ -408,9 +419,14 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                     onClick={() => {
                       setResult(null);
                       setRut('');
+                      setErrorVisual(''); // Limpiar errores
+                      // Asegurar que el input reciba el foco para poder escanear inmediatamente
                       setTimeout(() => {
-                        if (rutInputRef.current) rutInputRef.current.focus();
-                      }, 100);
+                        if (rutInputRef.current) {
+                          rutInputRef.current.focus();
+                          rutInputRef.current.select(); // Seleccionar el texto si hay alguno
+                        }
+                      }, 200); // Aumentado a 200ms para asegurar que el DOM se actualice
                     }}
                     className='w-full py-3 md:py-4 rounded-xl bg-white border-2 border-slate-100 text-st-verde font-bold text-base md:text-lg hover:border-st-verde hover:bg-green-50/50 transition-all duration-200 flex items-center justify-center gap-2 group'
                   >
