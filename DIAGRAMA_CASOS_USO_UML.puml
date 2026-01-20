@@ -1,0 +1,45 @@
+@startuml DiagramaCasosUso_AsistenciaDigital
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam actorStyle awesome
+left to right direction
+
+title Diagrama de Casos de Uso UML\nSistema de Gestión de Asistencia Digital
+
+' Actores a los lados (fuera del sistema)
+actor "Participante" as Participante
+actor "Administrador" as Admin
+
+' Sistema en el centro - Casos de uso dentro del cuadro organizados verticalmente
+rectangle "Sistema de Gestión\nde Asistencia" {
+  ' Casos de uso del Participante
+  (Registrar Asistencia)
+  (Ver Lista Participantes)
+  
+  ' Casos de uso del Administrador
+  (Crear/Editar Eventos)
+  (Activar Evento)
+  (Agregar Participantes)
+  (Editar Participantes)
+  (Importar desde Excel)
+  (Exportar a Excel)
+  (Ver Estadísticas)
+  (Autenticarse)
+}
+
+' Relaciones - Participante (izquierda) se conecta con sus casos de uso
+Participante --> (Registrar Asistencia)
+Participante --> (Ver Lista Participantes)
+
+' Relaciones - Administrador (derecha) se conecta con sus casos de uso
+Admin --> (Crear/Editar Eventos)
+Admin --> (Activar Evento)
+Admin --> (Agregar Participantes)
+Admin --> (Editar Participantes)
+Admin --> (Importar desde Excel)
+Admin --> (Exportar a Excel)
+Admin --> (Ver Estadísticas)
+Admin --> (Autenticarse)
+
+@enduml
+

@@ -36,7 +36,9 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                             const run = url.searchParams.get('RUN');
 
                             if (run) {
-                                onScan(run);
+                                // Limpiar el RUT: eliminar espacios, guiones y otros caracteres no válidos
+                                const cleanRun = run.trim().replace(/[^0-9kK]/gi, '').toUpperCase();
+                                onScan(cleanRun);
                                 stopScanner();
                             } else {
                                 setError('No se encontró RUT en el código QR');

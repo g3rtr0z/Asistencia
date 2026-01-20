@@ -46,11 +46,13 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
   }, []);
 
   const formatRut = value => {
-    let clean = value
-      .replace(/[\r\n\t]/g, '')
-      .trim()
-      .replace(/[^0-9kK]/g, '')
-      .toUpperCase();
+    if (!value) return '';
+    // Eliminar todos los espacios, guiones, puntos y otros caracteres no válidos
+    let clean = String(value)
+      .replace(/[\s\r\n\t.-]/g, '') // Eliminar espacios, saltos de línea, tabs, guiones y puntos
+      .replace(/[^0-9kK]/gi, '') // Eliminar cualquier otro carácter que no sea número o K
+      .toUpperCase()
+      .trim(); // Trim final por si acaso
     return clean.slice(0, 9);
   };
 

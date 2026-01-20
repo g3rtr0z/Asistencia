@@ -480,7 +480,13 @@ export const deleteAlumnoPorRut = async rut => {
 export const agregarAlumno = async (alumno, eventoId) => {
   try {
     const alumnosRef = collection(db, `eventos/${eventoId}/alumnos`);
-    const docRef = await addDoc(alumnosRef, {
+    
+    // Preparar fecha de registro: usar la proporcionada o la fecha actual
+    const fechaRegistroFinal = alumno.fechaRegistro 
+      ? (alumno.fechaRegistro instanceof Date ? alumno.fechaRegistro : new Date(alumno.fechaRegistro))
+      : (alumno.presente ? new Date() : null);
+    
+    const docData = {
       Nombres: alumno.nombres ?? null,
       Apellidos: alumno.apellidos ?? null,
       'Nombre Completo': alumno.nombre,
@@ -494,7 +500,17 @@ export const agregarAlumno = async (alumno, eventoId) => {
       asiento: alumno.asiento ?? null,
       grupo: alumno.grupo ?? null,
       numeroLista: alumno.numeroLista ?? null,
-    });
+    };
+    
+    // Agregar fechaRegistro si existe
+    if (fechaRegistroFinal) {
+      docData.fechaRegistro = fechaRegistroFinal;
+    }
+    
+    // Agregar ultimaActualizacion
+    docData.ultimaActualizacion = new Date();
+    
+    const docRef = await addDoc(alumnosRef, docData);
     return docRef.id;
   } catch (error) {
     console.error('Error al agregar alumno:', error);
@@ -749,6 +765,26 @@ export const importarAlumnosDesdeExcel = async (
         'presente',
         'asistencia',
         'presente (si,no)',
+        'presente (si o no)',
+        'presente (sí o no)',
+        'presente si o no',
+        'presente sí o no',
+      ]),
+      fechaRegistro: normalizarAlias([
+        'fecha y hora de registro',
+        'fecha y hora registro',
+        'fecha hora registro',
+        'fecha de registro',
+        'fecha registro',
+        'hora de registro',
+        'hora registro',
+        'fecha',
+        'fecha y hora',
+        'timestamp',
+        'fecha creacion',
+        'fecha creación',
+        'fecha creacion registro',
+        'fecha creación registro',
       ]),
       asiste: normalizarAlias([
         'asiste',
@@ -881,6 +917,21 @@ export const importarAlumnosDesdeExcel = async (
           aliasCampos.asiste
         );
         const asiste = parseBooleanField(asisteValor);
+        
+        // Procesar fecha y hora de registro
+        const fechaRegistroRaw = obtenerValorCampo(filaNormalizada, aliasCampos.fechaRegistro);
+        let fechaRegistro = null;
+        if (fechaRegistroRaw) {
+          try {
+            // Intentar parsear la fecha desde diferentes formatos
+            const fechaParseada = new Date(fechaRegistroRaw);
+            if (!isNaN(fechaParseada.getTime())) {
+              fechaRegistro = fechaParseada;
+            }
+          } catch (err) {
+            console.warn('No se pudo parsear la fecha de registro:', fechaRegistroRaw);
+          }
+        }
 
         // Para eventos de trabajadores, solo usamos departamento; institución ya no aplica
         const departamentoFinal = esEventoTrabajadores
@@ -926,6 +977,7 @@ export const importarAlumnosDesdeExcel = async (
             departamento: esEventoTrabajadores ? departamentoFinal : null,
             observacion: esEventoTrabajadores ? (observacion ?? null) : null,
             asiste: asiste ?? false,
+            fechaRegistro: fechaRegistro,
           },
           eventoId
         );

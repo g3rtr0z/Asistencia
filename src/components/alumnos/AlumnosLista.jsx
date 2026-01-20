@@ -64,7 +64,7 @@ const AlumnosLista = ({
   const setApellidos = setLocalApellidos;
 
   const [ordenAlfabetico, setOrdenAlfabetico] = useState('asc');
-  const [ordenCampo, setOrdenCampo] = useState('nombre');
+  const [ordenCampo, setOrdenCampo] = useState('apellidos');
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
 
