@@ -67,9 +67,11 @@ export const exportarAExcel = (
         Apellidos: alumno.apellidos || '',
         Observación: alumno.observacion || '',
         'Fecha y Hora de Registro':
-          formatearFecha(alumno.fechaRegistro) ||
-          formatearFecha(alumno.ultimaActualizacion) ||
-          '',
+          alumno.presente
+            ? (formatearFecha(alumno.fechaRegistro) ||
+               formatearFecha(alumno.ultimaActualizacion) ||
+               '')
+            : '',
       }))
       : alumnosFiltrados.map(alumno => ({
         RUT: alumno.rut || '',
@@ -82,9 +84,11 @@ export const exportarAExcel = (
         'N° de Lista': alumno.numeroLista || '',
         Presente: alumno.presente ? 'Sí' : 'No',
         'Fecha y Hora de Registro':
-          formatearFecha(alumno.fechaRegistro) ||
-          formatearFecha(alumno.ultimaActualizacion) ||
-          '',
+          alumno.presente
+            ? (formatearFecha(alumno.fechaRegistro) ||
+               formatearFecha(alumno.ultimaActualizacion) ||
+               '')
+            : '',
       }));
 
     // Identificar columnas que tienen al menos un dato no vacío
