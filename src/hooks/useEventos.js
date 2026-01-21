@@ -17,9 +17,6 @@ export default function useEventos() {
 
     const setupSubscriptions = async () => {
       try {
-        // Crear eventos de ejemplo si no existen
-        await crearEventosEjemplo();
-
         // Suscribirse a todos los eventos
         unsubscribeEventos = subscribeToEventos(
           eventosData => {

@@ -156,45 +156,7 @@ export const eliminarEvento = async eventoId => {
   }
 };
 
-// Crear eventos de ejemplo si no existen
-export const crearEventosEjemplo = async () => {
-  try {
-    const eventosExistentes = await getEventos();
-
-    if (eventosExistentes.length === 0) {
-      const eventosEjemplo = [
-        {
-          nombre: 'Seminario de Informática 2025',
-          descripcion:
-            'Seminario anual de estudiantes de Informática del Instituto Santo Tomás Temuco',
-          fechaInicio: '2025-03-15T09:00',
-          fechaFin: '2025-03-15T18:00',
-          activo: true,
-        },
-        {
-          nombre: 'Conferencia de Ingeniería',
-          descripcion: 'Conferencia sobre nuevas tecnologías en ingeniería',
-          fechaInicio: '2025-04-20T10:00',
-          fechaFin: '2025-04-20T17:00',
-          activo: false,
-        },
-        {
-          nombre: 'Workshop de Administración',
-          descripcion: 'Taller práctico de administración empresarial',
-          fechaInicio: '2025-05-10T08:00',
-          fechaFin: '2025-05-10T16:00',
-          activo: false,
-        },
-      ];
-
-      for (const evento of eventosEjemplo) {
-        await crearEvento(evento);
-      }
-    }
-  } catch (error) {
-    console.error('Error al crear eventos de ejemplo:', error);
-  }
-};
+// Nota: se removió la creación automática de eventos de ejemplo
 
 // Escuchar cambios en eventos en tiempo real
 export const subscribeToEventos = (callback, errorCallback) => {
