@@ -14,6 +14,21 @@ function getInstitucionLabel(value) {
   return found ? found.label : value;
 }
 
+// Normaliza etiquetas de carrera para evitar duplicados visuales
+function normalizarCarreraLabel(valor) {
+  if (typeof valor !== 'string') return valor || '';
+  const llave = valor
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita acentos
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+  const mapa = {
+    'ingenieria en informatica': 'Ingenieria en Informatica',
+    'ingeniera en informatica': 'Ingenieria en Informatica',
+  };
+  return mapa[llave] || valor.trim();
+}
+
 const AlumnosLista = ({
   alumnos = [],
   alumnosCompletos,
@@ -35,6 +50,13 @@ const AlumnosLista = ({
 }) => {
   // Use alumnosCompletos for stats, fallback to alumnos
   const alumnosParaStats = alumnosCompletos || alumnos;
+  // Normaliza solo para vista (no altera exportación)
+  const alumnosNormalizados = useMemo(() => (
+    alumnos.map(a => ({
+      ...a,
+      carreraNormalizada: normalizarCarreraLabel(a.carrera),
+    }))
+  ), [alumnos]);
   // Local state for filters (for compatibility with admin)
   const [localCarrera, setLocalCarrera] = useState('');
   const [localRUT, setLocalRUT] = useState('');
@@ -120,7 +142,7 @@ const AlumnosLista = ({
 
   // Detect which columns have data - Hide empty columns but keep basic ones
   const columnasConDatos = useMemo(() => {
-    if (alumnos.length === 0) {
+    if (alumnosNormalizados.length === 0) {
       return {
         estado: true, rut: true, nombres: true, apellidos: true,
         carrera: true, institucion: true, numeroLista: true,
@@ -130,16 +152,16 @@ const AlumnosLista = ({
 
     return {
       estado: true, // Siempre visible
-      rut: alumnos.some(a => a.rut != null && String(a.rut).trim() !== ''),
-      nombres: alumnos.some(a => (a.nombres != null && String(a.nombres).trim() !== '') || (a.nombre != null && String(a.nombre).trim() !== '')),
-      apellidos: alumnos.some(a => a.apellidos != null && String(a.apellidos).trim() !== ''),
-      carrera: alumnos.some(a => a.carrera != null && String(a.carrera).trim() !== ''),
-      institucion: alumnos.some(a => a.institucion != null && String(a.institucion).trim() !== ''),
-      numeroLista: alumnos.some(a => a.numeroLista != null && String(a.numeroLista).trim() !== ''),
-      grupo: alumnos.some(a => a.grupo != null && String(a.grupo).trim() !== ''),
-      asiento: alumnos.some(a => a.asiento != null && String(a.asiento).trim() !== ''),
+      rut: alumnosNormalizados.some(a => a.rut != null && String(a.rut).trim() !== ''),
+      nombres: alumnosNormalizados.some(a => (a.nombres != null && String(a.nombres).trim() !== '') || (a.nombre != null && String(a.nombre).trim() !== '')),
+      apellidos: alumnosNormalizados.some(a => a.apellidos != null && String(a.apellidos).trim() !== ''),
+      carrera: alumnosNormalizados.some(a => a.carreraNormalizada != null && String(a.carreraNormalizada).trim() !== ''),
+      institucion: alumnosNormalizados.some(a => a.institucion != null && String(a.institucion).trim() !== ''),
+      numeroLista: alumnosNormalizados.some(a => a.numeroLista != null && String(a.numeroLista).trim() !== ''),
+      grupo: alumnosNormalizados.some(a => a.grupo != null && String(a.grupo).trim() !== ''),
+      asiento: alumnosNormalizados.some(a => a.asiento != null && String(a.asiento).trim() !== ''),
     };
-  }, [alumnos]);
+  }, [alumnosNormalizados]);
 
   // Column visibility config
   const [columnasVisibles, setColumnasVisibles] = useState({
@@ -203,9 +225,9 @@ const AlumnosLista = ({
 
   // Filter base for options
   const alumnosParaOpciones = useMemo(() => {
-    if (!soloPresentes) return alumnos;
-    return alumnos.filter(alumno => soloPresentes === 'presentes' ? alumno.presente : !alumno.presente);
-  }, [alumnos, soloPresentes]);
+    if (!soloPresentes) return alumnosNormalizados;
+    return alumnosNormalizados.filter(alumno => soloPresentes === 'presentes' ? alumno.presente : !alumno.presente);
+  }, [alumnosNormalizados, soloPresentes]);
 
   const opcionesInstituciones = useMemo(() => {
     return [...new Set(alumnosParaOpciones.map(a => a.institucion))].sort();
@@ -215,7 +237,7 @@ const AlumnosLista = ({
     const grupos = {};
     alumnosParaOpciones.forEach(alumno => {
       if (!grupos[alumno.institucion]) grupos[alumno.institucion] = new Set();
-      grupos[alumno.institucion].add(alumno.carrera);
+      grupos[alumno.institucion].add(alumno.carreraNormalizada);
     });
     Object.keys(grupos).forEach(inst => { grupos[inst] = [...grupos[inst]].sort(); });
     return grupos;
@@ -224,7 +246,7 @@ const AlumnosLista = ({
   const gruposUnicos = useMemo(() => {
     const set = new Set();
     const alumnosParaGrupos = alumnosParaOpciones.filter(a => {
-      const matchCarrera = !carrera || a.carrera === carrera;
+      const matchCarrera = !carrera || a.carreraNormalizada === carrera;
       const matchInstitucion = !institucion || a.institucion === institucion;
       return matchCarrera && matchInstitucion;
     });
@@ -240,7 +262,7 @@ const AlumnosLista = ({
 
   // Filtered students
   const alumnosFiltrados = useMemo(() => {
-    return alumnos.filter(alumno => {
+    return alumnosNormalizados.filter(alumno => {
       const searchLower = busqueda.toLowerCase();
       const cumpleBusqueda = !busqueda ||
         (alumno.rut && alumno.rut.toLowerCase().startsWith(searchLower)) ||
@@ -249,7 +271,7 @@ const AlumnosLista = ({
         (alumno.apellidos && alumno.apellidos.toLowerCase().includes(searchLower));
 
       const cumplePresente = !soloPresentes || (soloPresentes === 'presentes' ? alumno.presente : !alumno.presente);
-      const cumpleCarrera = !carrera || alumno.carrera === carrera;
+      const cumpleCarrera = !carrera || alumno.carreraNormalizada === carrera;
       const cumpleRut = !rut || alumno.rut.toLowerCase().startsWith(rut.toLowerCase());
       const cumpleInstitucion = !institucion || alumno.institucion === institucion;
       const grupoAlumno = alumno.grupo ? String(alumno.grupo).trim() : '';
@@ -260,7 +282,7 @@ const AlumnosLista = ({
       const cumpleApellidos = !apellidos || (alumno.apellidos && alumno.apellidos.toLowerCase().includes(apellidos.toLowerCase()));
       return cumpleBusqueda && cumplePresente && cumpleCarrera && cumpleRut && cumpleInstitucion && cumpleGrupo && cumpleAsiento && cumpleNombres && cumpleApellidos;
     });
-  }, [alumnos, soloPresentes, carrera, rut, institucion, grupo, asiento, nombres, apellidos, busqueda]);
+  }, [alumnosNormalizados, soloPresentes, carrera, rut, institucion, grupo, asiento, nombres, apellidos, busqueda]);
 
   // Sorted students
   const alumnosOrdenados = useMemo(() => {
@@ -703,7 +725,12 @@ const AlumnosLista = ({
                       )}
                       {columnasVisibles.carrera && (
                         <td className="py-3 px-4 text-slate-600 text-xs">
-                          <div className="truncate max-w-[120px]" title={alumno.carrera ?? '-'}>{alumno.carrera ?? '-'}</div>
+                          <div
+                            className="truncate max-w-[120px]"
+                            title={alumno.carreraNormalizada ?? alumno.carrera ?? '-'}
+                          >
+                            {alumno.carreraNormalizada ?? alumno.carrera ?? '-'}
+                          </div>
                         </td>
                       )}
                       {columnasVisibles.institucion && (

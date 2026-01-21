@@ -27,6 +27,31 @@ const formatearSiNo = valor => {
   return valor ? 'Sí' : 'No';
 };
 
+// Normaliza textos para evitar duplicados por espacios o mayúsculas/minúsculas
+const normalizarTexto = valor => {
+  if (typeof valor !== 'string') return valor || '';
+  // Elimina espacios dobles, recorta y aplica Title Case simple
+  const limpio = valor.replace(/\s+/g, ' ').trim().toLowerCase();
+  return limpio
+    .split(' ')
+    .filter(Boolean)
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+    .join(' ');
+};
+
+// Mapeo específico para unificar nombres de carrera
+const normalizarCarrera = valor => {
+  const base = normalizarTexto(valor);
+  const llave = base.toLowerCase();
+  const mapaCarreras = {
+    'ingenieria en informatica': 'Ingenieria en Informatica',
+    'ingeniera en informatica': 'Ingenieria en Informatica',
+    'ingenieria en informática': 'Ingenieria en Informatica',
+    'ingeniera en informática': 'Ingenieria en Informatica'
+  };
+  return mapaCarreras[llave] || base;
+};
+
 export const exportarAExcel = (
   alumnos,
   nombreEvento = 'Evento',
@@ -63,8 +88,8 @@ export const exportarAExcel = (
         'Asiste (Pre confirmación)': formatearSiNo(alumno.asiste),
         Presente: alumno.presente ? 'Sí' : 'No',
         RUT: alumno.rut || '',
-        Nombres: alumno.nombres || '',
-        Apellidos: alumno.apellidos || '',
+        Nombres: normalizarTexto(alumno.nombres),
+        Apellidos: normalizarTexto(alumno.apellidos),
         Observación: alumno.observacion || '',
         'Fecha y Hora de Registro':
           alumno.presente
@@ -75,10 +100,10 @@ export const exportarAExcel = (
       }))
       : alumnosFiltrados.map(alumno => ({
         RUT: alumno.rut || '',
-        Nombres: alumno.nombres || '',
-        Apellidos: alumno.apellidos || '',
-        Carrera: alumno.carrera || '',
-        Institución: alumno.institucion || '',
+        Nombres: normalizarTexto(alumno.nombres),
+        Apellidos: normalizarTexto(alumno.apellidos),
+        Carrera: normalizarCarrera(alumno.carrera),
+        Institución: normalizarTexto(alumno.institucion),
         Asiento: alumno.asiento || '',
         Grupo: alumno.grupo || '',
         'N° de Lista': alumno.numeroLista || '',
