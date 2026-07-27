@@ -402,62 +402,96 @@ const AlumnosLista = ({
 
   return (
     <div className="w-full">
-      {/* Tarjetas de Estadísticas Simplificadas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Tarjetas de Estadísticas Simplificadas Optimizadas para Móvil */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6">
         <button
           onClick={() => setSoloPresentes && setSoloPresentes('')}
-          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${soloPresentes === '' ? 'bg-st-verde text-white border-st-verde shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'}`}
+          className={`flex items-center gap-2.5 sm:gap-4 p-3 sm:p-4 rounded-2xl border transition-all text-left ${
+            soloPresentes === '' ? 'bg-st-verde text-white border-st-verde shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'
+          }`}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${soloPresentes === '' ? 'bg-white/20' : 'bg-st-pastel text-st-verde'}`}>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${
+            soloPresentes === '' ? 'bg-white/20' : 'bg-st-pastel text-st-verde'
+          }`}>
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
-          <div>
-            <p className={`text-2xl font-bold leading-none mb-1 ${soloPresentes === '' ? 'text-white' : 'text-slate-800'}`}>{alumnosParaStats.length}</p>
-            <p className={`text-[10px] uppercase font-bold tracking-wider ${soloPresentes === '' ? 'text-white/70' : 'text-slate-400'}`}>Total</p>
+          <div className="min-w-0">
+            <p className={`text-xl sm:text-2xl font-bold leading-none mb-1 ${soloPresentes === '' ? 'text-white' : 'text-slate-800'}`}>
+              {alumnosParaStats.length}
+            </p>
+            <p className={`text-[9px] sm:text-[10px] uppercase font-bold tracking-wider truncate ${
+              soloPresentes === '' ? 'text-white/80' : 'text-slate-400'
+            }`}>
+              Total
+            </p>
           </div>
         </button>
 
         <button
           onClick={() => setSoloPresentes && setSoloPresentes('presentes')}
-          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${soloPresentes === 'presentes' ? 'bg-st-verde text-white border-st-verde shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'}`}
+          className={`flex items-center gap-2.5 sm:gap-4 p-3 sm:p-4 rounded-2xl border transition-all text-left ${
+            soloPresentes === 'presentes' ? 'bg-st-verde text-white border-st-verde shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'
+          }`}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${soloPresentes === 'presentes' ? 'bg-white/20' : 'bg-st-pastel text-st-verde'}`}>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${
+            soloPresentes === 'presentes' ? 'bg-white/20' : 'bg-st-pastel text-st-verde'
+          }`}>
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div>
-            <p className={`text-2xl font-bold leading-none mb-1 ${soloPresentes === 'presentes' ? 'text-white' : 'text-slate-800'}`}>{totalPresentes}</p>
-            <p className={`text-[10px] uppercase font-bold tracking-wider ${soloPresentes === 'presentes' ? 'text-white/70' : 'text-slate-400'}`}>Presentes</p>
+          <div className="min-w-0">
+            <p className={`text-xl sm:text-2xl font-bold leading-none mb-1 ${soloPresentes === 'presentes' ? 'text-white' : 'text-slate-800'}`}>
+              {totalPresentes}
+            </p>
+            <p className={`text-[9px] sm:text-[10px] uppercase font-bold tracking-wider truncate ${
+              soloPresentes === 'presentes' ? 'text-white/80' : 'text-slate-400'
+            }`}>
+              Presentes
+            </p>
           </div>
         </button>
 
         <button
           onClick={() => setSoloPresentes && setSoloPresentes('ausentes')}
-          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${soloPresentes === 'ausentes' ? 'bg-rose-500 text-white border-rose-500 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'}`}
+          className={`flex items-center gap-2.5 sm:gap-4 p-3 sm:p-4 rounded-2xl border transition-all text-left ${
+            soloPresentes === 'ausentes' ? 'bg-rose-500 text-white border-rose-500 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'
+          }`}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${soloPresentes === 'ausentes' ? 'bg-white/20' : 'bg-rose-50 text-rose-600'}`}>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${
+            soloPresentes === 'ausentes' ? 'bg-white/20' : 'bg-rose-50 text-rose-600'
+          }`}>
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div>
-            <p className={`text-2xl font-bold leading-none mb-1 ${soloPresentes === 'ausentes' ? 'text-white' : 'text-slate-800'}`}>{totalAusentes}</p>
-            <p className={`text-[10px] uppercase font-bold tracking-wider ${soloPresentes === 'ausentes' ? 'text-white/70' : 'text-slate-400'}`}>Ausentes</p>
+          <div className="min-w-0">
+            <p className={`text-xl sm:text-2xl font-bold leading-none mb-1 ${soloPresentes === 'ausentes' ? 'text-white' : 'text-slate-800'}`}>
+              {totalAusentes}
+            </p>
+            <p className={`text-[9px] sm:text-[10px] uppercase font-bold tracking-wider truncate ${
+              soloPresentes === 'ausentes' ? 'text-white/80' : 'text-slate-400'
+            }`}>
+              Ausentes
+            </p>
           </div>
         </button>
 
-        <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-          <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="flex items-center gap-2.5 sm:gap-4 p-3 sm:p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
-          <div>
-            <p className="text-2xl font-bold text-slate-800 leading-none mb-1">{[...new Set(alumnosParaStats.map(a => a.institucion))].length}</p>
-            <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Instituciones</p>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-bold text-slate-800 leading-none mb-1">
+              {[...new Set(alumnosParaStats.map(a => (a.establecimiento || a.institucion || '').trim()).filter(Boolean))].length}
+            </p>
+            <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-400 truncate">
+              {alumnosParaStats.some(a => a.establecimiento) ? 'Establecimientos' : 'Instituciones'}
+            </p>
           </div>
         </div>
       </div>
