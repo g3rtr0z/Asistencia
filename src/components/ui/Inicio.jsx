@@ -1,0 +1,526 @@
+import React, { useState, useRef, useEffect } from 'react';
+import Logo from '../../assets/logo3.png';
+import { buscarAlumnoPorRutEnEvento } from '../../services/alumnosService';
+import { motion, AnimatePresence } from 'framer-motion';
+import QRScanner from './QRScanner';
+
+const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminClick, errorVisual, showButtons = true }) => {
+  const [rut, setRut] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [showScanner, setShowScanner] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
+  const [isFocused, setIsFocused] = useState(false); // Track input focus
+  const rutInputRef = useRef(null);
+  const scanTimeoutRef = useRef(null);
+
+  // Auto-reset
+  useEffect(() => {
+    if (result) {
+      const timer = setTimeout(() => {
+        setResult(null);
+        setRut('');
+        setErrorVisual(''); // Limpiar errores
+        // Enfocar el input después del auto-reset para poder escanear inmediatamente
+        setTimeout(() => {
+          if (rutInputRef.current) {
+            rutInputRef.current.focus();
+          }
+        }, 100);
+      }, 30000); // 30s auto-reset
+      return () => clearTimeout(timer);
+    }
+  }, [result]);
+
+  useEffect(() => {
+    // Focus only on desktop
+    if (window.innerWidth >= 768 && rutInputRef.current) {
+      rutInputRef.current.focus();
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+    };
+  }, []);
+
+  const formatRut = value => {
+    if (!value) return '';
+    // Eliminar todos los espacios, guiones, puntos y otros caracteres no válidos
+    let clean = String(value)
+      .replace(/[\s\r\n\t.-]/g, '') // Eliminar espacios, saltos de línea, tabs, guiones y puntos
+      .replace(/[^0-9kK]/gi, '') // Eliminar cualquier otro carácter que no sea número o K
+      .toUpperCase()
+      .trim(); // Trim final por si acaso
+    return clean.slice(0, 9);
+  };
+
+  const procesarLogin = async (rawRut) => {
+    const rutValue = formatRut(rawRut);
+
+    if (!rutValue.trim()) {
+      setErrorVisual('Por favor ingresa tu RUT');
+      return;
+    }
+
+    setLoading(true);
+    setResult(null);
+    setErrorVisual('');
+
+    let resultadoEstablecido = false;
+
+    try {
+      if (!eventoActivo?.id) {
+        setErrorVisual('No hay un evento activo disponible.');
+        setLoading(false);
+        return;
+      }
+
+      // Buscar el alumno primero para verificar que existe
+      const alumno = await buscarAlumnoPorRutEnEvento(
+        rutValue.trim(),
+        eventoActivo.id
+      );
+
+      if (!alumno) {
+        setErrorVisual('RUT no encontrado en la base de datos del evento activo.');
+        setLoading(false);
+        return;
+      }
+
+      // Intentar actualizar la presencia (incluso si ya está presente)
+      const res = await onLogin(rutValue.trim());
+      
+      const datosAlumno = res && (res.nombre || res.nombres) 
+        ? { ...res, presente: true }
+        : { ...alumno, presente: true };
+      
+      setResult({ data: datosAlumno, rut: rutValue });
+      resultadoEstablecido = true;
+
+      setRut('');
+      if (rutInputRef.current) rutInputRef.current.value = '';
+
+    } catch (error) {
+      console.error('Error en procesarLogin:', error);
+      if (!resultadoEstablecido) {
+        try {
+          const alumnoError = await buscarAlumnoPorRutEnEvento(
+            rutValue.trim(),
+            eventoActivo.id
+          );
+          if (alumnoError) {
+            setResult({ data: { ...alumnoError, presente: true }, rut: rutValue });
+            setRut('');
+          } else {
+            setErrorVisual('Error al procesar la asistencia. Inténtalo de nuevo.');
+          }
+        } catch (err) {
+          setErrorVisual('Error al procesar la asistencia. Inténtalo de nuevo.');
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async e => {
+    if (e) e.preventDefault();
+    const rutValue = formatRut(rutInputRef.current?.value || rut);
+    await procesarLogin(rutValue);
+  };
+
+  const handleInput = e => {
+    const value = e.target.value;
+    const formatted = formatRut(value);
+    setRut(formatted);
+
+    // Limpiar timeout anterior
+    if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+
+    if (formatted.length >= 8 && formatted.length <= 9) {
+      scanTimeoutRef.current = setTimeout(() => {
+        const currentValue = formatRut(rutInputRef.current?.value || '');
+        if (currentValue.length >= 8 && currentValue.length <= 9 && currentValue === formatted && !loading) {
+          procesarLogin(formatted);
+        }
+      }, 1500);
+    }
+  };
+
+  const esEventoFuncionarios = eventoActivo?.tipo === 'trabajadores';
+
+  const handleQRScan = (scannedRut) => {
+    const formatted = formatRut(scannedRut);
+    setRut(formatted);
+    setShowScanner(false);
+    procesarLogin(formatted);
+  };
+
+  const InfoRow = ({ label, value, border = true, highlight = false }) => {
+    if (!value) return null;
+    return (
+      <div className={`flex flex-col sm:flex-row sm:justify-between sm:items-center py-3.5 gap-1 ${border ? 'border-b border-gray-100' : ''}`}>
+        <span className='text-sm text-gray-500 font-medium tracking-wide uppercase'>{label}</span>
+        <span className={`text-gray-900 font-semibold text-lg text-right ${highlight ? 'text-st-verde' : ''}`}>
+          {value}
+        </span>
+      </div>
+    );
+  };
+
+  return (
+    <div className='min-h-screen w-full flex items-center justify-center p-4 md:p-6 bg-slate-50'>
+      <div className='w-full max-w-xl xl:max-w-6xl bg-white rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden min-h-[auto] xl:min-h-[600px] flex flex-col xl:flex-row'>
+
+        {/* Left Section - Information */}
+        <div className='bg-st-verde p-6 md:p-8 xl:p-12 text-white flex flex-row xl:flex-col justify-between items-center xl:items-start relative overflow-hidden shrink-0 xl:w-5/12'>
+          <div className='absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 pointer-events-none'></div>
+          <div className='absolute bottom-0 left-0 w-48 h-48 bg-black/20 rounded-full blur-2xl transform -translate-x-1/2 translate-y-1/2 pointer-events-none'></div>
+
+          <div className='relative z-10 flex items-center gap-4 xl:block'>
+            <div className='w-10 h-10 md:w-16 md:h-16 bg-white/20 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center mb-0 xl:mb-8'>
+              <span className='font-bold text-lg md:text-2xl'>ST</span>
+            </div>
+            <div className='hidden xl:block'>
+              <h1 className='text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-3 md:mb-4'>
+                Bienvenido
+              </h1>
+              <p className='text-white/80 text-base md:text-lg font-light max-w-sm'>
+                Sistema de registro de asistencia digital institucional.
+              </p>
+            </div>
+          </div>
+
+          <div className='relative z-10 mt-0 xl:mt-12'>
+            <div className='flex items-center gap-3 md:gap-4 bg-white/10 backdrop-blur-md p-2 md:p-4 rounded-lg md:rounded-xl border border-white/20'>
+              <div className='w-8 h-8 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-st-verde font-bold shadow-lg shrink-0'>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-6 md:w-6" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className='min-w-0 max-w-[120px] md:max-w-none'>
+                <div className='text-[8px] md:text-xs text-white/60 uppercase tracking-wider font-semibold'>Evento Activo</div>
+                <div className='font-bold text-xs md:text-base truncate'>
+                  {eventoActivo?.nombre || 'Cargando...'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Section - Form */}
+        <div className='xl:w-7/12 p-6 md:p-10 xl:p-16 flex flex-col justify-center bg-gradient-to-b from-white via-white to-slate-50/50 relative'>
+
+          {/* Error Message - Fixed top on mobile, absolute on desktop */}
+          <AnimatePresence>
+            {errorVisual && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, type: "spring", stiffness: 100 }}
+                className="fixed xl:absolute top-5 left-4 right-32 xl:right-auto xl:top-10 xl:left-8 z-10 xl:max-w-sm pointer-events-none"
+              >
+                <div className='bg-red-50 border-l-4 border-red-500 p-2 md:p-4 rounded-lg shadow-lg pointer-events-auto'>
+                  {/* Horizontal layout on all screen sizes */}
+                  <div className='flex flex-row items-center gap-2 md:gap-3'>
+                    <div className='w-5 h-5 md:w-5 md:h-5 rounded-full bg-red-500 flex items-center justify-center shrink-0'>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" className="w-3 h-3 md:w-3 md:h-3">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className='text-[10px] md:text-sm font-medium text-red-800 text-left flex-1 leading-tight'>{errorVisual}</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Top Actions - Fixed on mobile, absolute on desktop */}
+          {(showButtons && !showScanner && !showCredits) && (
+            <div className={`fixed xl:absolute top-4 right-4 xl:top-8 xl:right-8 flex items-center gap-2 md:gap-4 z-30 transition-opacity duration-200 ${isFocused ? 'opacity-0 pointer-events-none xl:opacity-100 xl:pointer-events-auto' : 'opacity-100'}`}>
+              {/* Info Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInfoClick();
+                }}
+                className='w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white/90 md:bg-slate-50 text-slate-500 md:text-slate-400 border border-slate-200 shadow-lg md:shadow-sm hover:text-st-verde hover:border-st-verde/30 hover:shadow-md transition-all duration-300 flex items-center justify-center active:scale-95 pointer-events-auto'
+                title='Ver lista'
+              >
+                <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-5 h-5 md:w-6 md:h-6'>
+                  <path strokeLinecap='round' strokeLinejoin='round' d='M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z' />
+                </svg>
+              </button>
+
+              {/* Admin Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdminClick();
+                }}
+                className='w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white/90 md:bg-slate-50 text-slate-500 md:text-slate-400 border border-slate-200 shadow-lg md:shadow-sm hover:text-st-verde hover:border-st-verde/30 hover:shadow-md transition-all duration-300 flex items-center justify-center active:scale-95 pointer-events-auto'
+                title='Administración'
+              >
+                <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-5 h-5 md:w-6 md:h-6'>
+                  <path strokeLinecap='round' strokeLinejoin='round' d='M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z' />
+                </svg>
+              </button>
+
+              <div className="w-px h-8 bg-slate-200 mx-1 hidden xl:block"></div>
+
+              <img src={Logo} alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain opacity-90 hover:opacity-100 transition-all duration-500 hidden xl:block" />
+            </div>
+          )}
+
+          <AnimatePresence mode='wait'>
+            {!result ? (
+              <motion.div
+                key="login-form-split"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.4 }}
+                className='max-w-md mx-auto w-full mt-2 md:mt-0 relative'
+              >
+                <h2 className='text-xl md:text-3xl font-bold text-slate-800 mb-1 md:mb-2 tracking-tight text-center xl:text-left'>Registra tu llegada</h2>
+                <p className='text-slate-500 mb-5 md:mb-8 text-xs md:text-base font-medium opacity-80 text-center xl:text-left'>Ingresa tu RUT para confirmar tu asistencia.</p>
+
+                <form onSubmit={handleSubmit} className='flex flex-col gap-4 md:gap-6'>
+                  <div className='group'>
+                    <label className='block text-xs md:text-sm font-semibold text-slate-700 mb-1.5 md:mb-3 ml-1'>
+                      RUT
+                    </label>
+                    <div className='relative'>
+                      <input
+                        ref={rutInputRef}
+                        type='text'
+                        value={rut}
+                        onChange={handleInput}
+                        placeholder='12345678K'
+                        className={`w-full h-12 md:h-16 px-4 md:px-6 pr-20 md:pr-24 bg-slate-50 border-2 rounded-xl md:rounded-2xl text-base md:text-2xl font-bold tracking-wider text-slate-800 outline-none transition-all duration-300
+                            ${!eventoActivo
+                            ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200'
+                            : 'border-st-verde hover:border-st-verde focus:bg-white focus:border-st-verde focus:shadow-2xl focus:shadow-st-verde/5'
+                          }`}
+                        maxLength={12}
+                        disabled={!eventoActivo || loading}
+                        autoComplete='off'
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+                      />
+                      <div className='absolute right-3 md:right-5 top-1/2 transform -translate-y-1/2 flex items-center gap-2'>
+                        <button
+                          type='button'
+                          onClick={() => setShowScanner(true)}
+                          disabled={!eventoActivo || loading}
+                          className='w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-st-verde/10 hover:bg-st-verde/20 text-st-verde flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed'
+                          title='Escanear QR'
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 md:w-5 md:h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type='submit'
+                    disabled={loading || !rut.trim() || !eventoActivo}
+                    className={`
+                        w-full h-12 md:h-16 rounded-xl md:rounded-2xl font-bold text-sm md:text-lg transition-all duration-300
+                        flex items-center justify-center gap-3 shadow-lg
+                        ${loading || !rut.trim() || !eventoActivo
+                        ? 'bg-slate-100 text-slate-400 shadow-none cursor-not-allowed'
+                        : 'bg-st-verde text-white shadow-st-verde/20 hover:bg-[#004b30] hover:shadow-xl hover:shadow-st-verde/30 transform hover:-translate-y-1'
+                      }
+                      `}
+                  >
+                    {loading ? 'Verificando...' : 'Confirmar Asistencia'}
+                    {!loading && (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    )}
+                  </button>
+                </form>
+
+
+                {/* Mobile Footer inside form area - removed, now using floating button */}
+
+
+              </motion.div>
+            ) : (
+              <motion.div
+                key="success-card-split"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.4 }}
+                className='max-w-md mx-auto w-full md:mt-0'
+              >
+                <div className='flex flex-col items-center mb-10 md:mb-8'>
+                  <div className='w-24 h-24 md:w-28 md:h-28 bg-green-50 rounded-full flex items-center justify-center mb-6 ring-8 ring-green-50/50'>
+                    <svg className="w-12 h-12 md:w-14 md:h-14 text-st-verde" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h2 className='text-2xl md:text-3xl font-bold text-st-verde text-center'>
+                    ¡Bienvenido!
+                  </h2>
+
+                  <p className='text-st-verde/80 text-center mt-2 font-medium text-sm md:text-base'>
+                    Asistencia registrada correctamente
+                  </p>
+                </div>
+
+                <div className='bg-slate-50 rounded-2xl p-5 md:p-6 border border-slate-100 space-y-1 mb-6'>
+                  {esEventoFuncionarios ? (
+                    <>
+                      <InfoRow label="Funcionario" value={`${result.data.nombres || ''} ${result.data.apellidos || ''}`} highlight />
+                      <InfoRow label="RUT" value={result.rut} />
+                      <InfoRow label="Departamento" value={result.data.departamento} />
+                      <div className='pt-2 mt-2 border-t border-slate-200'>
+                        <InfoRow label="Confirmación" value={result.data.asiste ? 'Pre-Confirmada' : 'En Puerta'} border={false} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <InfoRow
+                        label="Nombre Completo"
+                        value={result.data.nombre ?? `${result.data.nombres ?? ''} ${result.data.apellidos ?? ''}`.trim()}
+                        highlight
+                      />
+                      <InfoRow label="RUT" value={result.rut} />
+                      {result.data.carrera && <InfoRow label="Carrera" value={result.data.carrera} />}
+                      {result.data.cargo && <InfoRow label="Cargo" value={result.data.cargo} />}
+                      {(result.data.establecimiento || result.data.institucion) && (
+                        <InfoRow label="Establecimiento" value={result.data.establecimiento || result.data.institucion} />
+                      )}
+                      {result.data.comuna && <InfoRow label="Comuna del Establecimiento" value={result.data.comuna} border={false} />}
+                    </>
+                  )}
+                </div>
+
+
+                <div className='mb-6'>
+                  <button
+                    onClick={() => {
+                      setResult(null);
+                      setRut('');
+                      setErrorVisual(''); // Limpiar errores
+                      // Asegurar que el input reciba el foco para poder escanear inmediatamente
+                      setTimeout(() => {
+                        if (rutInputRef.current) {
+                          rutInputRef.current.focus();
+                          rutInputRef.current.select(); // Seleccionar el texto si hay alguno
+                        }
+                      }, 200); // Aumentado a 200ms para asegurar que el DOM se actualice
+                    }}
+                    className='w-full py-3 md:py-4 rounded-xl bg-white border-2 border-slate-100 text-st-verde font-bold text-base md:text-lg hover:border-st-verde hover:bg-green-50/50 transition-all duration-200 flex items-center justify-center gap-2 group'
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Ingresar otro asistente
+                  </button>
+                </div>
+
+                <div className='text-center'>
+                  <p className='text-xs text-slate-400 font-medium mb-3 uppercase tracking-wider'>
+                    Cierre automático
+                  </p>
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-st-verde"
+                      initial={{ width: "100%" }}
+                      animate={{ width: "0%" }}
+                      transition={{ duration: 30, ease: "linear" }}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Footer info button - bottom right on all screens */}
+      <div className={`fixed bottom-4 right-4 z-40 transition-opacity duration-200 ${isFocused ? 'opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto' : 'opacity-100'}`}>
+        <button
+          onClick={() => setShowCredits(true)}
+          className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm hover:shadow-md text-slate-400 hover:text-slate-600 transition-all flex items-center justify-center"
+          title="Información del sistema"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScan={handleQRScan}
+      />
+
+      {/* Credits Modal */}
+      <AnimatePresence>
+        {showCredits && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowCredits(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-800">Información del Sistema</h3>
+                <button
+                  onClick={() => setShowCredits(false)}
+                  className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-slate-600">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Departamento</p>
+                  <p className="text-sm font-medium text-slate-800">Departamento de Informática</p>
+                  <p className="text-sm text-slate-600">Santo Tomás Temuco</p>
+                </div>
+
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Desarrollador</p>
+                  <p className="text-sm font-medium text-slate-800">Gerson Uziel Valdebenito</p>
+                </div>
+
+                <div className="text-center pt-2">
+                  <p className="text-xs text-slate-400">Sistema de Gestión de Asistencia</p>
+                  <p className="text-xs text-slate-300 mt-1">Versión 2.0 · 2026</p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default Inicio;

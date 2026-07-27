@@ -1,0 +1,11 @@
+const { readFileSync, writeFileSync } = require('fs');
+const path = 'src/components/admin/AdminPanel.jsx';
+let text = readFileSync(path, 'utf8');
+const marker = '      {/* Modal para agregar y eliminar alumnos */}';
+const first = text.indexOf(marker);
+const second = text.indexOf(marker, first + 1);
+if (second === -1) throw new Error('second marker not found');
+const end = text.indexOf('\n      <div className="flex-1 overflow-y-auto">', second);
+if (end === -1) throw new Error('div marker not found after second modal');
+text = text.slice(0, second) + text.slice(end + 1);
+writeFileSync(path, text);

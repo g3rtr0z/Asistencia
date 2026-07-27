@@ -1,0 +1,386 @@
+import React, { useState, useMemo } from 'react';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+  Navigate,
+} from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
+import { AnimatePresence, motion } from 'framer-motion';
+import { Alert } from './components/ui/Alert';
+import { actualizarPresencia } from './services/alumnosService';
+import useAlumnosEvento from './hooks/useAlumnosEvento';
+import useEventos from './hooks/useEventos';
+import { Inicio, Footer } from './components/ui';
+import AdminLogin from './components/admin/AdminLogin';
+import AdminPanel from './components/admin/AdminPanel';
+import AlumnosLista from './components/alumnos/AlumnosLista';
+import TrabajadoresLista from './components/trabajadores/TrabajadoresLista';
+import TrabajadoresResumen from './components/trabajadores/TrabajadoresResumen';
+
+// Loader
+function Loader() {
+  return (
+    <div className='min-h-screen bg-white flex flex-col items-center justify-center animate-fadeIn'>
+      <div className='text-center flex flex-col items-center gap-4'>
+        <div className='h-16 w-16 border-4 border-green-300 border-t-green-700 rounded-full animate-spin' />
+        <p className='text-green-800 text-xl font-medium tracking-wide animate-pulse'>
+          Cargando datos...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Error
+function ErrorMessage({ error }) {
+  return (
+    <div className='min-h-screen bg-white flex flex-col items-center justify-center'>
+      <div className='text-center'>
+        <p className='text-red-600 text-xl mb-4'>Error al cargar los datos</p>
+        <button
+          onClick={() => window.location.reload()}
+          className='bg-green-800 text-white px-4 py-2 rounded mr-2'
+        >
+          Reintentar
+        </button>
+        <div className='text-gray-500 mt-2 text-sm'>{error}</div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  // Custom hook para la lógica de alumnos
+  const { alumnos, loading, error } = useAlumnosEvento();
+
+  // Hook para eventos
+  const { eventoActivo } = useEventos();
+
+  const [usuario, setUsuario] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  // const [filtroEstado] = useState('todos'); // No se usa actualmente
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [errorVisual, setErrorVisual] = useState('');
+  const [showAlumnosModal, setShowAlumnosModal] = useState(false);
+
+  // Filtros para el modal de alumnos
+  const [filtroCarrera, setFiltroCarrera] = useState('');
+  const [filtroInstitucion, setFiltroInstitucion] = useState('');
+  const [filtroRUT, setFiltroRUT] = useState('');
+  const [soloPresentes, setSoloPresentes] = useState('');
+  // Restaurar estado de autenticación desde localStorage
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    const savedAuth = localStorage.getItem('adminAuthenticated');
+    return savedAuth === 'true';
+  });
+  const [filtroGrupo, setFiltroGrupo] = useState('');
+
+  // Controlar el scroll según la ruta y modales
+  React.useEffect(() => {
+    if (location.pathname === '/admin' || showAlumnosModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [location.pathname, showAlumnosModal]);
+
+  // Filtrado para la vista de admin (memorizado) - comentado porque no se usa actualmente
+  // const alumnosFiltrados = useMemo(() => {
+  //   if (filtroEstado === 'presentes') {
+  //     return alumnos.filter(a => a.presente);
+  //   } else if (filtroEstado === 'ausentes') {
+  //     return alumnos.filter(a => !a.presente);
+  //   }
+  //   return alumnos;
+  // }, [alumnos, filtroEstado]);
+
+  // Filtrado para el modal de alumnos (Inicio), incluyendo grupo
+  const alumnosFiltradosModal = useMemo(() => {
+    let filtrados = alumnos.filter(
+      alumno =>
+        (filtroCarrera === '' || alumno.carrera === filtroCarrera) &&
+        (filtroInstitucion === '' ||
+          alumno.institucion === filtroInstitucion) &&
+        (filtroRUT === '' || alumno.rut.includes(filtroRUT))
+    );
+    if (filtroGrupo) {
+      const grupoNum = Number(filtroGrupo);
+      filtrados = filtrados.filter(alumno => Number(alumno.grupo) === grupoNum);
+    }
+    return filtrados;
+  }, [alumnos, filtroCarrera, filtroInstitucion, filtroRUT, filtroGrupo]);
+
+  // Login de alumno
+  const handleLogin = async rut => {
+    try {
+      if (!eventoActivo) {
+        setErrorVisual('No hay un evento activo en este momento.');
+        return null;
+      }
+
+      const cleanTarget = String(rut || '').replace(/[^0-9kK]/gi, '').toUpperCase();
+      const alumno = alumnos.find(a => {
+        if (!a.rut) return false;
+        return String(a.rut).replace(/[^0-9kK]/gi, '').toUpperCase() === cleanTarget;
+      });
+
+      if (alumno) {
+        // Actualizar presencia incluso si ya está presente (para actualizar fecha)
+        await actualizarPresencia(alumno.id, true, eventoActivo.id);
+        const actualizado = { ...alumno, presente: true };
+        setUsuario(actualizado);
+        return actualizado;
+      } else {
+        // No establecer error aquí, dejar que Inicio.jsx lo maneje
+        return null;
+      }
+    } catch (error) {
+      console.error('Error en handleLogin:', error);
+      // No establecer error aquí, dejar que Inicio.jsx lo maneje
+      return null;
+    }
+  };
+
+  // Mostrar confirmación solo 2 segundos y volver al login
+  React.useEffect(() => {
+    let timeout;
+    if (showConfirm) {
+      timeout = setTimeout(() => {
+        setUsuario(null);
+        setShowConfirm(false);
+      }, 2000);
+    }
+    return () => clearTimeout(timeout);
+  }, [showConfirm]);
+
+  // Ocultar errorVisual después de 1 segundo
+  React.useEffect(() => {
+    if (errorVisual) {
+      const timeout = setTimeout(() => setErrorVisual(''), 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [errorVisual]);
+
+  // Actualizar usuario si cambia el estado de alumnos
+  React.useEffect(() => {
+    if (usuario) {
+      const actualizado = alumnos.find(a => a.rut === usuario.rut);
+      if (actualizado) setUsuario(actualizado);
+    }
+  }, [alumnos, usuario]);
+
+  // Restaurar sesión al cargar la aplicación
+  React.useEffect(() => {
+    const savedAuth = localStorage.getItem('adminAuthenticated');
+    if (savedAuth === 'true' && location.pathname === '/panel') {
+      setIsAdminAuthenticated(true);
+    }
+  }, [location.pathname]);
+
+  // Acciones admin
+  const handleAdminClick = () => navigate('/admin');
+  const handleAuthAdmin = () => {
+    setIsAdminAuthenticated(true);
+    // Guardar estado de autenticación en localStorage
+    localStorage.setItem('adminAuthenticated', 'true');
+    navigate('/panel');
+  };
+  const handleSalirAdmin = () => {
+    // Limpiar todos los estados de autenticación y navegación
+    setShowAlumnosModal(false);
+
+    // Limpiar filtros del modal de alumnos
+    setFiltroCarrera('');
+    setFiltroInstitucion('');
+    setFiltroRUT('');
+    setSoloPresentes('');
+    setFiltroGrupo('');
+
+    // Desautenticar y limpiar localStorage
+    setIsAdminAuthenticated(false);
+    localStorage.removeItem('adminAuthenticated');
+    navigate('/');
+  };
+
+  if (loading) return <Loader />;
+  if (error) return <ErrorMessage error={error} />;
+
+  const esEventoTrabajadores = eventoActivo?.tipo === 'trabajadores';
+
+  // Determinar clases del contenedor según la ruta
+  const getContainerClasses = () => {
+    if (location.pathname === '/panel') {
+      return 'bg-white flex flex-col';
+    }
+    if (location.pathname === '/admin') {
+      return 'min-h-screen bg-white flex flex-col items-center justify-center';
+    }
+    return 'min-h-screen bg-white flex flex-col';
+  };
+
+  return (
+    <div className={getContainerClasses()}>
+
+
+      <AnimatePresence>
+        {showAlumnosModal && (
+          <motion.div
+            className='fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50'
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            key='modal-bg'
+          >
+            <motion.div
+              className='bg-white rounded-xl shadow-2xl p-4 sm:p-6 md:p-8 max-w-6xl w-full relative max-h-[95vh] overflow-auto'
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              key='modal-content'
+            >
+              <button
+                onClick={() => setShowAlumnosModal(false)}
+                className='absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600'
+                title='Cerrar'
+              >
+                ×
+              </button>
+              <h2 className='text-xl font-bold mb-4 text-green-800'>
+                {esEventoTrabajadores
+                  ? 'Lista de Funcionarios'
+                  : 'Lista de Alumnos'}
+              </h2>
+              {esEventoTrabajadores ? (
+                <TrabajadoresLista
+                  trabajadores={alumnos}
+                  trabajadoresCompletos={alumnos}
+                  soloPresentes={soloPresentes}
+                  setSoloPresentes={setSoloPresentes}
+                  eventoNombre={eventoActivo?.nombre}
+                  tipoEvento={eventoActivo?.tipo}
+                />
+              ) : (
+                <>
+                  <AlumnosLista
+                    alumnos={alumnos}
+                    alumnosCompletos={alumnos}
+                    eventoNombre={eventoActivo?.nombre}
+                    tipoEvento={eventoActivo?.tipo}
+                    soloPresentes={soloPresentes}
+                    setSoloPresentes={setSoloPresentes}
+                    filtroCarrera={filtroCarrera}
+                    setFiltroCarrera={setFiltroCarrera}
+                    filtroInstitucion={filtroInstitucion}
+                    setFiltroInstitucion={setFiltroInstitucion}
+                    filtroGrupo={filtroGrupo}
+                    setFiltroGrupo={setFiltroGrupo}
+                  />
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+
+
+      <main
+        className={`flex-1 flex flex-col w-full ${location.pathname === '/panel'
+          ? ''
+          : location.pathname === '/admin'
+            ? 'items-center justify-center min-h-screen'
+            : 'min-h-screen flex items-center justify-center px-2'
+          }`}
+      >
+        <div
+          className={`w-full flex flex-col ${location.pathname === '/panel' ? '' : 'items-center justify-center'
+            }`}
+        >
+          <AnimatePresence mode='wait'>
+            <Routes location={location} key={location.pathname}>
+              <Route
+                path='/'
+                element={
+                  <motion.div
+                    key='inicio'
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className='w-full flex flex-col items-center justify-center'
+                  >
+                    <Inicio
+                      className='w-full'
+                      onLogin={handleLogin}
+                      setErrorVisual={setErrorVisual}
+                      errorVisual={errorVisual}
+                      eventoActivo={eventoActivo}
+                      onInfoClick={() => setShowAlumnosModal(true)}
+                      onAdminClick={handleAdminClick}
+                      showButtons={!showAlumnosModal}
+                    />
+                  </motion.div>
+                }
+              />
+              <Route
+                path='/admin'
+                element={
+                  isAdminAuthenticated ? (
+                    <Navigate to='/panel' replace />
+                  ) : (
+                    <motion.div
+                      key='admin-login'
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className='w-full flex flex-col items-center justify-center'
+                    >
+                      <AdminLogin
+                        onAuth={handleAuthAdmin}
+                        onSalir={handleSalirAdmin}
+                      />
+                    </motion.div>
+                  )
+                }
+              />
+              <Route
+                path='/panel'
+                element={
+                  isAdminAuthenticated ? (
+                    <motion.div
+                      key='admin-panel'
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className='w-full flex flex-col items-center justify-center'
+                    >
+                      <AdminPanel onSalir={handleSalirAdmin} />
+                    </motion.div>
+                  ) : (
+                    <Navigate to='/' replace />
+                  )
+                }
+              />
+              <Route path='*' element={<Navigate to='/' replace />} />
+            </Routes>
+          </AnimatePresence>
+        </div>
+      </main>
+      {!location.pathname.startsWith('/admin') &&
+        location.pathname !== '/panel' && null}
+    </div>
+  );
+}
+
+export default App;
