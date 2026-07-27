@@ -66,6 +66,9 @@ const AlumnosLista = ({
   const [localAsiento, setLocalAsiento] = useState('');
   const [localNombres, setLocalNombres] = useState('');
   const [localApellidos, setLocalApellidos] = useState('');
+  const [localCargo, setLocalCargo] = useState('');
+  const [localComuna, setLocalComuna] = useState('');
+  const [localEstablecimiento, setLocalEstablecimiento] = useState('');
   const [busqueda, setBusqueda] = useState('');
 
   const carrera = filtroCarrera !== undefined ? filtroCarrera : localCarrera;
@@ -84,6 +87,12 @@ const AlumnosLista = ({
   const setNombres = setLocalNombres;
   const apellidos = localApellidos;
   const setApellidos = setLocalApellidos;
+  const cargo = localCargo;
+  const setCargo = setLocalCargo;
+  const comuna = localComuna;
+  const setComuna = setLocalComuna;
+  const establecimiento = localEstablecimiento;
+  const setEstablecimiento = setLocalEstablecimiento;
 
   const [ordenAlfabetico, setOrdenAlfabetico] = useState('asc');
   const [ordenCampo, setOrdenCampo] = useState('apellidos');
@@ -97,7 +106,7 @@ const AlumnosLista = ({
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [carrera, institucion, grupo, rut, numeroLista, asiento, nombres, apellidos, soloPresentes, busqueda]);
+  }, [carrera, institucion, grupo, rut, numeroLista, asiento, nombres, apellidos, cargo, comuna, establecimiento, soloPresentes, busqueda]);
 
   // Edit states
   const [alumnoAEditar, setAlumnoAEditar] = useState(null);
@@ -256,9 +265,11 @@ const AlumnosLista = ({
     setAsiento('');
     setNombres('');
     setApellidos('');
+    setCargo('');
+    setComuna('');
+    setEstablecimiento('');
     setBusqueda('');
     if (setSoloPresentes) setSoloPresentes('');
-    // No llamamos a mostrarTodasLasColumnas() para mantener la visibilidad basada en datos
   }
 
   // Filter base for options
@@ -268,7 +279,28 @@ const AlumnosLista = ({
   }, [alumnosNormalizados, soloPresentes]);
 
   const opcionesInstituciones = useMemo(() => {
-    return [...new Set(alumnosParaOpciones.map(a => a.institucion))].sort();
+    return [...new Set(alumnosParaOpciones.map(a => a.institucion))].filter(Boolean).sort();
+  }, [alumnosParaOpciones]);
+
+  const cargosUnicos = useMemo(() => {
+    const set = new Set();
+    alumnosParaOpciones.forEach(a => { if (a.cargo && String(a.cargo).trim()) set.add(String(a.cargo).trim()); });
+    return Array.from(set).sort();
+  }, [alumnosParaOpciones]);
+
+  const comunasUnicas = useMemo(() => {
+    const set = new Set();
+    alumnosParaOpciones.forEach(a => { if (a.comuna && String(a.comuna).trim()) set.add(String(a.comuna).trim()); });
+    return Array.from(set).sort();
+  }, [alumnosParaOpciones]);
+
+  const establecimientosUnicos = useMemo(() => {
+    const set = new Set();
+    alumnosParaOpciones.forEach(a => {
+      const est = a.establecimiento || a.institucion;
+      if (est && String(est).trim() && est !== 'General') set.add(String(est).trim());
+    });
+    return Array.from(set).sort();
   }, [alumnosParaOpciones]);
 
   const carrerasPorInstitucion = useMemo(() => {
@@ -317,15 +349,21 @@ const AlumnosLista = ({
       const cumpleCarrera = !carrera || alumno.carreraNormalizada === carrera;
       const cumpleRut = !rut || alumno.rut.toLowerCase().startsWith(rut.toLowerCase());
       const cumpleInstitucion = !institucion || alumno.institucion === institucion;
+      const cumpleCargo = !cargo || (alumno.cargo && String(alumno.cargo).trim() === cargo);
+      const cumpleComuna = !comuna || (alumno.comuna && String(alumno.comuna).trim() === comuna);
+      const cumpleEstablecimiento = !establecimiento ||
+        (alumno.establecimiento && String(alumno.establecimiento).trim() === establecimiento) ||
+        (alumno.institucion && String(alumno.institucion).trim() === establecimiento);
+
       const grupoAlumno = alumno.grupo ? String(alumno.grupo).trim() : '';
       const grupoFiltro = grupo ? String(grupo).trim() : '';
       const cumpleGrupo = !grupoFiltro || grupoAlumno === grupoFiltro;
       const cumpleAsiento = !asiento || String(alumno.asiento).trim() === String(asiento).trim();
       const cumpleNombres = !nombres || (alumno.nombres && alumno.nombres.toLowerCase().includes(nombres.toLowerCase())) || (alumno.nombre && alumno.nombre.toLowerCase().includes(nombres.toLowerCase()));
       const cumpleApellidos = !apellidos || (alumno.apellidos && alumno.apellidos.toLowerCase().includes(apellidos.toLowerCase()));
-      return cumpleBusqueda && cumplePresente && cumpleCarrera && cumpleRut && cumpleInstitucion && cumpleGrupo && cumpleAsiento && cumpleNombres && cumpleApellidos;
+      return cumpleBusqueda && cumplePresente && cumpleCarrera && cumpleRut && cumpleInstitucion && cumpleCargo && cumpleComuna && cumpleEstablecimiento && cumpleGrupo && cumpleAsiento && cumpleNombres && cumpleApellidos;
     });
-  }, [alumnosNormalizados, soloPresentes, carrera, rut, institucion, grupo, asiento, nombres, apellidos, busqueda]);
+  }, [alumnosNormalizados, soloPresentes, carrera, rut, institucion, cargo, comuna, establecimiento, grupo, asiento, nombres, apellidos, busqueda]);
 
   // Sorted students
   const alumnosOrdenados = useMemo(() => {
@@ -574,54 +612,127 @@ const AlumnosLista = ({
         </div>
       </div>
 
-      {/* Filtros Expandidos Simplificados */}
+      {/* Filtros Expandidos Adaptados a los Campos Presentes */}
       {filtrosAbiertos && (
         <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-5 mb-6 animate-in fade-in slide-in-from-top-2 shadow-inner">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Carrera / Área</label>
-              <div className="relative">
-                <select
-                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
-                  value={carrera}
-                  onChange={e => setCarrera(e.target.value)}
-                >
-                  <option value="">Todas las áreas</option>
-                  {Object.entries(carrerasPorInstitucion).map(([inst, carreras]) => (
-                    <optgroup key={inst} label={getInstitucionLabel(inst)}>
-                      {carreras.map(c => <option key={c} value={c}>{c}</option>)}
-                    </optgroup>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+            {columnasConDatos.establecimiento && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Establecimiento</label>
+                <div className="relative">
+                  <select
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
+                    value={establecimiento}
+                    onChange={e => setEstablecimiento(e.target.value)}
+                  >
+                    <option value="">Todos los establecimientos</option>
+                    {establecimientosUnicos.map(est => (
+                      <option key={est} value={est}>{est}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Institución</label>
-              <div className="relative">
-                <select
-                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
-                  value={institucion}
-                  onChange={e => setInstitucion(e.target.value)}
-                >
-                  <option value="">Cualquier institución</option>
-                  {opcionesInstituciones.map(inst => (
-                    <option key={inst} value={inst}>{getInstitucionLabel(inst)}</option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+            {columnasConDatos.cargo && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Cargo</label>
+                <div className="relative">
+                  <select
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
+                    value={cargo}
+                    onChange={e => setCargo(e.target.value)}
+                  >
+                    <option value="">Todos los cargos</option>
+                    {cargosUnicos.map(cg => (
+                      <option key={cg} value={cg}>{cg}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {columnasConDatos.comuna && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Comuna del Establecimiento</label>
+                <div className="relative">
+                  <select
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
+                    value={comuna}
+                    onChange={e => setComuna(e.target.value)}
+                  >
+                    <option value="">Todas las comunas</option>
+                    {comunasUnicas.map(cm => (
+                      <option key={cm} value={cm}>{cm}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {columnasConDatos.carrera && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Carrera / Área</label>
+                <div className="relative">
+                  <select
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
+                    value={carrera}
+                    onChange={e => setCarrera(e.target.value)}
+                  >
+                    <option value="">Todas las áreas</option>
+                    {Object.entries(carrerasPorInstitucion).map(([inst, carreras]) => (
+                      <optgroup key={inst} label={getInstitucionLabel(inst)}>
+                        {carreras.map(c => <option key={c} value={c}>{c}</option>)}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {columnasConDatos.institucion && !columnasConDatos.establecimiento && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Institución</label>
+                <div className="relative">
+                  <select
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
+                    value={institucion}
+                    onChange={e => setInstitucion(e.target.value)}
+                  >
+                    <option value="">Cualquier institución</option>
+                    {opcionesInstituciones.map(inst => (
+                      <option key={inst} value={inst}>{getInstitucionLabel(inst)}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {columnasConDatos.grupo && (
               <div>
@@ -692,7 +803,9 @@ const AlumnosLista = ({
                     numeroLista: 'N° de Lista',
                     grupo: 'Grupo',
                     asiento: 'Asiento'
-                  }).map(([key, label]) => (
+                  })
+                  .filter(([key]) => columnasConDatos[key])
+                  .map(([key, label]) => (
                     <option key={key} value={key}>{columnasVisibles[key] ? '❌ Ocultar' : '✅ Mostrar'} {label}</option>
                   ))}
                   <option value="mostrar-todas" className="font-bold border-t border-slate-100 mt-1">🔄 Restaurar todas</option>
