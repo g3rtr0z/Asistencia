@@ -42,12 +42,51 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
     const html5QrCodeRef = useRef(null);
     const videoTrackRef = useRef(null);
     const [error, setError] = useState('');
+    const onScanRef = useRef(onScan);
+
+    useEffect(() => {
+        onScanRef.current = onScan;
+    }, [onScan]);
 
     useEffect(() => {
         if (!isOpen) return;
 
+        let isSubscribed = true;
+
+        const stopScanner = async () => {
+            const videoElement = document.querySelector('#qr-reader video');
+            if (videoElement && videoElement._focusCleanup) {
+                videoElement._focusCleanup();
+            }
+
+            if (html5QrCodeRef.current) {
+                try {
+                    if (html5QrCodeRef.current.isScanning) {
+                        await html5QrCodeRef.current.stop();
+                    }
+                    html5QrCodeRef.current.clear();
+                } catch (err) {
+                    console.error('Error stopping scanner:', err);
+                } finally {
+                    html5QrCodeRef.current = null;
+                }
+            }
+        };
+
         const startScanner = async () => {
             try {
+                // Limpiar el contenedor antes de iniciar para evitar cámaras duplicadas
+                const container = document.getElementById("qr-reader");
+                if (container) {
+                    container.innerHTML = '';
+                }
+
+                if (html5QrCodeRef.current) {
+                    await stopScanner();
+                }
+
+                if (!isSubscribed) return;
+
                 const html5QrCode = new Html5Qrcode("qr-reader");
                 html5QrCodeRef.current = html5QrCode;
 
@@ -59,15 +98,15 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                 };
 
                 await html5QrCode.start(
-                    {
-                        facingMode: "environment"
-                    },
+                    { facingMode: "environment" },
                     config,
                     (decodedText) => {
                         const cleanRun = extraerRutDeQR(decodedText);
                         if (cleanRun) {
                             setError('');
-                            onScan(cleanRun);
+                            if (onScanRef.current) {
+                                onScanRef.current(cleanRun);
+                            }
                             stopScanner();
                         } else {
                             setError('No se pudo extraer el RUT del código QR');
@@ -78,48 +117,51 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                     }
                 );
 
-                // Apply continuous autofocus after scanner starts
+                if (!isSubscribed) return;
+
+                // Invertir horizontalmente la cámara en computadoras de escritorio
+                const isDesktop = window.innerWidth >= 768;
+                const videoElement = document.querySelector('#qr-reader video');
+                if (videoElement && isDesktop) {
+                    videoElement.style.transform = 'scaleX(-1)';
+                }
+
+                // Autocoenfoque y soporte táctil
                 setTimeout(async () => {
+                    if (!isSubscribed) return;
                     try {
-                        const videoElement = document.querySelector('#qr-reader video');
-                        if (videoElement && videoElement.srcObject) {
-                            const stream = videoElement.srcObject;
+                        const vidEl = document.querySelector('#qr-reader video');
+                        if (vidEl && vidEl.srcObject) {
+                            const stream = vidEl.srcObject;
                             const videoTrack = stream.getVideoTracks()[0];
                             videoTrackRef.current = videoTrack;
 
                             const capabilities = videoTrack.getCapabilities();
 
-                            // Apply focus mode if supported
                             if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
                                 await videoTrack.applyConstraints({
                                     advanced: [{ focusMode: 'continuous' }]
                                 });
                             }
 
-                            // Apply zoom if supported
                             if (capabilities.zoom) {
                                 const maxZoom = capabilities.zoom.max;
-                                const minZoom = capabilities.zoom.min;
                                 const optimalZoom = Math.min(2.0, maxZoom);
-
                                 await videoTrack.applyConstraints({
                                     advanced: [{ zoom: optimalZoom }]
                                 });
                             }
 
-                            // Add tap-to-focus functionality
                             const handleTapToFocus = async (e) => {
                                 e.preventDefault();
                                 try {
-                                    const rect = videoElement.getBoundingClientRect();
+                                    const rect = vidEl.getBoundingClientRect();
                                     const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
                                     const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
 
-                                    // Normalize coordinates to 0-1 range
                                     const normalizedX = x / rect.width;
                                     const normalizedY = y / rect.height;
 
-                                    // Try to apply manual focus at the touch point
                                     if (capabilities.focusMode && capabilities.focusMode.includes('manual')) {
                                         await videoTrack.applyConstraints({
                                             advanced: [{
@@ -128,7 +170,6 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                                             }]
                                         });
 
-                                        // Return to continuous focus after 2 seconds
                                         setTimeout(async () => {
                                             try {
                                                 await videoTrack.applyConstraints({
@@ -138,62 +179,29 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
                                                 console.log('Could not return to continuous focus');
                                             }
                                         }, 2000);
-                                    } else {
-                                        // Fallback: toggle between auto and continuous to trigger refocus
-                                        await videoTrack.applyConstraints({
-                                            advanced: [{ focusMode: 'auto' }]
-                                        });
-                                        setTimeout(async () => {
-                                            await videoTrack.applyConstraints({
-                                                advanced: [{ focusMode: 'continuous' }]
-                                            });
-                                        }, 100);
                                     }
-
-                                    // Visual feedback
-                                    videoElement.style.filter = 'brightness(1.2)';
-                                    setTimeout(() => {
-                                        videoElement.style.filter = 'brightness(1)';
-                                    }, 200);
                                 } catch (err) {
                                     console.log('Tap to focus error:', err);
                                 }
                             };
 
-                            // Add event listeners for both touch and click
-                            videoElement.addEventListener('touchstart', handleTapToFocus);
-                            videoElement.addEventListener('click', handleTapToFocus);
+                            vidEl.addEventListener('touchstart', handleTapToFocus);
+                            vidEl.addEventListener('click', handleTapToFocus);
 
-                            // Store cleanup function
-                            videoElement._focusCleanup = () => {
-                                videoElement.removeEventListener('touchstart', handleTapToFocus);
-                                videoElement.removeEventListener('click', handleTapToFocus);
+                            vidEl._focusCleanup = () => {
+                                vidEl.removeEventListener('touchstart', handleTapToFocus);
+                                vidEl.removeEventListener('click', handleTapToFocus);
                             };
                         }
                     } catch (err) {
-                        console.log('Could not apply advanced camera settings:', err);
+                        console.log('Advanced camera settings note:', err);
                     }
                 }, 500);
 
             } catch (err) {
-                setError('No se pudo acceder a la cámara');
-                console.error('Scanner error:', err);
-            }
-        };
-
-        const stopScanner = async () => {
-            // Clean up tap-to-focus listeners
-            const videoElement = document.querySelector('#qr-reader video');
-            if (videoElement && videoElement._focusCleanup) {
-                videoElement._focusCleanup();
-            }
-
-            if (html5QrCodeRef.current) {
-                try {
-                    await html5QrCodeRef.current.stop();
-                    html5QrCodeRef.current.clear();
-                } catch (err) {
-                    console.error('Error stopping scanner:', err);
+                if (isSubscribed) {
+                    setError('No se pudo acceder a la cámara');
+                    console.error('Scanner error:', err);
                 }
             }
         };
@@ -201,9 +209,10 @@ const QRScanner = ({ isOpen, onClose, onScan }) => {
         startScanner();
 
         return () => {
+            isSubscribed = false;
             stopScanner();
         };
-    }, [isOpen, onScan]);
+    }, [isOpen]);
 
     const handleClose = () => {
         setError('');
