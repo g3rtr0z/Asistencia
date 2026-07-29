@@ -30,6 +30,8 @@ function mapFirestoreEventoAlumnoData(doc) {
     institucion: data.institucion,
     asiento: data.asiento,
     grupo: data.grupo,
+    distincion: data.distincion ?? data['Distinción'] ?? data['Distinción Máxima'] ?? false,
+    reconocimiento: data.reconocimiento ?? data['Reconocimiento'] ?? false,
     fechaCreacion: data.fechaCreacion,
   };
 }
@@ -66,6 +68,10 @@ export const agregarAlumnoAEvento = async (eventoId, alumno) => {
       institucion: alumno.institucion,
       asiento: alumno.asiento,
       grupo: alumno.grupo,
+      distincion: alumno.distincion ?? false,
+      'Distinción': alumno.distincion ?? false,
+      reconocimiento: alumno.reconocimiento ?? false,
+      'Reconocimiento': alumno.reconocimiento ?? false,
       fechaCreacion: new Date(),
     });
     return docRef.id;

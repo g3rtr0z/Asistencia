@@ -17,11 +17,80 @@ const parseBooleanField = valor => {
   if (valor === null || valor === undefined) return null;
   const texto = valor.toString().trim().toLowerCase();
   if (!texto) return null;
-  const afirmativos = ['si', 'sí', 'yes', 'true', '1'];
-  const negativos = ['no', 'false', '0'];
+  const afirmativos = [
+    'si',
+    'sí',
+    'yes',
+    'true',
+    '1',
+    'distinción máxima',
+    'distinción maxima',
+    'distincion maxima',
+    'distincion',
+    'distinción',
+    'con distinción',
+    'con distincion',
+    'reconocimiento',
+    'con reconocimiento',
+    'reconocimiento especial',
+  ];
+  const negativos = [
+    'no',
+    'false',
+    '0',
+    'sin distinción',
+    'sin distincion',
+    'sin reconocimiento',
+  ];
   if (afirmativos.includes(texto)) return true;
   if (negativos.includes(texto)) return false;
   return null;
+};
+
+const parseReconocimientoField = valor => {
+  if (valor === null || valor === undefined) return false;
+  const parsedBool = parseBooleanField(valor);
+  if (parsedBool === true) return true;
+  if (parsedBool === false) return false;
+  if (typeof valor === 'string' && valor.trim().length > 0) return valor.trim();
+  return Boolean(valor);
+};
+
+const parseDistincionField = (valor, colHeader = '') => {
+  if (valor === null || valor === undefined) return false;
+  const colLower = (colHeader || '').toLowerCase();
+  const isUnanimeCol = colLower.includes('unanime') || colLower.includes('unánime');
+
+  if (typeof valor === 'boolean') {
+    if (!valor) return false;
+    return isUnanimeCol ? 'Distinción Unánime' : 'Distinción Máxima';
+  }
+
+  const strVal = String(valor).trim();
+  if (!strVal) return false;
+
+  const strLower = strVal.toLowerCase();
+  const negativos = ['no', 'false', '0', 'sin distinción', 'sin distincion'];
+  if (negativos.includes(strLower)) return false;
+
+  const parsedBool = parseBooleanField(strVal);
+  if (parsedBool === false) return false;
+  if (parsedBool === true) {
+    if (isUnanimeCol || strLower.includes('unanime') || strLower.includes('unánime')) {
+      return 'Distinción Unánime';
+    }
+    return 'Distinción Máxima';
+  }
+
+  if (strLower === 'distincion unanime' || strLower === 'distinción unánime' || strLower.includes('unanime')) {
+    return 'Distinción Unánime';
+  }
+
+  if (strLower === 'distincion maxima' || strLower === 'distinción máxima' || strLower.includes('maxima')) {
+    return 'Distinción Máxima';
+  }
+
+  return strVal;
 };
 
 // Función helper para mapear datos de Firestore
@@ -34,6 +103,19 @@ function mapFirestoreData(doc) {
     data['Asiste (Si/No)'] ??
     data['Asiste (Si o No)'] ??
     data['Confirmación Asistencia'];
+  const distincionValor =
+    data['Distinción'] ??
+    data['Distinción Máxima'] ??
+    data['Distinción maxima'] ??
+    data['Distincion Maxima'] ??
+    data['Distincion'] ??
+    data.distincion ??
+    data.distincionMaxima;
+  const reconocimientoValor =
+    data['Reconocimiento'] ??
+    data['Reconocimiento Especial'] ??
+    data['Reconocimientos'] ??
+    data.reconocimiento;
   return {
     id: doc.id,
     nombres: data['Nombres'] ?? null,
@@ -77,6 +159,8 @@ function mapFirestoreData(doc) {
     observacion: data['Observación'] ?? data['Observacion'] ?? null,
     presente: Boolean(data.presente),
     asiste: parseBooleanField(asisteValor) ?? false,
+    distincion: parseDistincionField(distincionValor),
+    reconocimiento: parseReconocimientoField(reconocimientoValor),
     asiento: data['asiento'] ?? null,
     grupo: data['grupo'] ?? null,
     numeroLista: (() => {
@@ -171,6 +255,16 @@ export const updateAlumno = async (eventoId, alumnoId, data) => {
     if (data.asiento !== undefined) updateData['asiento'] = data.asiento;
     if (data.numeroLista !== undefined) updateData['numeroLista'] = data.numeroLista;
     if (data.presente !== undefined) updateData['presente'] = data.presente;
+    if (data.distincion !== undefined) {
+      const distVal = parseDistincionField(data.distincion);
+      updateData['Distinción'] = distVal;
+      updateData['distincion'] = distVal;
+    }
+    if (data.reconocimiento !== undefined) {
+      const recVal = parseReconocimientoField(data.reconocimiento);
+      updateData['Reconocimiento'] = recVal;
+      updateData['reconocimiento'] = recVal;
+    }
 
     updateData['ultimaActualizacion'] = new Date().toISOString();
 
@@ -562,6 +656,10 @@ export const agregarAlumno = async (alumno, eventoId) => {
       Observación: alumno.observacion ?? null,
       asiste: parseBooleanField(alumno.asiste) ?? false,
       presente: alumno.presente ?? false,
+      'Distinción': parseDistincionField(alumno.distincion),
+      distincion: parseDistincionField(alumno.distincion),
+      'Reconocimiento': parseReconocimientoField(alumno.reconocimiento),
+      reconocimiento: parseReconocimientoField(alumno.reconocimiento),
       asiento: alumno.asiento ?? null,
       grupo: alumno.grupo ?? null,
       numeroLista: alumno.numeroLista ?? null,
@@ -939,6 +1037,47 @@ export const importarAlumnosDesdeExcel = async (
         'institución',
         'centro educativo',
       ]),
+      distincion: normalizarAlias([
+        'distincion',
+        'distinción',
+        'distincion maxima',
+        'distinción máxima',
+        'distincion unanime',
+        'distinción unánime',
+        'distincion unánime',
+        'distinción unanime',
+        'distincion unanime (si/no)',
+        'distinción unánime (si/no)',
+        'distincion unanime (sí/no)',
+        'distinción unánime (sí/no)',
+        'distincion maxima (si/no)',
+        'distinción máxima (si/no)',
+        'distincion maxima (sí/no)',
+        'distinción máxima (sí/no)',
+        'distincion (si/no)',
+        'distinción (si/no)',
+        'distincion (sí/no)',
+        'distinción (sí/no)',
+        'tiene distincion',
+        'tiene distinción',
+        'distincion max',
+        'distinción máx',
+        'distincion_maxima',
+        'distincionmaxima',
+        'distincion_unanime',
+        'distincionunanime',
+      ]),
+      reconocimiento: normalizarAlias([
+        'reconocimiento',
+        'reconocimientos',
+        'reconocimiento especial',
+        'reconocimiento (si/no)',
+        'reconocimiento (sí/no)',
+        'tiene reconocimiento',
+        'reconocimiento_especial',
+        'tipo de reconocimiento',
+        'tipo reconocimiento',
+      ]),
     };
 
     const obtenerValorCampo = (fila, alias) => {
@@ -948,6 +1087,15 @@ export const importarAlumnosDesdeExcel = async (
         }
       }
       return null;
+    };
+
+    const obtenerValorConClave = (fila, alias) => {
+      for (const clave of alias) {
+        if (Object.prototype.hasOwnProperty.call(fila, clave)) {
+          return { valor: fila[clave], clave };
+        }
+      }
+      return { valor: null, clave: null };
     };
 
     const esEventoTrabajadores = tipoEvento === 'trabajadores';
@@ -1036,6 +1184,18 @@ export const importarAlumnosDesdeExcel = async (
         );
         const asiste = parseBooleanField(asisteValor);
         
+        const { valor: distincionValor, clave: distincionClave } = obtenerValorConClave(
+          filaNormalizada,
+          aliasCampos.distincion
+        );
+        const distincion = parseDistincionField(distincionValor, distincionClave);
+        
+        const reconocimientoValor = obtenerValorCampo(
+          filaNormalizada,
+          aliasCampos.reconocimiento
+        );
+        const reconocimiento = parseReconocimientoField(reconocimientoValor);
+        
         const telefono = obtenerValorCampo(filaNormalizada, aliasCampos.telefono);
         const correo = obtenerValorCampo(filaNormalizada, aliasCampos.correo);
         const cargo = obtenerValorCampo(filaNormalizada, aliasCampos.cargo);
@@ -1108,6 +1268,8 @@ export const importarAlumnosDesdeExcel = async (
             grupo: esEventoTrabajadores ? null : grupo,
             numeroLista: esEventoTrabajadores ? null : numeroLista,
             presente: presente ?? false,
+            distincion: distincion ?? false,
+            reconocimiento: reconocimiento ?? false,
             departamento: esEventoTrabajadores ? departamentoFinal : null,
             observacion: esEventoTrabajadores ? (observacion ?? null) : null,
             asiste: asiste ?? false,

@@ -113,6 +113,16 @@ export const exportarAExcel = (
         Asiento: alumno.asiento || '',
         Grupo: alumno.grupo || '',
         'N° de Lista': alumno.numeroLista || '',
+        'Distinción': alumno.distincion
+          ? typeof alumno.distincion === 'string' && alumno.distincion !== 'true'
+            ? alumno.distincion
+            : 'Distinción Máxima'
+          : 'No',
+        Reconocimiento: alumno.reconocimiento
+          ? typeof alumno.reconocimiento === 'string' && alumno.reconocimiento !== 'true'
+            ? alumno.reconocimiento
+            : 'Sí'
+          : 'No',
         Presente: alumno.presente ? 'Sí' : 'No',
         'Fecha y Hora de Registro':
           alumno.presente
@@ -162,6 +172,8 @@ export const exportarAExcel = (
       'Asiento': 10,
       'Grupo': 10,
       'N° de Lista': 12,
+      'Distinción': 20,
+      'Reconocimiento': 20,
       'Presente': 10,
       'Fecha y Hora de Registro': 25,
       'Asiste (Pre confirmación)': 20,

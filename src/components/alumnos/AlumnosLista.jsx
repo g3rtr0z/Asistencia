@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { updateAlumno } from '../../services/alumnosService';
 import { createPortal } from 'react-dom';
 import { exportarAExcel } from '../admin/exportarAExcel';
+import { Star, Award } from 'lucide-react';
 
 const INSTITUCIONES = [
   { value: 'CFT', label: 'Centro de Formación Técnica' },
@@ -99,6 +100,9 @@ const AlumnosLista = ({
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
 
+  const [filtroDistincion, setFiltroDistincion] = useState('');
+  const [filtroReconocimiento, setFiltroReconocimiento] = useState('');
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
@@ -106,7 +110,7 @@ const AlumnosLista = ({
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [carrera, institucion, grupo, rut, numeroLista, asiento, nombres, apellidos, cargo, comuna, establecimiento, soloPresentes, busqueda]);
+  }, [carrera, institucion, grupo, rut, numeroLista, asiento, nombres, apellidos, cargo, comuna, establecimiento, soloPresentes, busqueda, filtroDistincion, filtroReconocimiento]);
 
   // Edit states
   const [alumnoAEditar, setAlumnoAEditar] = useState(null);
@@ -129,6 +133,8 @@ const AlumnosLista = ({
       numeroLista: alumno.numeroLista || '',
       grupo: alumno.grupo || '',
       asiento: alumno.asiento || '',
+      distincion: alumno.distincion ?? false,
+      reconocimiento: alumno.reconocimiento ?? false,
       // Guardar datos originales para sincronización en alumnosService
       originalData: {
         nombres: alumno.nombres,
@@ -173,6 +179,8 @@ const AlumnosLista = ({
         numeroLista: false,
         grupo: false,
         asiento: false,
+        distincion: false,
+        reconocimiento: false,
       };
     }
 
@@ -201,6 +209,8 @@ const AlumnosLista = ({
       numeroLista: alumnosNormalizados.some(a => a.numeroLista != null && String(a.numeroLista).trim() !== ''),
       grupo: alumnosNormalizados.some(a => a.grupo != null && String(a.grupo).trim() !== ''),
       asiento: alumnosNormalizados.some(a => a.asiento != null && String(a.asiento).trim() !== ''),
+      distincion: alumnosNormalizados.some(a => a.distincion === true),
+      reconocimiento: alumnosNormalizados.some(a => Boolean(a.reconocimiento)),
     };
   }, [alumnosNormalizados]);
 
@@ -221,6 +231,8 @@ const AlumnosLista = ({
     numeroLista: false,
     asiento: false,
     grupo: false,
+    distincion: false,
+    reconocimiento: false,
   });
 
   // Sync visibility with presence of data
@@ -269,6 +281,8 @@ const AlumnosLista = ({
     setComuna('');
     setEstablecimiento('');
     setBusqueda('');
+    setFiltroDistincion('');
+    setFiltroReconocimiento('');
     if (setSoloPresentes) setSoloPresentes('');
   }
 
@@ -330,6 +344,34 @@ const AlumnosLista = ({
     return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
   }, [alumnosParaOpciones]);
 
+  const distincionesUnicas = useMemo(() => {
+    const set = new Set();
+    alumnosParaOpciones.forEach(a => {
+      if (a.distincion) {
+        if (typeof a.distincion === 'string' && a.distincion !== 'true') {
+          set.add(a.distincion.trim());
+        } else {
+          set.add('Distinción Máxima');
+        }
+      }
+    });
+    return Array.from(set).sort();
+  }, [alumnosParaOpciones]);
+
+  const reconocimientosUnicos = useMemo(() => {
+    const set = new Set();
+    alumnosParaOpciones.forEach(a => {
+      if (a.reconocimiento) {
+        if (typeof a.reconocimiento === 'string' && a.reconocimiento !== 'true') {
+          set.add(a.reconocimiento.trim());
+        } else {
+          set.add('Reconocimiento');
+        }
+      }
+    });
+    return Array.from(set).sort();
+  }, [alumnosParaOpciones]);
+
   // Filtered students
   const alumnosFiltrados = useMemo(() => {
     return alumnosNormalizados.filter(alumno => {
@@ -343,7 +385,9 @@ const AlumnosLista = ({
         (alumno.comuna && alumno.comuna.toLowerCase().includes(searchLower)) ||
         (alumno.establecimiento && alumno.establecimiento.toLowerCase().includes(searchLower)) ||
         (alumno.telefono && alumno.telefono.toLowerCase().includes(searchLower)) ||
-        (alumno.correo && alumno.correo.toLowerCase().includes(searchLower));
+        (alumno.correo && alumno.correo.toLowerCase().includes(searchLower)) ||
+        (alumno.distincion && typeof alumno.distincion === 'string' && alumno.distincion.toLowerCase().includes(searchLower)) ||
+        (alumno.reconocimiento && typeof alumno.reconocimiento === 'string' && alumno.reconocimiento.toLowerCase().includes(searchLower));
 
       const cumplePresente = !soloPresentes || (soloPresentes === 'presentes' ? alumno.presente : !alumno.presente);
       const cumpleCarrera = !carrera || alumno.carreraNormalizada === carrera;
@@ -361,9 +405,34 @@ const AlumnosLista = ({
       const cumpleAsiento = !asiento || String(alumno.asiento).trim() === String(asiento).trim();
       const cumpleNombres = !nombres || (alumno.nombres && alumno.nombres.toLowerCase().includes(nombres.toLowerCase())) || (alumno.nombre && alumno.nombre.toLowerCase().includes(nombres.toLowerCase()));
       const cumpleApellidos = !apellidos || (alumno.apellidos && alumno.apellidos.toLowerCase().includes(apellidos.toLowerCase()));
-      return cumpleBusqueda && cumplePresente && cumpleCarrera && cumpleRut && cumpleInstitucion && cumpleCargo && cumpleComuna && cumpleEstablecimiento && cumpleGrupo && cumpleAsiento && cumpleNombres && cumpleApellidos;
+      
+      const cumpleDistincion = !filtroDistincion || (
+        filtroDistincion === 'si'
+          ? Boolean(alumno.distincion)
+          : filtroDistincion === 'no'
+          ? !alumno.distincion
+          : (
+              typeof alumno.distincion === 'string'
+                ? alumno.distincion.toLowerCase() === filtroDistincion.toLowerCase()
+                : (filtroDistincion === 'Distinción Máxima' && alumno.distincion === true)
+            )
+      );
+
+      const cumpleReconocimiento = !filtroReconocimiento || (
+        filtroReconocimiento === 'si'
+          ? Boolean(alumno.reconocimiento)
+          : filtroReconocimiento === 'no'
+          ? !alumno.reconocimiento
+          : (
+              typeof alumno.reconocimiento === 'string'
+                ? alumno.reconocimiento.toLowerCase() === filtroReconocimiento.toLowerCase()
+                : (filtroReconocimiento === 'Reconocimiento' && alumno.reconocimiento === true)
+            )
+      );
+
+      return cumpleBusqueda && cumplePresente && cumpleCarrera && cumpleRut && cumpleInstitucion && cumpleCargo && cumpleComuna && cumpleEstablecimiento && cumpleGrupo && cumpleAsiento && cumpleNombres && cumpleApellidos && cumpleDistincion && cumpleReconocimiento;
     });
-  }, [alumnosNormalizados, soloPresentes, carrera, rut, institucion, cargo, comuna, establecimiento, grupo, asiento, nombres, apellidos, busqueda]);
+  }, [alumnosNormalizados, soloPresentes, carrera, rut, institucion, cargo, comuna, establecimiento, grupo, asiento, nombres, apellidos, busqueda, filtroDistincion, filtroReconocimiento]);
 
   // Sorted students
   const alumnosOrdenados = useMemo(() => {
@@ -776,6 +845,54 @@ const AlumnosLista = ({
               </div>
             )}
 
+            {columnasConDatos.distincion && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Distinción</label>
+                <div className="relative">
+                  <select
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
+                    value={filtroDistincion}
+                    onChange={e => setFiltroDistincion(e.target.value)}
+                  >
+                    <option value="">Todas las distinciones</option>
+                    {distincionesUnicas.map(dist => (
+                      <option key={dist} value={dist}>{dist}</option>
+                    ))}
+                    <option value="no">Sin Distinción</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {columnasConDatos.reconocimiento && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Reconocimiento</label>
+                <div className="relative">
+                  <select
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-st-verde/10 focus:border-st-verde transition-all shadow-sm appearance-none cursor-pointer"
+                    value={filtroReconocimiento}
+                    onChange={e => setFiltroReconocimiento(e.target.value)}
+                  >
+                    <option value="">Todos los reconocimientos</option>
+                    {reconocimientosUnicos.map(rec => (
+                      <option key={rec} value={rec}>{rec}</option>
+                    ))}
+                    <option value="no">Sin Reconocimiento</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Visualización</label>
               <div className="relative">
@@ -802,7 +919,9 @@ const AlumnosLista = ({
                     institucion: 'Institución',
                     numeroLista: 'N° de Lista',
                     grupo: 'Grupo',
-                    asiento: 'Asiento'
+                    asiento: 'Asiento',
+                    distincion: 'Distinción',
+                    reconocimiento: 'Reconocimiento'
                   })
                   .filter(([key]) => columnasConDatos[key])
                   .map(([key, label]) => (
@@ -871,6 +990,8 @@ const AlumnosLista = ({
                 {columnasVisibles.numeroLista && <th className="py-3 px-4 text-center font-semibold text-xs leading-tight">N° de<br />Lista</th>}
                 {columnasVisibles.asiento && <th className="py-3 px-4 text-center font-semibold">Asiento</th>}
                 {columnasVisibles.grupo && <th className="py-3 px-4 text-center font-semibold">Grupo</th>}
+                {columnasVisibles.distincion && <th className="py-3 px-4 text-center font-semibold">Distinción</th>}
+                {columnasVisibles.reconocimiento && <th className="py-3 px-4 text-center font-semibold">Reconocimiento</th>}
                 {esAdmin && <th className="py-3 px-4 text-center font-semibold">Acciones</th>}
               </tr>
             </thead>
@@ -986,6 +1107,30 @@ const AlumnosLista = ({
                           <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-xs font-bold">
                             {alumno.grupo ?? '-'}
                           </span>
+                        </td>
+                      )}
+                      {columnasVisibles.distincion && (
+                        <td className="py-3 px-4 text-center">
+                          {alumno.distincion ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-300 shadow-sm">
+                              <Star className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+                              {typeof alumno.distincion === 'string' && alumno.distincion !== 'true' ? alumno.distincion : 'Distinción Máxima'}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-xs">-</span>
+                          )}
+                        </td>
+                      )}
+                      {columnasVisibles.reconocimiento && (
+                        <td className="py-3 px-4 text-center">
+                          {alumno.reconocimiento ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full bg-purple-100 text-purple-800 border border-purple-300 shadow-sm">
+                              <Award className="w-3.5 h-3.5 text-purple-600" />
+                              {typeof alumno.reconocimiento === 'string' && alumno.reconocimiento !== 'true' ? alumno.reconocimiento : 'Reconocimiento'}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-xs">-</span>
+                          )}
                         </td>
                       )}
                       {esAdmin && (
@@ -1120,6 +1265,36 @@ const AlumnosLista = ({
                     <input type="text" value={editFormData.asiento} onChange={e => setEditFormData({ ...editFormData, asiento: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
                   </div>
                 )}
+
+                {/* Distinción */}
+                <div className="flex flex-col gap-1.5 sm:col-span-2 bg-amber-50/80 p-3.5 rounded-xl border border-amber-200/80 mt-1">
+                  <label className="text-sm font-bold text-amber-900 flex items-center gap-2">
+                    <Star className="w-4 h-4 text-amber-600 fill-amber-500" />
+                    Distinción
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Distinción Máxima, Distinción Unánime"
+                    value={typeof editFormData.distincion === 'string' ? editFormData.distincion : editFormData.distincion ? 'Distinción Máxima' : ''}
+                    onChange={e => setEditFormData({ ...editFormData, distincion: e.target.value })}
+                    className="px-3 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all bg-white text-sm"
+                  />
+                </div>
+
+                {/* Reconocimiento */}
+                <div className="flex flex-col gap-1.5 sm:col-span-2 bg-purple-50/80 p-3.5 rounded-xl border border-purple-200/80">
+                  <label className="text-sm font-bold text-purple-900 flex items-center gap-2">
+                    <Award className="w-4 h-4 text-purple-600" />
+                    Reconocimiento
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Reconocimiento Especial, Mejor Compañero, o marca con 'Sí'"
+                    value={typeof editFormData.reconocimiento === 'string' ? editFormData.reconocimiento : editFormData.reconocimiento ? 'Sí' : ''}
+                    onChange={e => setEditFormData({ ...editFormData, reconocimiento: e.target.value })}
+                    className="px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white text-sm"
+                  />
+                </div>
 
                 <div className="sm:col-span-2 pt-4 flex gap-3 justify-end border-t border-slate-100 mt-2">
                   <button type="button" onClick={() => setAlumnoAEditar(null)} className="px-4 py-2 text-slate-700 font-medium hover:bg-slate-100 rounded-lg transition-colors">

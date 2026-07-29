@@ -95,7 +95,7 @@ function ImportExcel({
                   Sube tu archivo Excel con los datos de asistentes
                 </p>
                 <p className='text-blue-50 text-xs mt-1'>
-                  Formato esperado: Nombre Completo (o Nombres y Apellidos), RUT, Teléfono, Correo Electrónico, Cargo, Establecimiento, Comuna del Establecimiento
+                  Formato esperado: Nombre Completo (o Nombres y Apellidos), RUT, Teléfono, Correo Electrónico, Cargo, Establecimiento, Comuna del Establecimiento, Distinción (Máxima / Unánime), Reconocimiento
                 </p>
               </div>
             </div>
