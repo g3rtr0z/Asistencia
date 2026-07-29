@@ -106,6 +106,11 @@ function mapFirestoreData(doc) {
   const distincionValor =
     data['Distinción'] ??
     data['Distinción Máxima'] ??
+    data['Distinción Unánime'] ??
+    data['Distinción unánime'] ??
+    data['Distinción unanime'] ??
+    data['Distincion Unanime'] ??
+    data['Distincion unanime'] ??
     data['Distinción maxima'] ??
     data['Distincion Maxima'] ??
     data['Distincion'] ??

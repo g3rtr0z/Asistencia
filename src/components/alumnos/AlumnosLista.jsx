@@ -209,7 +209,7 @@ const AlumnosLista = ({
       numeroLista: alumnosNormalizados.some(a => a.numeroLista != null && String(a.numeroLista).trim() !== ''),
       grupo: alumnosNormalizados.some(a => a.grupo != null && String(a.grupo).trim() !== ''),
       asiento: alumnosNormalizados.some(a => a.asiento != null && String(a.asiento).trim() !== ''),
-      distincion: alumnosNormalizados.some(a => a.distincion === true),
+      distincion: alumnosNormalizados.some(a => Boolean(a.distincion)),
       reconocimiento: alumnosNormalizados.some(a => Boolean(a.reconocimiento)),
     };
   }, [alumnosNormalizados]);

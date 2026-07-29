@@ -30,7 +30,7 @@ function mapFirestoreEventoAlumnoData(doc) {
     institucion: data.institucion,
     asiento: data.asiento,
     grupo: data.grupo,
-    distincion: data.distincion ?? data['Distinción'] ?? data['Distinción Máxima'] ?? false,
+    distincion: data.distincion ?? data['Distinción'] ?? data['Distinción Máxima'] ?? data['Distinción Unánime'] ?? data['Distinción unánime'] ?? data['Distincion Unanime'] ?? false,
     reconocimiento: data.reconocimiento ?? data['Reconocimiento'] ?? false,
     fechaCreacion: data.fechaCreacion,
   };
