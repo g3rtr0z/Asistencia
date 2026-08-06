@@ -82,120 +82,161 @@ export const exportarAExcel = (
       }
     }
 
-    // Preparar los datos mapeados primero
-    const todosLosDatosMapeados = esFuncionarios
-      ? alumnosFiltrados.map(alumno => ({
-        'Asiste (Pre confirmación)': formatearSiNo(alumno.asiste),
-        Presente: alumno.presente ? 'Sí' : 'No',
-        RUT: alumno.rut || '',
-        Nombres: normalizarTexto(alumno.nombres),
-        Apellidos: normalizarTexto(alumno.apellidos),
-        Observación: alumno.observacion || '',
-        'Fecha y Hora de Registro':
-          alumno.presente
-            ? (formatearFecha(alumno.fechaRegistro) ||
-               formatearFecha(alumno.ultimaActualizacion) ||
-               '')
-            : '',
-      }))
-      : alumnosFiltrados.map(alumno => ({
-        'Nombre Completo': alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim(),
-        RUT: alumno.rut || '',
-        Nombres: normalizarTexto(alumno.nombres),
-        Apellidos: normalizarTexto(alumno.apellidos),
-        Cargo: alumno.cargo || '',
-        Establecimiento: normalizarTexto(alumno.establecimiento || alumno.institucion),
-        'Comuna del Establecimiento': alumno.comuna || '',
-        Teléfono: alumno.telefono || '',
-        'Correo electrónico': alumno.correo || '',
-        Carrera: normalizarCarrera(alumno.carrera),
-        Institución: normalizarTexto(alumno.institucion),
-        Asiento: alumno.asiento || '',
-        Grupo: alumno.grupo || '',
-        'N° de Lista': alumno.numeroLista || '',
-        'Distinción': alumno.distincion
-          ? typeof alumno.distincion === 'string' && alumno.distincion !== 'true'
-            ? alumno.distincion
-            : 'Distinción Máxima'
-          : 'No',
-        Reconocimiento: alumno.reconocimiento
-          ? typeof alumno.reconocimiento === 'string' && alumno.reconocimiento !== 'true'
-            ? alumno.reconocimiento
-            : 'Sí'
-          : 'No',
-        Presente: alumno.presente ? 'Sí' : 'No',
-        'Fecha y Hora de Registro':
-          alumno.presente
-            ? (formatearFecha(alumno.fechaRegistro) ||
-               formatearFecha(alumno.ultimaActualizacion) ||
-               '')
-            : '',
-      }));
+    if (!alumnosFiltrados || alumnosFiltrados.length === 0) return false;
 
-    // Identificar columnas que tienen al menos un dato no vacío
-    if (todosLosDatosMapeados.length === 0) return false;
+    // 1. Mapear cada fila con sus datos reales existentes
+    const todosLosDatosMapeados = alumnosFiltrados.map(alumno => {
+      const fila = {};
 
-    const columnasConDatos = Object.keys(todosLosDatosMapeados[0]).filter(columna => {
-      // Siempre mantener algunas columnas clave
-      const columnasClave = ['RUT', 'Nombres', 'Apellidos', 'Presente'];
-      if (columnasClave.includes(columna)) return true;
+      // Estado / Presente
+      fila['Estado'] = alumno.presente ? 'Presente' : 'Ausente';
 
-      // Para las demás, verificar si hay algún dato
-      return todosLosDatosMapeados.some(fila => fila[columna] !== null && String(fila[columna]).trim() !== '');
+      // RUT
+      if (alumno.rut) fila['RUT'] = alumno.rut;
+
+      // Nombre Completo
+      const nombreCompleto = alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim();
+      if (nombreCompleto) {
+        fila['Nombre Completo'] = nombreCompleto;
+      }
+
+      // Nombres y Apellidos (solo si existen por separado)
+      if (alumno.nombres && alumno.apellidos) {
+        fila['Nombres'] = alumno.nombres;
+        fila['Apellidos'] = alumno.apellidos;
+      }
+
+      // Teléfono
+      if (alumno.telefono) fila['Teléfono'] = alumno.telefono;
+
+      // Correo electrónico
+      if (alumno.correo) fila['Correo electrónico'] = alumno.correo;
+
+      // Establecimiento
+      if (alumno.establecimiento) {
+        fila['Establecimiento'] = alumno.establecimiento;
+      }
+
+      // Cargo
+      if (alumno.cargo) fila['Cargo'] = alumno.cargo;
+
+      // Comuna del Establecimiento
+      if (alumno.comuna) fila['Comuna del Establecimiento'] = alumno.comuna;
+
+      // Carrera
+      if (alumno.carrera && alumno.carrera !== 'General' && alumno.carrera !== 'Colaboradores Santo Tomás') {
+        fila['Carrera'] = alumno.carrera;
+      }
+
+      // Institución (solo si es distinta de establecimiento)
+      if (alumno.institucion && alumno.institucion !== alumno.establecimiento) {
+        fila['Institución'] = alumno.institucion;
+      }
+
+      // Asiento, Grupo, N° Lista
+      if (alumno.asiento) fila['Asiento'] = alumno.asiento;
+      if (alumno.grupo) fila['Grupo'] = alumno.grupo;
+      if (alumno.numeroLista) fila['N° de Lista'] = alumno.numeroLista;
+
+      // Distinción & Reconocimiento (solo si tienen valor real)
+      if (alumno.distincion && alumno.distincion !== 'No' && alumno.distincion !== false) {
+        fila['Distinción'] = typeof alumno.distincion === 'string' && alumno.distincion !== 'true'
+          ? alumno.distincion
+          : 'Distinción Máxima';
+      }
+      if (alumno.reconocimiento && alumno.reconocimiento !== 'No' && alumno.reconocimiento !== false) {
+        fila['Reconocimiento'] = typeof alumno.reconocimiento === 'string' && alumno.reconocimiento !== 'true'
+          ? alumno.reconocimiento
+          : 'Sí';
+      }
+
+      // Departamento / Observación
+      if (alumno.departamento) fila['Departamento'] = alumno.departamento;
+      if (alumno.observacion) fila['Observación'] = alumno.observacion;
+
+      // Confirmación previa (solo si existe información explícita de confirmación previa)
+      const hayConfirmacion = alumnosFiltrados.some(a => a.asiste === true);
+      if (hayConfirmacion) {
+        fila['Confirmación Previa'] = alumno.asiste ? 'Sí' : 'No';
+      }
+
+      // Fecha y hora de registro (si está presente)
+      if (alumno.presente) {
+        const fecha = formatearFecha(alumno.fechaRegistro) || formatearFecha(alumno.ultimaActualizacion);
+        if (fecha) fila['Fecha y Hora de Registro'] = fecha;
+      }
+
+      // Datos Extra dinámicos
+      if (alumno.datosExtra && typeof alumno.datosExtra === 'object') {
+        Object.entries(alumno.datosExtra).forEach(([k, v]) => {
+          if (v != null && String(v).trim() !== '') {
+            fila[k] = String(v).trim();
+          }
+        });
+      }
+
+      return fila;
     });
 
-    // Crear nuevos objetos solo con las columnas que tienen datos
+    // 2. Identificar únicamente las columnas que tienen datos en al menos 1 fila del conjunto
+    const columnasConDatos = [];
+    todosLosDatosMapeados.forEach(fila => {
+      Object.keys(fila).forEach(col => {
+        if (!columnasConDatos.includes(col)) {
+          columnasConDatos.push(col);
+        }
+      });
+    });
+
+    // 3. Crear matriz final para exportar con solo las columnas activas
     const datosParaExportar = todosLosDatosMapeados.map(fila => {
       const nuevaFila = {};
       columnasConDatos.forEach(col => {
-        nuevaFila[col] = fila[col];
+        nuevaFila[col] = fila[col] !== undefined && fila[col] !== null ? fila[col] : '';
       });
       return nuevaFila;
     });
 
-    // Crear el workbook
+    // 4. Generar hoja Excel
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(datosParaExportar);
 
-    // Ajustar el ancho de las columnas dinámicamente
+    // Ajustar ancho de columnas
     const widthsConfig = {
-      'Nombre Completo': 25,
+      'Nombre Completo': 28,
       'RUT': 15,
       'Nombres': 20,
       'Apellidos': 20,
-      'Cargo': 20,
+      'Cargo': 22,
       'Comuna del Establecimiento': 25,
+      'Establecimiento': 28,
       'Teléfono': 16,
-      'Correo electrónico': 25,
+      'Correo electrónico': 26,
       'Carrera': 25,
-      'Institución': 20,
+      'Institución': 22,
       'Asiento': 10,
       'Grupo': 10,
       'N° de Lista': 12,
       'Distinción': 20,
       'Reconocimiento': 20,
-      'Presente': 10,
+      'Estado': 12,
       'Fecha y Hora de Registro': 25,
-      'Asiste (Pre confirmación)': 20,
+      'Confirmación Previa': 20,
       'Observación': 30
     };
 
-    worksheet['!cols'] = columnasConDatos.map(col => ({ wch: widthsConfig[col] || 15 }));
+    worksheet['!cols'] = columnasConDatos.map(col => ({ wch: widthsConfig[col] || Math.max(col.length + 4, 15) }));
 
-    // Agregar la hoja al workbook
     XLSX.utils.book_append_sheet(
       workbook,
       worksheet,
-      esFuncionarios ? 'Funcionarios' : 'Alumnos'
+      esFuncionarios ? 'Funcionarios' : 'Participantes'
     );
 
-    // Generar el nombre del archivo con el nombre del evento
-    const fecha = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const nombreArchivo = `${nombreEvento}_${esFuncionarios ? 'Funcionarios' : 'Alumnos'}_${fecha}.xlsx`;
+    const fecha = new Date().toISOString().split('T')[0];
+    const nombreArchivo = `${nombreEvento}_${esFuncionarios ? 'Funcionarios' : 'Participantes'}_${fecha}.xlsx`;
 
-    // Exportar el archivo
     XLSX.writeFile(workbook, nombreArchivo);
-
     return true;
   } catch (error) {
     console.error('Error al exportar a Excel:', error);

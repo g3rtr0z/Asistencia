@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx';
+import { exportarAExcel } from '../admin/exportarAExcel.jsx';
 
 const TrabajadoresLista = ({
   trabajadores = [],
@@ -105,7 +106,7 @@ const TrabajadoresLista = ({
       cargo: trabajadores.some(t => t.cargo != null && String(t.cargo).trim() !== ''),
       comuna: trabajadores.some(t => (t.comuna != null && String(t.comuna).trim() !== '') || (t['Comuna del Establecimiento'] != null && String(t['Comuna del Establecimiento']).trim() !== '')),
       observacion: trabajadores.some(t => t.observacion != null && String(t.observacion).trim() !== ''),
-      asiste: true, // Always visible
+      asiste: trabajadores.some(t => t.asiste === true),
     };
   }, [trabajadores]);
 
@@ -226,35 +227,8 @@ const TrabajadoresLista = ({
   }, [trabajadoresOrdenados, paginaActual, itemsPerPage]);
 
   // Excel Export Function
-  const exportarAExcel = (datos, nombreEvento, tipoEvento, filtro) => {
-    let datosFiltrados = datos;
-    let sufijo = '';
-
-    if (filtro === 'presentes') {
-      datosFiltrados = datos.filter(t => t.presente);
-      sufijo = '_Presentes';
-    } else if (filtro === 'ausentes') {
-      datosFiltrados = datos.filter(t => !t.presente);
-      sufijo = '_Ausentes';
-    }
-
-    const datosExcel = datosFiltrados.map(t => {
-      const fila = {};
-      if (columnasVisibles.rut) fila['RUT'] = t.rut || '';
-      if (columnasVisibles.nombres) fila['Nombres'] = t.nombres || t.nombre || '';
-      if (columnasVisibles.apellidos) fila['Apellidos'] = t.apellidos || '';
-      if (columnasVisibles.observacion) fila['Observación'] = t.observacion || '';
-      if (columnasVisibles.estado) fila['Estado'] = t.presente ? 'Presente' : 'Ausente';
-      if (columnasVisibles.asiste) fila['Confirmación Previa'] = t.asiste ? 'Sí' : 'No';
-      return fila;
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(datosExcel);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Funcionarios');
-
-    const fileName = `${nombreEvento || 'Evento'}_Funcionarios${sufijo}.xlsx`;
-    XLSX.writeFile(workbook, fileName);
+  const handleExportarExcel = (datos, nombreEvento, tipoEvento, filtro) => {
+    exportarAExcel(datos, nombreEvento, 'trabajadores', filtro);
   };
 
   const PaginationControls = () => (
