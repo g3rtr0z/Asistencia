@@ -53,6 +53,7 @@ const TrabajadoresLista = ({
       nombre: trabajador.nombre || '',
       rut: trabajador.rut || '',
       observacion: trabajador.observacion || '',
+      presente: Boolean(trabajador.presente),
     });
     setTrabajadorAEditar(trabajador);
   };
@@ -77,16 +78,32 @@ const TrabajadoresLista = ({
   const columnasConDatos = useMemo(() => {
     if (trabajadores.length === 0) {
       return {
-        estado: true, rut: true, nombres: true, apellidos: true,
+        estado: true, rut: true, nombreCompleto: true, nombres: true, apellidos: true,
+        telefono: true, correo: true, establecimiento: true, cargo: true, comuna: true,
         observacion: true, asiste: true,
       };
     }
 
+    const tieneCamposNuevos = trabajadores.some(
+      t =>
+        (t.cargo != null && String(t.cargo).trim() !== '') ||
+        (t.comuna != null && String(t.comuna).trim() !== '') ||
+        (t.establecimiento != null && String(t.establecimiento).trim() !== '') ||
+        (t.telefono != null && String(t.telefono).trim() !== '') ||
+        (t.correo != null && String(t.correo).trim() !== '')
+    );
+
     return {
       estado: true, // Always visible
       rut: trabajadores.some(t => t.rut != null && String(t.rut).trim() !== ''),
-      nombres: trabajadores.some(t => (t.nombres != null && String(t.nombres).trim() !== '') || (t.nombre != null && String(t.nombre).trim() !== '')),
-      apellidos: trabajadores.some(t => t.apellidos != null && String(t.apellidos).trim() !== ''),
+      nombreCompleto: trabajadores.some(t => (t.nombre != null && String(t.nombre).trim() !== '') || (t.nombreCompleto != null && String(t.nombreCompleto).trim() !== '') || (t.nombres != null && String(t.nombres).trim() !== '')),
+      nombres: !tieneCamposNuevos && trabajadores.some(t => t.nombres != null && String(t.nombres).trim() !== ''),
+      apellidos: !tieneCamposNuevos && trabajadores.some(t => t.apellidos != null && String(t.apellidos).trim() !== ''),
+      telefono: trabajadores.some(t => t.telefono != null && String(t.telefono).trim() !== ''),
+      correo: trabajadores.some(t => t.correo != null && String(t.correo).trim() !== ''),
+      establecimiento: trabajadores.some(t => (t.establecimiento != null && String(t.establecimiento).trim() !== '') || (t.institucion != null && String(t.institucion).trim() !== '')),
+      cargo: trabajadores.some(t => t.cargo != null && String(t.cargo).trim() !== ''),
+      comuna: trabajadores.some(t => (t.comuna != null && String(t.comuna).trim() !== '') || (t['Comuna del Establecimiento'] != null && String(t['Comuna del Establecimiento']).trim() !== '')),
       observacion: trabajadores.some(t => t.observacion != null && String(t.observacion).trim() !== ''),
       asiste: true, // Always visible
     };
@@ -96,8 +113,14 @@ const TrabajadoresLista = ({
   const [columnasVisibles, setColumnasVisibles] = useState({
     estado: true,
     rut: true,
+    nombreCompleto: true,
     nombres: true,
     apellidos: true,
+    telefono: true,
+    correo: true,
+    establecimiento: true,
+    cargo: true,
+    comuna: true,
     observacion: true,
     asiste: true,
   });
@@ -131,6 +154,11 @@ const TrabajadoresLista = ({
       rut: true,
       nombres: true,
       apellidos: true,
+      telefono: true,
+      correo: true,
+      establecimiento: true,
+      cargo: true,
+      comuna: true,
       observacion: true,
       asiste: true,
     });
@@ -514,7 +542,22 @@ const TrabajadoresLista = ({
                     RUT
                   </th>
                 )}
-                {columnasVisibles.nombres && (
+                {columnasVisibles.nombreCompleto && (
+                  <th
+                    className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors min-w-44 flex-1"
+                    onClick={() => handleOrdenarPor('nombre')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Nombre Completo</span>
+                      {ordenCampo === 'nombre' && (
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d={ordenAlfabetico === 'asc' ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z'} />
+                        </svg>
+                      )}
+                    </div>
+                  </th>
+                )}
+                {columnasVisibles.nombres && !columnasVisibles.nombreCompleto && (
                   <th
                     className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors min-w-36 flex-1"
                     onClick={() => handleOrdenarPor('nombre')}
@@ -529,7 +572,7 @@ const TrabajadoresLista = ({
                     </div>
                   </th>
                 )}
-                {columnasVisibles.apellidos && (
+                {columnasVisibles.apellidos && !columnasVisibles.nombreCompleto && (
                   <th
                     className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors min-w-36 flex-1"
                     onClick={() => handleOrdenarPor('apellidos')}
@@ -544,6 +587,11 @@ const TrabajadoresLista = ({
                     </div>
                   </th>
                 )}
+                {columnasVisibles.telefono && <th className="py-4 px-4 text-left font-semibold min-w-32">Teléfono</th>}
+                {columnasVisibles.correo && <th className="py-4 px-4 text-left font-semibold min-w-36">Correo electrónico</th>}
+                {columnasVisibles.establecimiento && <th className="py-4 px-4 text-left font-semibold min-w-36">Establecimiento</th>}
+                {columnasVisibles.cargo && <th className="py-4 px-4 text-left font-semibold min-w-36">Cargo</th>}
+                {columnasVisibles.comuna && <th className="py-4 px-4 text-left font-semibold min-w-36">Comuna del Establecimiento</th>}
                 {columnasVisibles.observacion && (
                   <th className="py-4 px-4 text-left font-semibold min-w-36">
                     Observación
@@ -607,18 +655,48 @@ const TrabajadoresLista = ({
                         {trabajador.rut}
                       </td>
                     )}
-                    {columnasVisibles.nombres && (
+                    {columnasVisibles.nombreCompleto && (
                       <td className="py-4 px-4 text-slate-800 font-medium">
-                        <div className="truncate uppercase" title={trabajador.nombres ?? trabajador.nombre ?? '-'}>
+                        <div className="truncate" title={trabajador.nombre || `${trabajador.nombres || ''} ${trabajador.apellidos || ''}`.trim() || '-'}>
+                          {(trabajador.nombre || `${trabajador.nombres || ''} ${trabajador.apellidos || ''}`.trim()) || '-'}
+                        </div>
+                      </td>
+                    )}
+                    {columnasVisibles.nombres && !columnasVisibles.nombreCompleto && (
+                      <td className="py-4 px-4 text-slate-800 font-medium">
+                        <div className="truncate" title={trabajador.nombres ?? trabajador.nombre ?? '-'}>
                           {trabajador.nombres ?? trabajador.nombre ?? '-'}
                         </div>
                       </td>
                     )}
-                    {columnasVisibles.apellidos && (
+                    {columnasVisibles.apellidos && !columnasVisibles.nombreCompleto && (
                       <td className="py-4 px-4 text-slate-800 font-medium">
-                        <div className="truncate uppercase" title={trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}>
+                        <div className="truncate" title={trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}>
                           {trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}
                         </div>
+                      </td>
+                    )}
+                    {columnasVisibles.telefono && (
+                      <td className="py-4 px-4 text-slate-700 text-xs font-mono">{trabajador.telefono ?? '-'}</td>
+                    )}
+                    {columnasVisibles.correo && (
+                      <td className="py-4 px-4 text-slate-700 text-xs">
+                        <div className="truncate max-w-[170px]" title={trabajador.correo ?? '-'}>{trabajador.correo ?? '-'}</div>
+                      </td>
+                    )}
+                    {columnasVisibles.establecimiento && (
+                      <td className="py-4 px-4 text-slate-700 text-xs">
+                        <div className="truncate max-w-[160px]" title={trabajador.establecimiento ?? '-'}>{trabajador.establecimiento ?? '-'}</div>
+                      </td>
+                    )}
+                    {columnasVisibles.cargo && (
+                      <td className="py-4 px-4 text-slate-700 text-xs">
+                        <div className="truncate max-w-[140px]" title={trabajador.cargo ?? '-'}>{trabajador.cargo ?? '-'}</div>
+                      </td>
+                    )}
+                    {columnasVisibles.comuna && (
+                      <td className="py-4 px-4 text-slate-700 text-xs">
+                        <div className="truncate max-w-[140px]" title={trabajador.comuna ?? '-'}>{trabajador.comuna ?? '-'}</div>
                       </td>
                     )}
                     {columnasVisibles.observacion && (
@@ -665,6 +743,24 @@ const TrabajadoresLista = ({
             </div>
 
             <form onSubmit={handleGuardarEdicion} className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto flex-1">
+              {/* Estado de Asistencia (Presente / Ausente) */}
+              <div className="flex flex-col gap-1.5 sm:col-span-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <label className="text-sm font-semibold text-slate-700 flex items-center justify-between">
+                  <span>Estado de Asistencia</span>
+                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${editFormData.presente ? 'bg-st-verde/10 text-st-verde' : 'bg-red-100 text-red-700'}`}>
+                    {editFormData.presente ? 'Presente' : 'Ausente'}
+                  </span>
+                </label>
+                <select
+                  value={editFormData.presente ? 'presente' : 'ausente'}
+                  onChange={e => setEditFormData({ ...editFormData, presente: e.target.value === 'presente' })}
+                  className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all bg-white font-medium text-sm"
+                >
+                  <option value="presente">🟢 Presente</option>
+                  <option value="ausente">🔴 Ausente</option>
+                </select>
+              </div>
+
               {/* RUT - Always visible */}
               <div className="flex flex-col gap-1.5 sm:col-span-2">
                 <label className="text-sm font-semibold text-slate-700">RUT</label>

@@ -12,6 +12,26 @@ import {
 } from 'firebase/firestore';
 import { db } from '../connection/firebase.js';
 
+export const capitalizarPalabras = (texto) => {
+  if (texto === null || texto === undefined) return null;
+  const str = String(texto).trim();
+  if (!str) return null;
+
+  const minusculas = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e', 'o', 'u', 'en', 'con', 'por', 'para', 'a']);
+
+  return str
+    .toLowerCase()
+    .split(/\s+/)
+    .map((palabra, index) => {
+      if (!palabra) return '';
+      if (index > 0 && minusculas.has(palabra)) {
+        return palabra;
+      }
+      return palabra.charAt(0).toUpperCase() + palabra.slice(1);
+    })
+    .join(' ');
+};
+
 const parseBooleanField = valor => {
   if (typeof valor === 'boolean') return valor;
   if (valor === null || valor === undefined) return null;
@@ -127,6 +147,10 @@ function mapFirestoreData(doc) {
     apellidos: data['Apellidos'] ?? null,
     nombre:
       data['Nombre Completo'] ??
+      data['Nombre completo'] ??
+      data['nombreCompleto'] ??
+      data['Nombre'] ??
+      data['nombre'] ??
       (data['Nombres'] && data['Apellidos']
         ? `${data['Nombres']} ${data['Apellidos']}`
         : null),
@@ -149,8 +173,11 @@ function mapFirestoreData(doc) {
     comuna:
       data['Comuna del Establecimiento'] ??
       data['Comuna del establecimiento'] ??
+      data['Comuna de establecimiento'] ??
       data['Comuna'] ??
       data['comuna'] ??
+      data['Comuna Colegio'] ??
+      data['Comuna Origen'] ??
       null,
     establecimiento:
       data['Establecimiento'] ??
@@ -227,24 +254,23 @@ export const updateAlumno = async (eventoId, alumnoId, data) => {
     // Si miramos mapFirestoreData, lee 'Nombres', 'Apellidos', etc.
 
     const updateData = {};
-    if (data.nombres !== undefined) updateData['Nombres'] = data.nombres;
-    if (data.apellidos !== undefined) updateData['Apellidos'] = data.apellidos;
+    if (data.nombres !== undefined) updateData['Nombres'] = capitalizarPalabras(data.nombres);
+    if (data.apellidos !== undefined) updateData['Apellidos'] = capitalizarPalabras(data.apellidos);
 
     if (data.nombre !== undefined && String(data.nombre).trim() !== '') {
-      const nombreTrim = String(data.nombre).trim();
-      updateData['Nombre Completo'] = nombreTrim;
-      updateData['nombre'] = nombreTrim;
-      // Sincronizar Nombres y Apellidos si no estaban o si vinieron vacíos
+      const nombreCap = capitalizarPalabras(data.nombre);
+      updateData['Nombre Completo'] = nombreCap;
+      updateData['nombre'] = nombreCap;
       if (!data.nombres) {
-        const partes = nombreTrim.split(' ');
+        const partes = nombreCap.split(' ');
         updateData['Nombres'] = partes[0] || '';
         if (!data.apellidos) {
           updateData['Apellidos'] = partes.slice(1).join(' ') || '';
         }
       }
     } else if (data.nombres !== undefined || data.apellidos !== undefined) {
-      const nombres = data.nombres ?? (data.originalData?.nombres || '');
-      const apellidos = data.apellidos ?? (data.originalData?.apellidos || '');
+      const nombres = capitalizarPalabras(data.nombres) ?? (data.originalData?.nombres || '');
+      const apellidos = capitalizarPalabras(data.apellidos) ?? (data.originalData?.apellidos || '');
       const nombreCompleto = `${nombres} ${apellidos}`.trim();
       if (nombreCompleto) {
         updateData['Nombre Completo'] = nombreCompleto;
@@ -252,21 +278,31 @@ export const updateAlumno = async (eventoId, alumnoId, data) => {
       }
     }
 
-    if (data.rut !== undefined) updateData['RUT'] = data.rut;
-    if (data.telefono !== undefined) updateData['Teléfono'] = data.telefono;
-    if (data.correo !== undefined) updateData['Correo electrónico'] = data.correo;
-    if (data.cargo !== undefined) updateData['Cargo'] = data.cargo;
-    if (data.comuna !== undefined) updateData['Comuna del Establecimiento'] = data.comuna;
+    if (data.rut !== undefined) updateData['RUT'] = data.rut ? String(data.rut).replace(/[^0-9kK]/gi, '').trim().toUpperCase() : data.rut;
+    if (data.telefono !== undefined) updateData['Teléfono'] = data.telefono ? String(data.telefono).trim() : data.telefono;
+    if (data.correo !== undefined) updateData['Correo electrónico'] = data.correo ? String(data.correo).trim().toLowerCase() : data.correo;
+    if (data.cargo !== undefined) updateData['Cargo'] = capitalizarPalabras(data.cargo);
+    if (data.comuna !== undefined) updateData['Comuna del Establecimiento'] = capitalizarPalabras(data.comuna);
     if (data.establecimiento !== undefined) {
-      updateData['Establecimiento'] = data.establecimiento;
-      updateData['Institución'] = data.establecimiento;
+      const estCap = capitalizarPalabras(data.establecimiento);
+      updateData['Establecimiento'] = estCap;
+      updateData['Institución'] = estCap;
     }
-    if (data.carrera !== undefined) updateData['Carrera'] = data.carrera;
-    if (data.institucion !== undefined) updateData['Institución'] = data.institucion;
+    if (data.carrera !== undefined) updateData['Carrera'] = capitalizarPalabras(data.carrera);
+    if (data.institucion !== undefined) updateData['Institución'] = capitalizarPalabras(data.institucion);
     if (data.grupo !== undefined) updateData['grupo'] = data.grupo;
     if (data.asiento !== undefined) updateData['asiento'] = data.asiento;
     if (data.numeroLista !== undefined) updateData['numeroLista'] = data.numeroLista;
-    if (data.presente !== undefined) updateData['presente'] = data.presente;
+    if (data.presente !== undefined) {
+      const esPresente = Boolean(data.presente);
+      updateData['presente'] = esPresente;
+      if (esPresente) {
+        const alumnoDoc = await getDoc(alumnoRef);
+        if (!alumnoDoc.data()?.fechaRegistro) {
+          updateData['fechaRegistro'] = new Date();
+        }
+      }
+    }
     if (data.distincion !== undefined) {
       const distVal = parseDistincionField(data.distincion);
       updateData['Distinción'] = distVal;
@@ -666,23 +702,26 @@ export const agregarAlumno = async (alumno, eventoId) => {
       ? (alumno.fechaRegistro instanceof Date ? alumno.fechaRegistro : new Date(alumno.fechaRegistro))
       : (alumno.presente ? new Date() : null);
 
-    const nombreFinal = alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim();
-    const nombresFinal = alumno.nombres || (nombreFinal ? nombreFinal.split(' ')[0] : null);
-    const apellidosFinal = alumno.apellidos || (nombreFinal ? nombreFinal.split(' ').slice(1).join(' ') : null);
+    const nombreRaw = alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim();
+    const nombreFinal = capitalizarPalabras(nombreRaw);
+    const nombresFinal = capitalizarPalabras(alumno.nombres) || (nombreFinal ? nombreFinal.split(' ')[0] : null);
+    const apellidosFinal = capitalizarPalabras(alumno.apellidos) || (nombreFinal ? nombreFinal.split(' ').slice(1).join(' ') : null);
+    const rutClean = alumno.rut ? String(alumno.rut).replace(/[^0-9kK]/gi, '').trim().toUpperCase() : null;
+    const correoClean = alumno.correo ? String(alumno.correo).trim().toLowerCase() : null;
     
     const docData = {
       Nombres: nombresFinal,
       Apellidos: apellidosFinal,
       'Nombre Completo': nombreFinal,
-      RUT: alumno.rut,
+      RUT: rutClean || alumno.rut,
       'Teléfono': alumno.telefono ?? null,
-      'Correo electrónico': alumno.correo ?? null,
-      Cargo: alumno.cargo ?? null,
-      'Comuna del Establecimiento': alumno.comuna ?? null,
-      Establecimiento: alumno.establecimiento ?? alumno.institucion ?? null,
-      Carrera: alumno.carrera ?? null,
-      Institución: alumno.institucion ?? alumno.establecimiento ?? null,
-      Departamento: alumno.departamento ?? null,
+      'Correo electrónico': correoClean,
+      Cargo: capitalizarPalabras(alumno.cargo) ?? null,
+      'Comuna del Establecimiento': capitalizarPalabras(alumno.comuna) ?? null,
+      Establecimiento: capitalizarPalabras(alumno.establecimiento ?? alumno.institucion) ?? null,
+      Carrera: capitalizarPalabras(alumno.carrera) ?? null,
+      Institución: capitalizarPalabras(alumno.institucion ?? alumno.establecimiento) ?? null,
+      Departamento: capitalizarPalabras(alumno.departamento) ?? null,
       Observación: alumno.observacion ?? null,
       asiste: parseBooleanField(alumno.asiste) ?? false,
       presente: alumno.presente ?? false,
@@ -958,9 +997,15 @@ export const importarAlumnosDesdeExcel = async (
           {}
         );
 
-        const nombres = obtenerValorCampo(filaNormalizada, aliasCampos.nombres, aliasKeywords.nombres);
-        const apellidos = obtenerValorCampo(filaNormalizada, aliasCampos.apellidos, aliasKeywords.apellidos);
-        let nombreCompleto = obtenerValorCampo(filaNormalizada, aliasCampos.nombreCompleto, aliasKeywords.nombreCompleto);
+
+
+        const nombresRaw = obtenerValorCampo(filaNormalizada, aliasCampos.nombres, aliasKeywords.nombres);
+        const apellidosRaw = obtenerValorCampo(filaNormalizada, aliasCampos.apellidos, aliasKeywords.apellidos);
+        let nombreCompletoRaw = obtenerValorCampo(filaNormalizada, aliasCampos.nombreCompleto, aliasKeywords.nombreCompleto);
+
+        const nombres = capitalizarPalabras(nombresRaw);
+        const apellidos = capitalizarPalabras(apellidosRaw);
+        let nombreCompleto = capitalizarPalabras(nombreCompletoRaw);
 
         if (!nombreCompleto && (nombres || apellidos)) {
           nombreCompleto = `${nombres || ''} ${apellidos || ''}`.trim();
@@ -973,7 +1018,7 @@ export const importarAlumnosDesdeExcel = async (
 
         const rutRaw = obtenerValorCampo(filaNormalizada, aliasCampos.rut, aliasKeywords.rut);
         const rut = rutRaw != null
-          ? String(rutRaw).replace(/[.-]/g, '').trim().toUpperCase()
+          ? String(rutRaw).replace(/[^0-9kK]/gi, '').trim().toUpperCase()
           : null;
 
         if (estaVacio(rut)) {
@@ -981,15 +1026,22 @@ export const importarAlumnosDesdeExcel = async (
           continue;
         }
 
-        const carrera = obtenerValorCampo(filaNormalizada, aliasCampos.carrera, aliasKeywords.carrera);
-        const institucion = obtenerValorCampo(filaNormalizada, aliasCampos.institucion, aliasKeywords.institucion);
+        const carreraRaw = obtenerValorCampo(filaNormalizada, aliasCampos.carrera, aliasKeywords.carrera);
+        const carrera = capitalizarPalabras(carreraRaw);
+
+        const institucionRaw = obtenerValorCampo(filaNormalizada, aliasCampos.institucion, aliasKeywords.institucion);
+        const institucion = capitalizarPalabras(institucionRaw);
+
         const asiento = obtenerValorCampo(filaNormalizada, aliasCampos.asiento);
         const grupo = obtenerValorCampo(filaNormalizada, aliasCampos.grupo);
         const numeroListaRaw = obtenerValorCampo(filaNormalizada, aliasCampos.numeroLista);
         const numeroLista = numeroListaRaw != null ? String(numeroListaRaw).trim() : null;
         const estado = obtenerValorCampo(filaNormalizada, aliasCampos.estado);
         const presente = parseBooleanField(estado);
-        const departamento = obtenerValorCampo(filaNormalizada, aliasCampos.departamento);
+
+        const departamentoRaw = obtenerValorCampo(filaNormalizada, aliasCampos.departamento);
+        const departamento = capitalizarPalabras(departamentoRaw);
+
         const observacion = obtenerValorCampo(filaNormalizada, aliasCampos.observacion);
         const asisteValor = obtenerValorCampo(filaNormalizada, aliasCampos.asiste);
         const asiste = parseBooleanField(asisteValor);
@@ -1008,10 +1060,18 @@ export const importarAlumnosDesdeExcel = async (
         const reconocimiento = parseReconocimientoField(reconocimientoValor);
         
         const telefono = obtenerValorCampo(filaNormalizada, aliasCampos.telefono, aliasKeywords.telefono);
-        const correo = obtenerValorCampo(filaNormalizada, aliasCampos.correo, aliasKeywords.correo);
-        const cargo = obtenerValorCampo(filaNormalizada, aliasCampos.cargo, aliasKeywords.cargo);
-        const comuna = obtenerValorCampo(filaNormalizada, aliasCampos.comuna, aliasKeywords.comuna);
-        const establecimiento = obtenerValorCampo(filaNormalizada, aliasCampos.establecimiento, aliasKeywords.establecimiento);
+
+        const correoRaw = obtenerValorCampo(filaNormalizada, aliasCampos.correo, aliasKeywords.correo);
+        const correo = correoRaw ? String(correoRaw).trim().toLowerCase() : null;
+
+        const cargoRaw = obtenerValorCampo(filaNormalizada, aliasCampos.cargo, aliasKeywords.cargo);
+        const cargo = capitalizarPalabras(cargoRaw);
+
+        const comunaRaw = obtenerValorCampo(filaNormalizada, aliasCampos.comuna, aliasKeywords.comuna);
+        const comuna = capitalizarPalabras(comunaRaw);
+
+        const establecimientoRaw = obtenerValorCampo(filaNormalizada, aliasCampos.establecimiento, aliasKeywords.establecimiento);
+        const establecimiento = capitalizarPalabras(establecimientoRaw);
 
         const fechaRegistroRaw = obtenerValorCampo(filaNormalizada, aliasCampos.fechaRegistro);
         let fechaRegistro = null;

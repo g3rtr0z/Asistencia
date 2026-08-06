@@ -133,6 +133,7 @@ const AlumnosLista = ({
       numeroLista: alumno.numeroLista || '',
       grupo: alumno.grupo || '',
       asiento: alumno.asiento || '',
+      presente: Boolean(alumno.presente),
       distincion: alumno.distincion ?? false,
       reconocimiento: alumno.reconocimiento ?? false,
       // Guardar datos originales para sincronización en alumnosService
@@ -1172,6 +1173,24 @@ const AlumnosLista = ({
               </div>
 
               <form onSubmit={handleGuardarEdicion} className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto flex-1">
+                {/* Estado de Asistencia (Presente / Ausente) */}
+                <div className="flex flex-col gap-1.5 sm:col-span-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  <label className="text-sm font-semibold text-slate-700 flex items-center justify-between">
+                    <span>Estado de Asistencia</span>
+                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${editFormData.presente ? 'bg-st-verde/10 text-st-verde' : 'bg-red-100 text-red-700'}`}>
+                      {editFormData.presente ? 'Presente' : 'Ausente'}
+                    </span>
+                  </label>
+                  <select
+                    value={editFormData.presente ? 'presente' : 'ausente'}
+                    onChange={e => setEditFormData({ ...editFormData, presente: e.target.value === 'presente' })}
+                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all bg-white font-medium text-sm"
+                  >
+                    <option value="presente">🟢 Presente</option>
+                    <option value="ausente">🔴 Ausente</option>
+                  </select>
+                </div>
+
                 {/* RUT - Always visible as it's the identifier */}
                 <div className="flex flex-col gap-1.5 sm:col-span-2">
                   <label className="text-sm font-semibold text-slate-700">RUT</label>
@@ -1209,45 +1228,55 @@ const AlumnosLista = ({
                 )}
 
                 {/* Cargo */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Cargo</label>
-                  <input type="text" value={editFormData.cargo || ''} onChange={e => setEditFormData({ ...editFormData, cargo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                </div>
+                {(columnasConDatos.cargo || Boolean(editFormData.cargo)) && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Cargo</label>
+                    <input type="text" value={editFormData.cargo || ''} onChange={e => setEditFormData({ ...editFormData, cargo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  </div>
+                )}
 
                 {/* Comuna del Establecimiento */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Comuna del Establecimiento</label>
-                  <input type="text" value={editFormData.comuna || ''} onChange={e => setEditFormData({ ...editFormData, comuna: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                </div>
+                {(columnasConDatos.comuna || Boolean(editFormData.comuna)) && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Comuna del Establecimiento</label>
+                    <input type="text" value={editFormData.comuna || ''} onChange={e => setEditFormData({ ...editFormData, comuna: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  </div>
+                )}
 
                 {/* Establecimiento */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Establecimiento</label>
-                  <input type="text" value={editFormData.establecimiento || ''} onChange={e => setEditFormData({ ...editFormData, establecimiento: e.target.value, institucion: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                </div>
+                {(columnasConDatos.establecimiento || Boolean(editFormData.establecimiento)) && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Establecimiento</label>
+                    <input type="text" value={editFormData.establecimiento || ''} onChange={e => setEditFormData({ ...editFormData, establecimiento: e.target.value, institucion: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  </div>
+                )}
 
                 {/* Teléfono */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Teléfono</label>
-                  <input type="text" value={editFormData.telefono || ''} onChange={e => setEditFormData({ ...editFormData, telefono: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                </div>
+                {(columnasConDatos.telefono || Boolean(editFormData.telefono)) && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Teléfono</label>
+                    <input type="text" value={editFormData.telefono || ''} onChange={e => setEditFormData({ ...editFormData, telefono: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  </div>
+                )}
 
                 {/* Correo Electrónico */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Correo Electrónico</label>
-                  <input type="email" value={editFormData.correo || ''} onChange={e => setEditFormData({ ...editFormData, correo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                </div>
+                {(columnasConDatos.correo || Boolean(editFormData.correo)) && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Correo Electrónico</label>
+                    <input type="email" value={editFormData.correo || ''} onChange={e => setEditFormData({ ...editFormData, correo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  </div>
+                )}
 
-                {/* Carrera - Only if visible */}
-                {columnasVisibles.carrera && (
+                {/* Carrera */}
+                {(columnasConDatos.carrera || Boolean(editFormData.carrera)) && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-slate-700">Carrera</label>
                     <input type="text" value={editFormData.carrera} onChange={e => setEditFormData({ ...editFormData, carrera: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
                   </div>
                 )}
 
-                {/* Institución - Only if visible */}
-                {columnasVisibles.institucion && (
+                {/* Institución */}
+                {(columnasConDatos.institucion || Boolean(editFormData.institucion)) && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-slate-700">Institución</label>
                     <select value={editFormData.institucion} onChange={e => setEditFormData({ ...editFormData, institucion: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all">
@@ -1257,24 +1286,24 @@ const AlumnosLista = ({
                   </div>
                 )}
 
-                {/* N° de Lista - Only if visible */}
-                {columnasVisibles.numeroLista && (
+                {/* N° de Lista */}
+                {(columnasConDatos.numeroLista || Boolean(editFormData.numeroLista)) && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-slate-700">N° de Lista</label>
                     <input type="text" value={editFormData.numeroLista} onChange={e => setEditFormData({ ...editFormData, numeroLista: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
                   </div>
                 )}
 
-                {/* Grupo - Only if visible */}
-                {columnasVisibles.grupo && (
+                {/* Grupo */}
+                {(columnasConDatos.grupo || Boolean(editFormData.grupo)) && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-slate-700">Grupo</label>
                     <input type="text" value={editFormData.grupo} onChange={e => setEditFormData({ ...editFormData, grupo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
                   </div>
                 )}
 
-                {/* Asiento - Only if visible */}
-                {columnasVisibles.asiento && (
+                {/* Asiento */}
+                {(columnasConDatos.asiento || Boolean(editFormData.asiento)) && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-slate-700">Asiento</label>
                     <input type="text" value={editFormData.asiento} onChange={e => setEditFormData({ ...editFormData, asiento: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
@@ -1282,34 +1311,38 @@ const AlumnosLista = ({
                 )}
 
                 {/* Distinción */}
-                <div className="flex flex-col gap-1.5 sm:col-span-2 bg-amber-50/80 p-3.5 rounded-xl border border-amber-200/80 mt-1">
-                  <label className="text-sm font-bold text-amber-900 flex items-center gap-2">
-                    <Star className="w-4 h-4 text-amber-600 fill-amber-500" />
-                    Distinción
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Distinción Máxima, Distinción Unánime"
-                    value={typeof editFormData.distincion === 'string' ? editFormData.distincion : editFormData.distincion ? 'Distinción Máxima' : ''}
-                    onChange={e => setEditFormData({ ...editFormData, distincion: e.target.value })}
-                    className="px-3 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all bg-white text-sm"
-                  />
-                </div>
+                {(columnasConDatos.distincion || Boolean(editFormData.distincion)) && (
+                  <div className="flex flex-col gap-1.5 sm:col-span-2 bg-amber-50/80 p-3.5 rounded-xl border border-amber-200/80 mt-1">
+                    <label className="text-sm font-bold text-amber-900 flex items-center gap-2">
+                      <Star className="w-4 h-4 text-amber-600 fill-amber-500" />
+                      Distinción
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Distinción Máxima, Distinción Unánime"
+                      value={typeof editFormData.distincion === 'string' ? editFormData.distincion : editFormData.distincion ? 'Distinción Máxima' : ''}
+                      onChange={e => setEditFormData({ ...editFormData, distincion: e.target.value })}
+                      className="px-3 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all bg-white text-sm"
+                    />
+                  </div>
+                )}
 
                 {/* Reconocimiento */}
-                <div className="flex flex-col gap-1.5 sm:col-span-2 bg-purple-50/80 p-3.5 rounded-xl border border-purple-200/80">
-                  <label className="text-sm font-bold text-purple-900 flex items-center gap-2">
-                    <Award className="w-4 h-4 text-purple-600" />
-                    Reconocimiento
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Reconocimiento Especial, Mejor Compañero, o marca con 'Sí'"
-                    value={typeof editFormData.reconocimiento === 'string' ? editFormData.reconocimiento : editFormData.reconocimiento ? 'Sí' : ''}
-                    onChange={e => setEditFormData({ ...editFormData, reconocimiento: e.target.value })}
-                    className="px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white text-sm"
-                  />
-                </div>
+                {(columnasConDatos.reconocimiento || Boolean(editFormData.reconocimiento)) && (
+                  <div className="flex flex-col gap-1.5 sm:col-span-2 bg-purple-50/80 p-3.5 rounded-xl border border-purple-200/80">
+                    <label className="text-sm font-bold text-purple-900 flex items-center gap-2">
+                      <Award className="w-4 h-4 text-purple-600" />
+                      Reconocimiento
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Reconocimiento Especial, Mejor Compañero, o marca con 'Sí'"
+                      value={typeof editFormData.reconocimiento === 'string' ? editFormData.reconocimiento : editFormData.reconocimiento ? 'Sí' : ''}
+                      onChange={e => setEditFormData({ ...editFormData, reconocimiento: e.target.value })}
+                      className="px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white text-sm"
+                    />
+                  </div>
+                )}
 
                 <div className="sm:col-span-2 pt-4 flex gap-3 justify-end border-t border-slate-100 mt-2">
                   <button type="button" onClick={() => setAlumnoAEditar(null)} className="px-4 py-2 text-slate-700 font-medium hover:bg-slate-100 rounded-lg transition-colors">
