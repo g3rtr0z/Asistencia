@@ -230,19 +230,26 @@ export const updateAlumno = async (eventoId, alumnoId, data) => {
     if (data.nombres !== undefined) updateData['Nombres'] = data.nombres;
     if (data.apellidos !== undefined) updateData['Apellidos'] = data.apellidos;
 
-    // Sincronizar campo Nombre Completo si se editan nombres o apellidos
-    if (data.nombres !== undefined || data.apellidos !== undefined) {
+    if (data.nombre !== undefined && String(data.nombre).trim() !== '') {
+      const nombreTrim = String(data.nombre).trim();
+      updateData['Nombre Completo'] = nombreTrim;
+      updateData['nombre'] = nombreTrim;
+      // Sincronizar Nombres y Apellidos si no estaban o si vinieron vacíos
+      if (!data.nombres) {
+        const partes = nombreTrim.split(' ');
+        updateData['Nombres'] = partes[0] || '';
+        if (!data.apellidos) {
+          updateData['Apellidos'] = partes.slice(1).join(' ') || '';
+        }
+      }
+    } else if (data.nombres !== undefined || data.apellidos !== undefined) {
       const nombres = data.nombres ?? (data.originalData?.nombres || '');
       const apellidos = data.apellidos ?? (data.originalData?.apellidos || '');
       const nombreCompleto = `${nombres} ${apellidos}`.trim();
       if (nombreCompleto) {
         updateData['Nombre Completo'] = nombreCompleto;
-        updateData['nombre'] = nombreCompleto; // Mantener versión en minúsculas consistente
+        updateData['nombre'] = nombreCompleto;
       }
-    } else if (data.nombre !== undefined) {
-      // Si se edita directamente el nombre completo (caso fallback)
-      updateData['Nombre Completo'] = data.nombre;
-      updateData['nombre'] = data.nombre;
     }
 
     if (data.rut !== undefined) updateData['RUT'] = data.rut;
@@ -521,7 +528,8 @@ export const subscribeToAlumnosEventoActivo = (callback, errorCallback) => {
 // Buscar alumno por RUT en evento específico
 export const buscarAlumnoPorRutEnEvento = async (rut, eventoId) => {
   try {
-    const cleanSearchRut = String(rut || '').replace(/[^0-9kK]/gi, '').toUpperCase();
+    const cleanSearchRut = String(rut || '').replace(/[^0-9kK]/gi, '').trim().toUpperCase();
+    const cleanSearchRutNoZero = cleanSearchRut.replace(/^0+/, '');
     const alumnosRef = collection(db, `eventos/${eventoId}/alumnos`);
 
     // 1. Intentar búsqueda exacta
@@ -532,7 +540,7 @@ export const buscarAlumnoPorRutEnEvento = async (rut, eventoId) => {
       return mapFirestoreData(querySnapshot.docs[0]);
     }
 
-    // 2. Intentar búsqueda por RUT limpio (sin puntos ni guion)
+    // 2. Intentar búsqueda por RUT limpio (sin puntos ni guion ni espacios)
     if (cleanSearchRut && cleanSearchRut !== rut) {
       q = query(alumnosRef, where('RUT', '==', cleanSearchRut));
       querySnapshot = await getDocs(q);
@@ -541,12 +549,25 @@ export const buscarAlumnoPorRutEnEvento = async (rut, eventoId) => {
       }
     }
 
-    // 3. Fallback: buscar en todos los alumnos del evento comparando RUTs normalizados
+    // 3. Intentar búsqueda sin cero inicial (por si el escáner incluyó 0 al inicio)
+    if (cleanSearchRutNoZero && cleanSearchRutNoZero !== cleanSearchRut) {
+      q = query(alumnosRef, where('RUT', '==', cleanSearchRutNoZero));
+      querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        return mapFirestoreData(querySnapshot.docs[0]);
+      }
+    }
+
+    // 4. Fallback: buscar en todos los alumnos del evento comparando RUTs normalizados
     const allSnapshot = await getDocs(alumnosRef);
     const docEncontrado = allSnapshot.docs.find(d => {
       const dRut = d.data()['RUT'];
       if (!dRut) return false;
-      return String(dRut).replace(/[^0-9kK]/gi, '').toUpperCase() === cleanSearchRut;
+      const dRutClean = String(dRut).replace(/[^0-9kK]/gi, '').trim().toUpperCase();
+      return (
+        dRutClean === cleanSearchRut ||
+        dRutClean.replace(/^0+/, '') === cleanSearchRutNoZero
+      );
     });
 
     if (docEncontrado) {
@@ -644,11 +665,15 @@ export const agregarAlumno = async (alumno, eventoId) => {
     const fechaRegistroFinal = alumno.fechaRegistro 
       ? (alumno.fechaRegistro instanceof Date ? alumno.fechaRegistro : new Date(alumno.fechaRegistro))
       : (alumno.presente ? new Date() : null);
+
+    const nombreFinal = alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim();
+    const nombresFinal = alumno.nombres || (nombreFinal ? nombreFinal.split(' ')[0] : null);
+    const apellidosFinal = alumno.apellidos || (nombreFinal ? nombreFinal.split(' ').slice(1).join(' ') : null);
     
     const docData = {
-      Nombres: alumno.nombres ?? null,
-      Apellidos: alumno.apellidos ?? null,
-      'Nombre Completo': alumno.nombre,
+      Nombres: nombresFinal,
+      Apellidos: apellidosFinal,
+      'Nombre Completo': nombreFinal,
       RUT: alumno.rut,
       'Teléfono': alumno.telefono ?? null,
       'Correo electrónico': alumno.correo ?? null,
@@ -656,7 +681,7 @@ export const agregarAlumno = async (alumno, eventoId) => {
       'Comuna del Establecimiento': alumno.comuna ?? null,
       Establecimiento: alumno.establecimiento ?? alumno.institucion ?? null,
       Carrera: alumno.carrera ?? null,
-      Institución: alumno.institucion ?? null,
+      Institución: alumno.institucion ?? alumno.establecimiento ?? null,
       Departamento: alumno.departamento ?? null,
       Observación: alumno.observacion ?? null,
       asiste: parseBooleanField(alumno.asiste) ?? false,
@@ -819,7 +844,6 @@ export const importarAlumnosDesdeExcel = async (
       );
     }
 
-    // Función para verificar si un valor está vacío
     const estaVacio = valor => {
       return (
         valor === null ||
@@ -835,281 +859,88 @@ export const importarAlumnosDesdeExcel = async (
         .trim()
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
-        .replace(/°/g, '') // Eliminar símbolo de grado
-        .replace(/[^\w\s]/g, ' '); // Reemplazar otros símbolos con espacio
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/°/g, '')
+        .replace(/[^\w\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
 
     const normalizarAlias = lista => lista.map(normalizarClave);
 
     const aliasCampos = {
       nombres: normalizarAlias([
-        'nombres',
-        'nombre',
-        'nombre(s)',
-        'name',
-        'primer nombre',
-        'nombres del alumno',
-        'nombre del alumno',
+        'nombres', 'nombre(s)', 'name', 'primer nombre', 'nombres del alumno', 'nombres del participante', 'nombres del asistente', 'nombre participante', 'nombre asistente', 'nombre alumno', 'nombre', 'participante', 'asistente', 'alumno', 'persona', 'contacto',
       ]),
       apellidos: normalizarAlias([
-        'apellidos',
-        'apellido',
-        'second name',
-        'segundo nombre',
-        'apellidos del alumno',
-        'apellido del alumno',
+        'apellidos', 'apellido', 'second name', 'segundo nombre', 'apellidos del alumno', 'apellidos del participante', 'apellidos del asistente',
       ]),
       nombreCompleto: normalizarAlias([
-        'nombre completo',
-        'nombrecompleto',
-        'nombre y apellido',
-        'nombre y apellidos',
-        'full name',
+        'nombre completo', 'nombrecompleto', 'nombre y apellido', 'nombre y apellidos', 'full name', 'nombres y apellidos', 'nombre del alumno', 'nombre del participante', 'nombre del asistente', 'nombre participante', 'nombre asistente', 'nombre alumno', 'nombre', 'participante', 'asistente', 'alumno', 'persona', 'contacto',
       ]),
       rut: normalizarAlias([
-        'rut',
-        'r.u.t',
-        'r.u.t.',
-        'documento',
-        'dni',
-        'cedula',
-        'cédula',
-        'id',
-        'identificacion',
-        'identificación',
-        'numero documento',
-        'nro documento',
-        'numero de documento',
-        'nro de documento',
+        'rut', 'r.u.t', 'r.u.t.', 'run', 'r.u.n', 'r.u.n.', 'documento', 'dni', 'cedula', 'cédula', 'id', 'identificacion', 'identificación', 'numero documento', 'nro documento', 'numero de documento', 'nro de documento', 'rut del participante', 'rut participante', 'rut del alumno', 'rut alumno', 'rut del asistente', 'rut asistente', 'run del participante', 'run participante', 'run alumno',
       ]),
-      carrera: normalizarAlias([
-        'carrera',
-        'programa',
-        'curso',
-        'especialidad',
-        'carrera profesional',
-        'programa de estudios',
-      ]),
-      institucion: normalizarAlias([
-        'institucion',
-        'institución',
-        'institucion de origen',
-        'institución de origen',
-        'sede',
-        'universidad',
-        'colegio',
-        'centro',
-        'instituto',
-        'casa de estudios',
-      ]),
-      asiento: normalizarAlias([
-        'asiento',
-        'nro asiento',
-        'numero asiento',
-        'seat',
-      ]),
-      grupo: normalizarAlias([
-        'grupo',
-        'grupo nro',
-        'grupo numero',
-        'group',
-      ]),
-      numeroLista: normalizarAlias([
-        'numero de lista', // Prioridad: sin símbolo de grado
-        'numero de lista',
-        'nro de lista',
-        'numero lista',
-        'nro lista',
-        'n° de lista',
-        'n de lista',
-        'n. de lista',
-        'lista',
-        'n lista',
-        'num lista',
-        'n° lista',
-      ]),
-      estado: normalizarAlias([
-        'estado',
-        'presente',
-        'asistencia',
-        'presente (si,no)',
-        'presente (si o no)',
-        'presente (sí o no)',
-        'presente si o no',
-        'presente sí o no',
-      ]),
-      fechaRegistro: normalizarAlias([
-        'fecha y hora de registro',
-        'fecha y hora registro',
-        'fecha hora registro',
-        'fecha de registro',
-        'fecha registro',
-        'hora de registro',
-        'hora registro',
-        'fecha',
-        'fecha y hora',
-        'timestamp',
-        'fecha creacion',
-        'fecha creación',
-        'fecha creacion registro',
-        'fecha creación registro',
-      ]),
-      asiste: normalizarAlias([
-        'asiste',
-        'asiste (si,no)',
-        'asiste (si/no)',
-        'asiste (sí/no)',
-        'asiste (si o no)',
-        'asiste (sí o no)',
-        'confirmación',
-        'confirmacion',
-        'preconfirmacion',
-        'pre confirmacion',
-        'pre-confirmacion',
-        'confirmacion asistencia',
-        'confirmación asistencia',
-        'confirma asistencia',
-        'pre asistencia',
-      ]),
-      departamento: normalizarAlias([
-        'departamento',
-        'área',
-        'area',
-        'unidad',
-        'dependencia',
-        'departamento/area',
-        'area/departamento',
-      ]),
-      observacion: normalizarAlias([
-        'observacion',
-        'observación',
-        'obs',
-        'nota',
-        'notas',
-        'comentario',
-        'comentarios',
-      ]),
-      telefono: normalizarAlias([
-        'telefono',
-        'teléfono',
-        'celular',
-        'phone',
-        'fono',
-        'movil',
-        'móvil',
-        'telefono/celular',
-        'teléfono/celular',
-        'telefono de contacto',
-        'teléfono de contacto',
-      ]),
-      correo: normalizarAlias([
-        'correo electronico',
-        'correo electrónico',
-        'correo',
-        'email',
-        'e-mail',
-        'e mail',
-        'mail',
-        'correo de contacto',
-      ]),
-      cargo: normalizarAlias([
-        'cargo',
-        'puesto',
-        'funcion',
-        'función',
-        'position',
-        'rol',
-        'cargo/puesto',
-        'cargo ocupado',
-      ]),
-      comuna: normalizarAlias([
-        'comuna del establecimiento',
-        'comuna establecimiento',
-        'comuna de establecimiento',
-        'comuna',
-        'municipio',
-        'ciudad',
-        'comuna de residencia',
-      ]),
-      establecimiento: normalizarAlias([
-        'establecimiento',
-        'nombre del establecimiento',
-        'establecimiento de origen',
-        'colegio',
-        'escuela',
-        'liceo',
-        'institucion',
-        'institución',
-        'centro educativo',
-      ]),
-      distincion: normalizarAlias([
-        'distincion',
-        'distinción',
-        'distincion maxima',
-        'distinción máxima',
-        'distincion unanime',
-        'distinción unánime',
-        'distincion unánime',
-        'distinción unanime',
-        'distincion unanime (si/no)',
-        'distinción unánime (si/no)',
-        'distincion unanime (sí/no)',
-        'distinción unánime (sí/no)',
-        'distincion maxima (si/no)',
-        'distinción máxima (si/no)',
-        'distincion maxima (sí/no)',
-        'distinción máxima (sí/no)',
-        'distincion (si/no)',
-        'distinción (si/no)',
-        'distincion (sí/no)',
-        'distinción (sí/no)',
-        'tiene distincion',
-        'tiene distinción',
-        'distincion max',
-        'distinción máx',
-        'distincion_maxima',
-        'distincionmaxima',
-        'distincion_unanime',
-        'distincionunanime',
-      ]),
-      reconocimiento: normalizarAlias([
-        'reconocimiento',
-        'reconocimientos',
-        'reconocimiento especial',
-        'reconocimiento (si/no)',
-        'reconocimiento (sí/no)',
-        'tiene reconocimiento',
-        'reconocimiento_especial',
-        'tipo de reconocimiento',
-        'tipo reconocimiento',
-      ]),
+      carrera: normalizarAlias(['carrera', 'programa', 'curso', 'especialidad', 'carrera profesional', 'programa de estudios']),
+      institucion: normalizarAlias(['institucion', 'institución', 'institucion de origen', 'institución de origen', 'sede', 'universidad', 'colegio', 'centro', 'instituto', 'casa de estudios', 'rbd']),
+      asiento: normalizarAlias(['asiento', 'nro asiento', 'numero asiento', 'seat']),
+      grupo: normalizarAlias(['grupo', 'grupo nro', 'grupo numero', 'group']),
+      numeroLista: normalizarAlias(['numero de lista', 'nro de lista', 'numero lista', 'nro lista', 'n° de lista', 'n de lista', 'n. de lista', 'lista', 'n lista', 'num lista', 'n° lista']),
+      estado: normalizarAlias(['estado', 'presente', 'asistencia', 'presente (si,no)', 'presente (si o no)', 'presente (sí o no)', 'presente si o no', 'presente sí o no']),
+      fechaRegistro: normalizarAlias(['fecha y hora de registro', 'fecha y hora registro', 'fecha hora registro', 'fecha de registro', 'fecha registro', 'hora de registro', 'hora registro', 'fecha', 'fecha y hora', 'timestamp', 'fecha creacion', 'fecha creación', 'fecha creacion registro', 'fecha creación registro']),
+      asiste: normalizarAlias(['asiste', 'asiste (si,no)', 'asiste (si/no)', 'asiste (sí/no)', 'asiste (si o no)', 'asiste (sí o no)', 'confirmación', 'confirmacion', 'preconfirmacion', 'pre confirmacion', 'pre-confirmacion', 'confirmacion asistencia', 'confirmación asistencia', 'confirma asistencia', 'pre asistencia']),
+      departamento: normalizarAlias(['departamento', 'área', 'area', 'unidad', 'dependencia', 'departamento/area', 'area/departamento']),
+      observacion: normalizarAlias(['observacion', 'observación', 'obs', 'nota', 'notas', 'comentario', 'comentarios']),
+      telefono: normalizarAlias(['telefono', 'teléfono', 'celular', 'phone', 'fono', 'movil', 'móvil', 'telefono/celular', 'teléfono/celular', 'telefono de contacto', 'teléfono de contacto', 'telefono participante', 'teléfono participante', 'contacto', 'nro telefono', 'nro teléfono']),
+      correo: normalizarAlias(['correo electronico', 'correo electrónico', 'correo', 'email', 'e-mail', 'e mail', 'mail', 'correo de contacto', 'correo institucional', 'correo personal', 'email de contacto', 'correo participante', 'correo del participante']),
+      cargo: normalizarAlias(['cargo', 'puesto', 'funcion', 'función', 'position', 'rol', 'cargo/puesto', 'cargo ocupado', 'cargo participante', 'cargo del participante', 'cargo en el establecimiento']),
+      comuna: normalizarAlias(['comuna del establecimiento', 'comuna establecimiento', 'comuna de establecimiento', 'comuna', 'municipio', 'ciudad', 'comuna de residencia', 'comuna colegio', 'comuna liceo', 'comuna origen']),
+      establecimiento: normalizarAlias(['establecimiento', 'nombre del establecimiento', 'establecimiento de origen', 'colegio', 'escuela', 'liceo', 'institucion', 'institución', 'centro educativo', 'establecimiento educacional', 'unidad educativa', 'lugar de procedencia', 'rbd']),
+      distincion: normalizarAlias(['distincion', 'distinción', 'distincion maxima', 'distinción máxima', 'distincion unanime', 'distinción unánime', 'distincion unánime', 'distinción unanime', 'distincion unanime (si/no)', 'distinción unánime (si/no)', 'distincion unanime (sí/no)', 'distinción unánime (sí/no)', 'distincion maxima (si/no)', 'distinción máxima (si/no)', 'distincion maxima (sí/no)', 'distinción máxima (sí/no)', 'distincion (si/no)', 'distinción (si/no)', 'distincion (sí/no)', 'distinción (sí/no)', 'tiene distincion', 'tiene distinción', 'distincion max', 'distinción máx', 'distincion_maxima', 'distincionmaxima', 'distincion_unanime', 'distincionunanime']),
+      reconocimiento: normalizarAlias(['reconocimiento', 'reconocimientos', 'reconocimiento especial', 'reconocimiento (si/no)', 'reconocimiento (sí/no)', 'tiene reconocimiento', 'reconocimiento_especial', 'tipo de reconocimiento', 'tipo reconocimiento']),
     };
 
-    const obtenerValorCampo = (fila, alias) => {
+    const aliasKeywords = {
+      nombres: ['nombres'],
+      apellidos: ['apellidos', 'apellido'],
+      nombreCompleto: ['nombre', 'participante', 'asistente', 'alumno', 'persona'],
+      rut: ['rut', 'run', 'dni', 'cedula', 'identificacion', 'documento'],
+      carrera: ['carrera', 'programa', 'curso', 'especialidad'],
+      institucion: ['institucion', 'institución', 'sede', 'universidad'],
+      telefono: ['telefono', 'celular', 'phone', 'fono', 'movil', 'contacto'],
+      correo: ['correo', 'email', 'e mail', 'mail'],
+      cargo: ['cargo', 'puesto', 'funcion', 'rol'],
+      comuna: ['comuna', 'municipio', 'ciudad'],
+      establecimiento: ['establecimiento', 'colegio', 'escuela', 'liceo', 'rbd'],
+    };
+
+    const obtenerValorCampo = (fila, alias, keywords = []) => {
       for (const clave of alias) {
         if (Object.prototype.hasOwnProperty.call(fila, clave)) {
-          return fila[clave];
+          const val = fila[clave];
+          if (val !== null && val !== undefined && String(val).trim() !== '') {
+            return val;
+          }
+        }
+      }
+      if (keywords && keywords.length > 0) {
+        for (const [claveFila, val] of Object.entries(fila)) {
+          if (val !== null && val !== undefined && String(val).trim() !== '') {
+            const claveLower = claveFila.toLowerCase();
+            if (keywords.some(kw => claveLower.includes(kw))) {
+              return val;
+            }
+          }
         }
       }
       return null;
     };
 
-    const obtenerValorConClave = (fila, alias) => {
-      for (const clave of alias) {
-        if (Object.prototype.hasOwnProperty.call(fila, clave)) {
-          return { valor: fila[clave], clave };
-        }
-      }
-      return { valor: null, clave: null };
-    };
-
     const esEventoTrabajadores = tipoEvento === 'trabajadores';
 
-    // Obtener alumnos existentes para verificar duplicados
     const alumnosExistentes = await getAlumnosPorEvento(eventoId);
     const rutsExistentes = new Set(
       alumnosExistentes
-        .map(a => a.rut && String(a.rut).trim().toLowerCase())
+        .map(a => a.rut && String(a.rut).replace(/[.-]/g, '').trim().toUpperCase())
         .filter(Boolean)
     );
 
@@ -1119,7 +950,6 @@ export const importarAlumnosDesdeExcel = async (
 
     for (const alumno of jsonData) {
       try {
-        // Normalizar claves de la fila para permitir cualquier nombre de columna
         const filaNormalizada = Object.entries(alumno).reduce(
           (acc, [clave, valor]) => {
             acc[normalizarClave(clave)] = valor;
@@ -1128,91 +958,65 @@ export const importarAlumnosDesdeExcel = async (
           {}
         );
 
-        const nombres = obtenerValorCampo(filaNormalizada, aliasCampos.nombres);
-        const apellidos = obtenerValorCampo(
-          filaNormalizada,
-          aliasCampos.apellidos
-        );
-        let nombreCompleto = obtenerValorCampo(
-          filaNormalizada,
-          aliasCampos.nombreCompleto
-        );
+        const nombres = obtenerValorCampo(filaNormalizada, aliasCampos.nombres, aliasKeywords.nombres);
+        const apellidos = obtenerValorCampo(filaNormalizada, aliasCampos.apellidos, aliasKeywords.apellidos);
+        let nombreCompleto = obtenerValorCampo(filaNormalizada, aliasCampos.nombreCompleto, aliasKeywords.nombreCompleto);
 
-        // Si no hay nombre completo pero sí nombres y apellidos, lo armo
-        if (!nombreCompleto && nombres && apellidos) {
-          nombreCompleto = `${nombres} ${apellidos}`;
+        if (!nombreCompleto && (nombres || apellidos)) {
+          nombreCompleto = `${nombres || ''} ${apellidos || ''}`.trim();
         }
 
-        // Validar que exista nombre (ya sea completo o compuesto)
-        if (
-          (estaVacio(nombres) || estaVacio(apellidos)) &&
-          estaVacio(nombreCompleto)
-        ) {
+        if (estaVacio(nombreCompleto) && estaVacio(nombres) && estaVacio(apellidos)) {
           errorCount++;
           continue;
         }
 
-        const rutRaw = obtenerValorCampo(filaNormalizada, aliasCampos.rut);
+        const rutRaw = obtenerValorCampo(filaNormalizada, aliasCampos.rut, aliasKeywords.rut);
         const rut = rutRaw != null
           ? String(rutRaw).replace(/[.-]/g, '').trim().toUpperCase()
           : null;
 
-        // Validar campos obligatorios
         if (estaVacio(rut)) {
           errorCount++;
           continue;
         }
 
-        const carrera = obtenerValorCampo(filaNormalizada, aliasCampos.carrera);
-        const institucion = obtenerValorCampo(
-          filaNormalizada,
-          aliasCampos.institucion
-        );
+        const carrera = obtenerValorCampo(filaNormalizada, aliasCampos.carrera, aliasKeywords.carrera);
+        const institucion = obtenerValorCampo(filaNormalizada, aliasCampos.institucion, aliasKeywords.institucion);
         const asiento = obtenerValorCampo(filaNormalizada, aliasCampos.asiento);
         const grupo = obtenerValorCampo(filaNormalizada, aliasCampos.grupo);
         const numeroListaRaw = obtenerValorCampo(filaNormalizada, aliasCampos.numeroLista);
-        // Convertir numeroLista a string si existe
         const numeroLista = numeroListaRaw != null ? String(numeroListaRaw).trim() : null;
         const estado = obtenerValorCampo(filaNormalizada, aliasCampos.estado);
         const presente = parseBooleanField(estado);
-        const departamento = obtenerValorCampo(
-          filaNormalizada,
-          aliasCampos.departamento
-        );
-        const observacion = obtenerValorCampo(
-          filaNormalizada,
-          aliasCampos.observacion
-        );
-        const asisteValor = obtenerValorCampo(
-          filaNormalizada,
-          aliasCampos.asiste
-        );
+        const departamento = obtenerValorCampo(filaNormalizada, aliasCampos.departamento);
+        const observacion = obtenerValorCampo(filaNormalizada, aliasCampos.observacion);
+        const asisteValor = obtenerValorCampo(filaNormalizada, aliasCampos.asiste);
         const asiste = parseBooleanField(asisteValor);
         
-        const { valor: distincionValor, clave: distincionClave } = obtenerValorConClave(
-          filaNormalizada,
-          aliasCampos.distincion
-        );
-        const distincion = parseDistincionField(distincionValor, distincionClave);
+        const { valor: distincionValor, clave: distincionClave } = (fila => {
+          for (const clave of aliasCampos.distincion) {
+            if (Object.prototype.hasOwnProperty.call(fila, clave)) {
+              return { valor: fila[clave], clave };
+            }
+          }
+          return { valor: null, clave: null };
+        })(filaNormalizada);
         
-        const reconocimientoValor = obtenerValorCampo(
-          filaNormalizada,
-          aliasCampos.reconocimiento
-        );
+        const distincion = parseDistincionField(distincionValor, distincionClave);
+        const reconocimientoValor = obtenerValorCampo(filaNormalizada, aliasCampos.reconocimiento);
         const reconocimiento = parseReconocimientoField(reconocimientoValor);
         
-        const telefono = obtenerValorCampo(filaNormalizada, aliasCampos.telefono);
-        const correo = obtenerValorCampo(filaNormalizada, aliasCampos.correo);
-        const cargo = obtenerValorCampo(filaNormalizada, aliasCampos.cargo);
-        const comuna = obtenerValorCampo(filaNormalizada, aliasCampos.comuna);
-        const establecimiento = obtenerValorCampo(filaNormalizada, aliasCampos.establecimiento);
+        const telefono = obtenerValorCampo(filaNormalizada, aliasCampos.telefono, aliasKeywords.telefono);
+        const correo = obtenerValorCampo(filaNormalizada, aliasCampos.correo, aliasKeywords.correo);
+        const cargo = obtenerValorCampo(filaNormalizada, aliasCampos.cargo, aliasKeywords.cargo);
+        const comuna = obtenerValorCampo(filaNormalizada, aliasCampos.comuna, aliasKeywords.comuna);
+        const establecimiento = obtenerValorCampo(filaNormalizada, aliasCampos.establecimiento, aliasKeywords.establecimiento);
 
-        // Procesar fecha y hora de registro
         const fechaRegistroRaw = obtenerValorCampo(filaNormalizada, aliasCampos.fechaRegistro);
         let fechaRegistro = null;
         if (fechaRegistroRaw) {
           try {
-            // Intentar parsear la fecha desde diferentes formatos
             const fechaParseada = new Date(fechaRegistroRaw);
             if (!isNaN(fechaParseada.getTime())) {
               fechaRegistro = fechaParseada;
@@ -1222,38 +1026,18 @@ export const importarAlumnosDesdeExcel = async (
           }
         }
 
-        // Para eventos de trabajadores, solo usamos departamento; institución ya no aplica
-        const departamentoFinal = esEventoTrabajadores
-          ? (departamento ?? null)
-          : departamento;
+        const departamentoFinal = esEventoTrabajadores ? (departamento ?? null) : departamento;
+        const carreraFinal = estaVacio(carrera) ? (esEventoTrabajadores ? 'Colaboradores Santo Tomás' : null) : carrera;
+        const institucionFinal = estaVacio(institucion) ? null : institucion;
 
-        const carreraFinal = estaVacio(carrera)
-          ? esEventoTrabajadores
-            ? 'Colaboradores Santo Tomás'
-            : null
-          : carrera;
-        const institucionFinal = estaVacio(institucion)
-          ? null
-          : institucion;
 
-        if (
-          !esEventoTrabajadores &&
-          !cargo &&
-          !comuna &&
-          !establecimiento &&
-          (estaVacio(carreraFinal) || estaVacio(institucionFinal))
-        ) {
-          errorCount++;
-          continue;
-        }
 
-        const rutNormalizado = String(rut).toLowerCase();
+        const rutNormalizado = String(rut).toUpperCase();
         if (rutsExistentes.has(rutNormalizado)) {
           skippedCount++;
           continue;
         }
 
-        // Guardar el RUT tal como viene (sin puntos ni guión)
         await agregarAlumno(
           {
             nombres,
@@ -1266,9 +1050,7 @@ export const importarAlumnosDesdeExcel = async (
             comuna: comuna ? String(comuna).trim() : null,
             establecimiento: establecimiento ? String(establecimiento).trim() : (institucionFinal || null),
             carrera: carreraFinal || null,
-            institucion: esEventoTrabajadores
-              ? null
-              : (establecimiento ? String(establecimiento).trim() : (institucionFinal || null)),
+            institucion: esEventoTrabajadores ? null : (establecimiento ? String(establecimiento).trim() : (institucionFinal || null)),
             asiento: esEventoTrabajadores ? null : asiento,
             grupo: esEventoTrabajadores ? null : grupo,
             numeroLista: esEventoTrabajadores ? null : numeroLista,
@@ -1290,15 +1072,30 @@ export const importarAlumnosDesdeExcel = async (
       }
     }
 
-    if (successCount === 0 && errorCount > 0) {
-      throw new Error(
-        `No se pudo importar ningún alumno. Verifica el formato del archivo.`
-      );
+    if (successCount === 0) {
+      if (skippedCount > 0 && errorCount === 0) {
+        return {
+          successCount: 0,
+          errorCount: 0,
+          skippedCount,
+          message: `Todos los participantes (${skippedCount}) ya están registrados en este evento.`,
+        };
+      }
+      if (skippedCount > 0) {
+        return {
+          successCount: 0,
+          errorCount,
+          skippedCount,
+          message: `No se agregaron nuevos participantes: ${skippedCount} ya están registrados en este evento (${errorCount} filas omitidas por faltar Nombre o RUT).`,
+        };
+      }
+      throw new Error(`No se pudo importar ningún alumno. Asegúrese de que el archivo Excel contenga columnas con al menos el Nombre y el RUT del participante.`);
     }
 
     return {
       successCount,
       errorCount,
+      skippedCount,
       message: `Importación completada: ${successCount} agregados, ${skippedCount} duplicados omitidos, ${errorCount} errores`,
     };
   } catch (error) {

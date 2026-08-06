@@ -653,20 +653,18 @@ function AdminPanel({ onSalir }) {
                         <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Carrera</label>
                         <input
                           className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Ej: Informática'
+                          placeholder='Opcional (Ej: Informática)'
                           value={nuevoAlumno.carrera}
                           onChange={e => setNuevoAlumno(a => ({ ...a, carrera: e.target.value }))}
-                          required
                         />
                       </div>
                       <div className='space-y-1.5'>
                         <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Institución</label>
                         <input
                           className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Ej: Santo Tomás'
+                          placeholder='Opcional (Ej: Santo Tomás)'
                           value={nuevoAlumno.institucion}
                           onChange={e => setNuevoAlumno(a => ({ ...a, institucion: e.target.value }))}
-                          required
                         />
                       </div>
                     </div>

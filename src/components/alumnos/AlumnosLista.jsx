@@ -262,9 +262,10 @@ const AlumnosLista = ({
 
   function mostrarTodasLasColumnas() {
     setColumnasVisibles({
-      estado: true, rut: true, nombres: true, apellidos: true,
-      carrera: true, institucion: true, numeroLista: true,
-      asiento: true, grupo: true,
+      estado: true, rut: true, nombreCompleto: true, nombres: true, apellidos: true,
+      telefono: true, correo: true, establecimiento: true, cargo: true, comuna: true,
+      carrera: true, institucion: true, numeroLista: true, asiento: true, grupo: true,
+      distincion: true, reconocimiento: true,
     });
   }
 
@@ -1176,6 +1177,20 @@ const AlumnosLista = ({
                   <label className="text-sm font-semibold text-slate-700">RUT</label>
                   <input type="text" required value={editFormData.rut} onChange={e => setEditFormData({ ...editFormData, rut: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all bg-slate-50" />
                 </div>
+
+                {/* Nombre Completo */}
+                {(columnasVisibles.nombreCompleto || (!columnasVisibles.nombres && !columnasVisibles.apellidos)) && (
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label className="text-sm font-semibold text-slate-700">Nombre Completo</label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.nombre || `${editFormData.nombres || ''} ${editFormData.apellidos || ''}`.trim()}
+                      onChange={e => setEditFormData({ ...editFormData, nombre: e.target.value })}
+                      className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all"
+                    />
+                  </div>
+                )}
 
                 {/* Nombres - Only if visible */}
                 {columnasVisibles.nombres && (
