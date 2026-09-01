@@ -11,9 +11,34 @@ import useEventos from '../../hooks/useEventos';
 import useAlumnosEvento from '../../hooks/useAlumnosEvento';
 import TrabajadoresLista from '../trabajadores/TrabajadoresLista';
 import TrabajadoresResumen from '../trabajadores/TrabajadoresResumen';
+import UsuariosPanel from './UsuariosPanel';
 
-function AdminPanel({ onSalir }) {
-  const [tab, setTab] = useState('eventos');
+function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissions = null }) {
+  const esSuperAdmin = userRole === 'admin';
+  const permisos = userPermissions || (esSuperAdmin ? { eventos: true, participantes: true, asistencia: true, usuarios: true } : {});
+
+  // Tab inicial según permisos
+  const primerTab = esSuperAdmin || permisos.eventos
+    ? 'eventos'
+    : permisos.participantes
+    ? 'alumnos'
+    : permisos.usuarios
+    ? 'usuarios'
+    : 'eventos';
+
+  const [tab, setTab] = useState(primerTab);
+
+  // Asegurar que si el tab actual no está permitido para este usuario, cambie al primer tab válido
+  useEffect(() => {
+    if (esSuperAdmin) return;
+    if (tab === 'eventos' && !permisos.eventos) {
+      setTab(primerTab);
+    } else if (tab === 'alumnos' && !permisos.participantes) {
+      setTab(primerTab);
+    } else if (tab === 'usuarios' && !permisos.usuarios) {
+      setTab(primerTab);
+    }
+  }, [userRole, userPermissions, primerTab]);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminModalMode, setAdminModalMode] = useState('add');
   const deleteFormRef = useRef(null);
@@ -178,6 +203,7 @@ function AdminPanel({ onSalir }) {
         <EventosPanel
           eventos={eventos}
           eventoActivo={eventoActivo}
+          userRole={userRole}
         />
       );
     }
@@ -351,6 +377,10 @@ function AdminPanel({ onSalir }) {
         </div>
       );
     }
+
+    if (tab === 'usuarios') {
+      return <UsuariosPanel />;
+    }
   };
 
   return (
@@ -398,37 +428,75 @@ function AdminPanel({ onSalir }) {
         </div>
 
         <nav className='flex-1 px-3 space-y-2 mt-4'>
-          <button
-            onClick={() => setTab('eventos')}
-            className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-sm font-medium ${tab === 'eventos'
-              ? 'bg-white/15 text-white shadow-sm'
-              : 'text-white/70 hover:bg-white/10 hover:text-white'
-              } ${!sidebarOpen && 'justify-center'}`}
-            title={!sidebarOpen ? 'Eventos' : ''}
-          >
-            <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span className={`whitespace-nowrap transition-opacity duration-300 ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
-              Eventos
-            </span>
-          </button>
+          {(esSuperAdmin || permisos.eventos) && (
+            <button
+              onClick={() => setTab('eventos')}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-sm font-medium ${tab === 'eventos'
+                ? 'bg-white/15 text-white shadow-sm'
+                : 'text-white/70 hover:bg-white/10 hover:text-white'
+                } ${!sidebarOpen && 'justify-center'}`}
+              title={!sidebarOpen ? 'Eventos' : ''}
+            >
+              <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className={`whitespace-nowrap transition-opacity duration-300 ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
+                Eventos
+              </span>
+            </button>
+          )}
 
-          <button
-            onClick={() => setTab('alumnos')}
-            className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-sm font-medium ${tab === 'alumnos'
-              ? 'bg-white/15 text-white shadow-sm'
-              : 'text-white/70 hover:bg-white/10 hover:text-white'
-              } ${!sidebarOpen && 'justify-center'}`}
-            title={!sidebarOpen ? 'Participantes' : ''}
-          >
-            <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <span className={`whitespace-nowrap transition-opacity duration-300 ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
-              Participantes
-            </span>
-          </button>
+          {(esSuperAdmin || permisos.participantes) && (
+            <button
+              onClick={() => setTab('alumnos')}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-sm font-medium ${tab === 'alumnos'
+                ? 'bg-white/15 text-white shadow-sm'
+                : 'text-white/70 hover:bg-white/10 hover:text-white'
+                } ${!sidebarOpen && 'justify-center'}`}
+              title={!sidebarOpen ? 'Participantes' : ''}
+            >
+              <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <span className={`whitespace-nowrap transition-opacity duration-300 ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
+                Participantes
+              </span>
+            </button>
+          )}
+
+          {(esSuperAdmin || permisos.usuarios) && (
+            <button
+              onClick={() => setTab('usuarios')}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-sm font-medium ${tab === 'usuarios'
+                ? 'bg-white/15 text-white shadow-sm'
+                : 'text-white/70 hover:bg-white/10 hover:text-white'
+                } ${!sidebarOpen && 'justify-center'}`}
+              title={!sidebarOpen ? 'Usuarios' : ''}
+            >
+              <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span className={`whitespace-nowrap transition-opacity duration-300 ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
+                Usuarios
+              </span>
+            </button>
+          )}
+
+          {/* Botón directo a vista de ingreso de RUT */}
+          {onIrAsistencia && (esSuperAdmin || permisos.asistencia) && (
+            <button
+              onClick={onIrAsistencia}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-sm font-medium text-emerald-300 hover:bg-emerald-500/20 hover:text-white ${!sidebarOpen && 'justify-center'}`}
+              title={!sidebarOpen ? 'Ingreso RUT' : ''}
+            >
+              <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className={`whitespace-nowrap transition-opacity duration-300 ${!sidebarOpen ? 'opacity-0 w-0 hidden' : 'opacity-100'}`}>
+                Ingresar Asistencia
+              </span>
+            </button>
+          )}
         </nav>
 
         <div className='p-3 mt-auto border-t border-white/10'>
@@ -472,25 +540,53 @@ function AdminPanel({ onSalir }) {
       {/* Mobile Bottom Navigation */}
       <nav className='md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30 safe-area-inset-bottom'>
         <div className='flex items-center justify-around h-16 px-2'>
-          <button
-            onClick={() => setTab('eventos')}
-            className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${tab === 'eventos' ? 'text-st-verde' : 'text-slate-400'}`}
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span className='text-xs font-medium'>Eventos</span>
-          </button>
+          {(esSuperAdmin || permisos.eventos) && (
+            <button
+              onClick={() => setTab('eventos')}
+              className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${tab === 'eventos' ? 'text-st-verde' : 'text-slate-400'}`}
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className='text-xs font-medium'>Eventos</span>
+            </button>
+          )}
 
-          <button
-            onClick={() => setTab('alumnos')}
-            className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${tab === 'alumnos' ? 'text-st-verde' : 'text-slate-400'}`}
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <span className='text-xs font-medium'>Participantes</span>
-          </button>
+          {(esSuperAdmin || permisos.participantes) && (
+            <button
+              onClick={() => setTab('alumnos')}
+              className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${tab === 'alumnos' ? 'text-st-verde' : 'text-slate-400'}`}
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <span className='text-xs font-medium'>Participantes</span>
+            </button>
+          )}
+
+          {(esSuperAdmin || permisos.usuarios) && (
+            <button
+              onClick={() => setTab('usuarios')}
+              className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${tab === 'usuarios' ? 'text-st-verde' : 'text-slate-400'}`}
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span className='text-xs font-medium'>Usuarios</span>
+            </button>
+          )}
+
+          {onIrAsistencia && (esSuperAdmin || permisos.asistencia) && (
+            <button
+              onClick={onIrAsistencia}
+              className='flex flex-col items-center justify-center flex-1 h-full gap-1 text-emerald-600 hover:text-emerald-700 transition-colors'
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className='text-xs font-medium'>Ingreso RUT</span>
+            </button>
+          )}
 
           <button
             onClick={onSalir}

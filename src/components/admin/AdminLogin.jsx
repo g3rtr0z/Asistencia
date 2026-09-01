@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../connection/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import Logo from '../../assets/logo3.png';
+import Logo from '../../assets/logopag.png';
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
+import { obtenerRolUsuario } from '../../services/authService';
 
 // Claves para localStorage
 const STORAGE_KEY_EMAIL = 'admin_remembered_email';
@@ -11,6 +13,7 @@ const STORAGE_KEY_REMEMBER = 'admin_remember_me';
 function AdminLogin({ onAuth, onSalir }) {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -31,7 +34,6 @@ function AdminLogin({ onAuth, onSalir }) {
     setError('');
     setLoading(true);
     try {
-      // Guardar o eliminar email según la opción "Recordarme"
       if (rememberMe) {
         localStorage.setItem(STORAGE_KEY_EMAIL, email);
         localStorage.setItem(STORAGE_KEY_REMEMBER, 'true');
@@ -40,145 +42,232 @@ function AdminLogin({ onAuth, onSalir }) {
         localStorage.removeItem(STORAGE_KEY_REMEMBER);
       }
 
-      await signInWithEmailAndPassword(auth, email, pass);
-      onAuth();
-    } catch (_err) {
-      setError('Credenciales incorrectas o usuario no autorizado');
+      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      const rol = await obtenerRolUsuario(userCredential.user);
+      
+      if (!rol) {
+        await auth.signOut();
+        throw new Error('Usuario revocado o no autorizado');
+      }
+
+      onAuth(rol, userCredential.user);
+    } catch (err) {
+      setError(err.message === 'Usuario revocado o no autorizado' 
+        ? 'Este usuario no tiene permisos o ha sido eliminado.' 
+        : 'Credenciales incorrectas o usuario no autorizado');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className='min-h-screen w-full flex bg-slate-50'>
-      {/* Left Section - Institutional Branding */}
-      <div className='hidden lg:flex lg:w-1/2 bg-st-verde relative'>
-        {/* Simple decorative element */}
-        <div className='absolute inset-0 bg-gradient-to-br from-st-verde to-[#004b30] opacity-50'></div>
+    <div className='min-h-screen w-full flex flex-col lg:flex-row relative overflow-x-hidden bg-slate-900'>
+      
+      {/* Lado Izquierdo - Fondo Panorámico institucional (Oculto en móvil para enfocar el formulario, visible en escritorio) */}
+      <div className='hidden lg:flex w-full lg:w-3/5 min-h-screen relative flex-col justify-between p-8 lg:p-16 text-white shrink-0 overflow-hidden'>
+        {/* Imagen de Fondo ST Manuel Rodriguez */}
+        <div 
+          className='absolute inset-0 bg-cover bg-center pointer-events-none transform scale-105 filter blur-[1.5px]'
+          style={{ backgroundImage: `url('/ST Manuel Rodriguez.webp')` }}
+        />
+        {/* Capa de degradado institucional verde oscuro */}
+        <div className='absolute inset-0 bg-gradient-to-t from-slate-950/90 via-[#003822]/85 to-[#004b30]/75 pointer-events-none backdrop-blur-[1px]'></div>
+        
+        {/* Elementos decorativos */}
+        <div className='absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3 pointer-events-none'></div>
+        <div className='absolute bottom-0 left-0 w-96 h-96 bg-black/40 rounded-full blur-3xl pointer-events-none'></div>
 
-        <div className='relative z-10 flex flex-col justify-center items-center w-full p-16 text-white'>
-          <div className='text-center max-w-md'>
-            <div className='w-24 h-24 bg-white rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-xl p-5'>
-              <img src={Logo} alt="Logo Santo Tomás" className='w-full h-full object-contain' />
-            </div>
-            <h1 className='text-3xl font-bold mb-3'>Panel Administrativo</h1>
-            <p className='text-white/80 text-base leading-relaxed'>
-              Sistema de Gestión de Asistencia
-            </p>
-            <div className='mt-8 pt-6 border-t border-white/20'>
-              <p className='text-white/60 text-sm'>Santo Tomás - Temuco</p>
-            </div>
+        {/* Header superior izquierdo */}
+        <div className='relative z-10 flex items-center gap-3'>
+          <div className='w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-lg'>
+            <span className='font-bold text-xl tracking-wider'>ST</span>
           </div>
+          <div>
+            <div className='text-xs font-semibold uppercase tracking-widest text-white/70'>Santo Tomás</div>
+            <div className='text-sm font-bold'>Sede Temuco</div>
+          </div>
+        </div>
+
+        {/* Contenido central informativo */}
+        <div className='relative z-10 max-w-lg my-auto pt-6'>
+          <motion.h1 
+            initial={{ opacity: 0, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, filter: 'blur(0px)' }}
+            transition={{ duration: 0.45 }}
+            className='text-3xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-tight mb-4 drop-shadow-sm'
+          >
+            Mi Asistencia - ST
+          </motion.h1>
+
+          <motion.p 
+            initial={{ opacity: 0, filter: 'blur(6px)' }}
+            animate={{ opacity: 0.9, filter: 'blur(0px)' }}
+            transition={{ duration: 0.45, delay: 0.1 }}
+            className='text-white/85 text-sm sm:text-base lg:text-lg font-light leading-relaxed'
+          >
+            Plataforma institucional para el monitoreo de asistencia, gestión de eventos y análisis de registros en tiempo real.
+          </motion.p>
+        </div>
+
+        {/* Footer inferior izquierdo */}
+        <div className='relative z-10 flex items-center justify-between text-xs text-white/60 pt-6 border-t border-white/15'>
+          <span>© {new Date().getFullYear()} Santo Tomás</span>
+          <span>Acceso Restringido</span>
         </div>
       </div>
 
-      {/* Right Section - Login Form */}
-      <div className='w-full lg:w-1/2 flex items-center justify-center p-8'>
-        <div className='w-full max-w-md'>
-          {/* Mobile Logo */}
-          <div className='lg:hidden flex justify-center mb-6'>
-            <div className='w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-lg border-2 border-st-verde p-2'>
-              <img src={Logo} alt="Logo" className='w-full h-full object-contain' />
-            </div>
+      {/* Lado Derecho - Formulario de Login a Pantalla Completa (Optimizado y perfectamente centrado) */}
+      <div className='w-full lg:w-2/5 min-h-screen bg-slate-50 flex flex-col justify-center items-center px-6 py-10 sm:p-12 lg:p-14 relative z-10 shadow-2xl overflow-y-auto'>
+        
+        {/* Fondo sutil en móvil con imagen difuminada muy suave */}
+        <div 
+          className='lg:hidden absolute inset-0 bg-cover bg-center pointer-events-none opacity-5 filter blur-sm'
+          style={{ backgroundImage: `url('/ST Manuel Rodriguez.webp')` }}
+        />
+
+        <div className='w-full max-w-md my-auto flex flex-col items-center relative z-10'>
+          
+          {/* Logo institucional centrado arriba con botón volver opcional */}
+          <div className='w-full flex flex-col items-center relative mb-6'>
+            {onSalir && (
+              <button
+                onClick={onSalir}
+                className='absolute left-0 top-0 px-3.5 py-2 rounded-xl bg-white text-slate-700 hover:text-st-verde border border-slate-200 shadow-sm hover:shadow-md flex items-center gap-2 transition-all duration-200 active:scale-95 group'
+                title='Volver al inicio'
+              >
+                <ArrowLeft className='w-4 h-4 transform group-hover:-translate-x-1 transition-transform' />
+                <span className='text-xs font-bold uppercase tracking-wider'>Volver</span>
+              </button>
+            )}
+
+            <img src={Logo} alt="Santo Tomás Logo" className='w-24 h-24 sm:w-28 sm:h-28 object-contain opacity-95 drop-shadow-sm' />
           </div>
 
-          {/* Header */}
-          <div className='mb-5 text-center lg:text-left'>
-            <h2 className='text-xl lg:text-2xl font-bold text-slate-900 mb-1'>Iniciar Sesión</h2>
-            <p className='text-slate-500 text-xs lg:text-sm'>Acceso exclusivo para administradores</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, filter: 'blur(0px)' }}
+            transition={{ duration: 0.4 }}
+            className='w-full mb-6 text-center'
+          >
+            <h2 className='text-2xl sm:text-3xl font-black text-slate-800 tracking-tight mb-2'>
+              Iniciar Sesión
+            </h2>
+            <p className='text-slate-500 text-xs sm:text-sm font-medium'>
+              Ingresa tus credenciales institucionales para continuar.
+            </p>
+          </motion.div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className='space-y-3 lg:space-y-4'>
-            {/* Email */}
-            <div>
-              <label className='block text-sm font-semibold text-slate-700 mb-2'>
-                Correo electrónico
+          <motion.form 
+            initial={{ opacity: 0, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, filter: 'blur(0px)' }}
+            transition={{ duration: 0.45, delay: 0.1 }}
+            onSubmit={handleSubmit} 
+            className='w-full flex flex-col gap-4 sm:gap-5'
+          >
+            {/* Correo */}
+            <div className='group'>
+              <label className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1'>
+                Correo institucional
               </label>
-              <input
-                type='email'
-                value={email}
-                required
-                onChange={e => setEmail(e.target.value)}
-                placeholder='correo@institucional.cl'
-                className='w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-lg focus:border-st-verde focus:outline-none transition-colors text-slate-900'
-                autoComplete='username'
-              />
+              <div className='relative flex items-center'>
+                <div className='absolute left-3.5 sm:left-4 text-slate-400'>
+                  <Mail className='w-5 h-5' />
+                </div>
+                <input
+                  type='email'
+                  value={email}
+                  required
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder='correo@santotomas.cl'
+                  className='w-full h-12 sm:h-14 pl-11 sm:pl-12 pr-4 bg-white border-2 border-slate-200 rounded-xl sm:rounded-2xl text-sm font-semibold text-slate-800 outline-none transition-all duration-300 focus:border-st-verde focus:ring-4 focus:ring-st-verde/10 focus:shadow-xl focus:shadow-st-verde/5'
+                  autoComplete='username'
+                />
+              </div>
             </div>
 
-            {/* Password */}
-            <div>
-              <label className='block text-sm font-semibold text-slate-700 mb-2'>
+            {/* Contraseña */}
+            <div className='group'>
+              <label className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1'>
                 Contraseña
               </label>
-              <input
-                type='password'
-                value={pass}
-                required
-                onChange={e => setPass(e.target.value)}
-                placeholder='••••••••'
-                className='w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-lg focus:border-st-verde focus:outline-none transition-colors text-slate-900'
-                autoComplete='current-password'
-              />
+              <div className='relative flex items-center'>
+                <div className='absolute left-3.5 sm:left-4 text-slate-400'>
+                  <Lock className='w-5 h-5' />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={pass}
+                  required
+                  onChange={e => setPass(e.target.value)}
+                  placeholder='••••••••'
+                  className='w-full h-12 sm:h-14 pl-11 sm:pl-12 pr-11 sm:pr-12 bg-white border-2 border-slate-200 rounded-xl sm:rounded-2xl text-sm font-semibold text-slate-800 outline-none transition-all duration-300 focus:border-st-verde focus:ring-4 focus:ring-st-verde/10 focus:shadow-xl focus:shadow-st-verde/5'
+                  autoComplete='current-password'
+                />
+                <button
+                  type='button'
+                  onClick={() => setShowPassword(!showPassword)}
+                  className='absolute right-3.5 sm:right-4 text-slate-400 hover:text-slate-600 transition-colors p-1.5'
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className='w-5 h-5' />
+                  ) : (
+                    <Eye className='w-5 h-5' />
+                  )}
+                </button>
+              </div>
             </div>
 
-            {/* Remember Me Checkbox */}
-            <div className='flex items-center gap-2'>
-              <input
-                type='checkbox'
-                id='rememberMe'
-                checked={rememberMe}
-                onChange={e => setRememberMe(e.target.checked)}
-                className='w-4 h-4 text-st-verde bg-white border-2 border-slate-300 rounded focus:ring-st-verde focus:ring-2 cursor-pointer accent-st-verde'
-              />
-              <label htmlFor='rememberMe' className='text-sm text-slate-600 cursor-pointer select-none'>
-                Recordar mi correo
+            {/* Recordarme */}
+            <div className='flex items-center justify-between px-1'>
+              <label className='flex items-center gap-2.5 cursor-pointer select-none'>
+                <input
+                  type='checkbox'
+                  id='rememberMe'
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                  className='w-4 h-4 rounded border-slate-300 text-st-verde focus:ring-st-verde cursor-pointer accent-st-verde'
+                />
+                <span className='text-xs font-medium text-slate-600 hover:text-slate-800 transition-colors'>
+                  Recordar mi correo
+                </span>
               </label>
             </div>
 
-            {/* Error Message */}
+            {/* Mensaje de Error */}
             <AnimatePresence>
               {error && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className='overflow-hidden'
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className='p-3 sm:p-3.5 bg-red-50 border-l-4 border-red-500 rounded-xl flex items-center gap-2.5 text-red-700 text-xs font-semibold'
                 >
-                  <div className='flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200'>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-red-500 shrink-0">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-                    </svg>
-                    <p className='text-sm text-red-700'>{error}</p>
-                  </div>
+                  <span>{error}</span>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Submit Button */}
+            {/* Botón de Enviar */}
             <button
               type='submit'
               disabled={loading || !email.trim() || !pass.trim()}
-              className={`w-full py-2.5 lg:py-3 rounded-lg font-semibold text-sm lg:text-base transition-all duration-200
+              className={`w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl font-bold text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 shadow-lg mt-1 sm:mt-2
                 ${loading || !email.trim() || !pass.trim()
-                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  : 'bg-st-verde text-white hover:bg-[#004b30] shadow-sm hover:shadow-md'
+                  ? 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed border border-slate-300'
+                  : 'bg-st-verde text-white shadow-st-verde/25 hover:bg-[#004b30] hover:shadow-xl hover:shadow-st-verde/30 transform hover:-translate-y-0.5 active:translate-y-0'
                 }`}
             >
-              {loading ? 'Verificando...' : 'Iniciar Sesión'}
+              {loading ? (
+                <>
+                  <Loader2 className='w-5 h-5 animate-spin' />
+                  <span>Verificando credenciales...</span>
+                </>
+              ) : (
+                <span>Ingresar al Panel</span>
+              )}
             </button>
-
-            {/* Back Button */}
-            <button
-              type='button'
-              onClick={onSalir}
-              className='w-full py-2.5 text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors'
-            >
-              Volver al inicio
-            </button>
-          </form>
-
-
+          </motion.form>
         </div>
       </div>
     </div>

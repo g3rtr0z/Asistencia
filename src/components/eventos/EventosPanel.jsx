@@ -10,7 +10,8 @@ import {
 } from '../../services/eventosService';
 import ImportExcel from '../admin/ImportExcel';
 
-function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) {
+function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, userRole = 'admin' }) {
+  const esSuperAdmin = userRole === 'admin';
   const [showModal, setShowModal] = useState(false);
   const [editingEvento, setEditingEvento] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -21,6 +22,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
     fechaInicio: '',
     fechaFin: '',
     activo: false,
+    visibleCoordinador: true,
     tipo: 'alumnos',
   });
   const [mensaje, setMensaje] = useState('');
@@ -48,6 +50,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
           fechaInicio: '',
           fechaFin: '',
           activo: false,
+          visibleCoordinador: true,
           tipo: 'alumnos',
         });
       } else {
@@ -61,6 +64,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
           fechaInicio: '',
           fechaFin: '',
           activo: false,
+          visibleCoordinador: true,
           tipo: 'alumnos',
         });
       }
@@ -82,6 +86,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
       fechaInicio: evento.fechaInicio,
       fechaFin: evento.fechaFin,
       activo: evento.activo,
+      visibleCoordinador: evento.visibleCoordinador !== undefined ? evento.visibleCoordinador : true,
       tipo: evento.tipo || 'alumnos',
     });
     setShowModal(true);
@@ -243,16 +248,18 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
             </button>
           </div>
 
-          {/* Create Button */}
-          <button
-            onClick={() => setShowModal(true)}
-            className='flex items-center justify-center gap-2 bg-st-verde text-white px-5 py-2.5 rounded-lg hover:bg-[#004b30] transition-colors font-medium text-sm shadow-sm'
-          >
-            <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
-            </svg>
-            Nuevo Evento
-          </button>
+          {/* Create Button (Solo para Administrador) */}
+          {esSuperAdmin && (
+            <button
+              onClick={() => setShowModal(true)}
+              className='flex items-center justify-center gap-2 bg-st-verde text-white px-5 py-2.5 rounded-lg hover:bg-[#004b30] transition-colors font-medium text-sm shadow-sm'
+            >
+              <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+              </svg>
+              Nuevo Evento
+            </button>
+          )}
         </div>
       </div>
 
@@ -277,6 +284,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
         {eventos
           .filter(evento => (evento.tipo || 'alumnos') === filtroTipo)
+          .filter(evento => esSuperAdmin || evento.visibleCoordinador !== false)
           .map(evento => (
             <motion.div
               key={evento.id}
@@ -285,18 +293,25 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
               className={`bg-white rounded-xl border-2 overflow-hidden transition-all hover:shadow-lg ${evento.activo ? 'border-st-verde' : 'border-slate-200'
                 }`}
             >
-              {/* Event Header with Status */}
-              <div className={`px-5 py-3 ${evento.activo ? 'bg-st-verde' : 'bg-slate-100'}`}>
+              {/* Event Header */}
+              <div className={`p-4 ${evento.activo ? 'bg-st-verde text-white' : 'bg-slate-50'}`}>
                 <div className='flex items-center justify-between'>
                   <span className={`text-sm font-bold ${evento.activo ? 'text-white' : 'text-slate-600'}`}>
                     {evento.activo ? '● EVENTO ACTIVO' : '○ Inactivo'}
                   </span>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${evento.tipo === 'trabajadores'
-                    ? 'bg-blue-100 text-blue-700'
-                    : evento.activo ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'
-                    }`}>
-                    {evento.tipo === 'trabajadores' ? 'Funcionarios' : 'Alumnos'}
-                  </span>
+                  <div className='flex items-center gap-2'>
+                    {esSuperAdmin && (
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${evento.visibleCoordinador !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                        {evento.visibleCoordinador !== false ? '👁️ Coordinador' : '🔒 Solo Admin'}
+                      </span>
+                    )}
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${evento.tipo === 'trabajadores'
+                      ? 'bg-blue-100 text-blue-700'
+                      : evento.activo ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'
+                      }`}>
+                      {evento.tipo === 'trabajadores' ? 'Funcionarios' : 'Alumnos'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -337,15 +352,17 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
                     </svg>
                   </button>
-                  <button
-                    onClick={() => handleEliminar(evento.id)}
-                    className='p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors'
-                    title='Eliminar'
-                  >
-                    <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
-                    </svg>
-                  </button>
+                  {esSuperAdmin && (
+                    <button
+                      onClick={() => handleEliminar(evento.id)}
+                      className='p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors'
+                      title='Eliminar'
+                    >
+                      <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -353,24 +370,28 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
       </div>
 
       {/* Empty State */}
-      {eventos.filter(evento => (evento.tipo || 'alumnos') === filtroTipo).length === 0 && (
+      {eventos.filter(evento => (evento.tipo || 'alumnos') === filtroTipo).filter(evento => esSuperAdmin || evento.visibleCoordinador !== false).length === 0 && (
         <div className='bg-white rounded-xl border border-slate-200 p-12 text-center'>
           <div className='w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4'>
             <svg className='w-8 h-8 text-slate-400' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' />
             </svg>
           </div>
-          <h3 className='text-lg font-semibold text-slate-900 mb-1'>No hay eventos</h3>
-          <p className='text-slate-500 text-sm mb-4'>Crea tu primer evento para comenzar</p>
-          <button
-            onClick={() => setShowModal(true)}
-            className='inline-flex items-center gap-2 bg-st-verde text-white px-4 py-2 rounded-lg hover:bg-[#004b30] transition-colors text-sm font-medium'
-          >
-            <svg className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
-            </svg>
-            Crear Evento
-          </button>
+          <h3 className='text-lg font-semibold text-slate-900 mb-1'>No hay eventos disponibles</h3>
+          <p className='text-slate-500 text-sm mb-4'>
+            {esSuperAdmin ? 'Crea tu primer evento para comenzar.' : 'No tienes eventos asignados en esta categoría actualmente.'}
+          </p>
+          {esSuperAdmin && (
+            <button
+              onClick={() => setShowModal(true)}
+              className='inline-flex items-center gap-2 bg-st-verde text-white px-4 py-2 rounded-lg hover:bg-[#004b30] transition-colors text-sm font-medium'
+            >
+              <svg className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+              </svg>
+              Crear Evento
+            </button>
+          )}
         </div>
       )}
 
@@ -486,6 +507,32 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange }) 
                     </button>
                   </div>
                 </div>
+
+                {/* Visibilidad para Coordinador (solo visible para Administrador) */}
+                {esSuperAdmin && (
+                  <div className='p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between'>
+                    <div className='flex items-center gap-2.5'>
+                      <div className='w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm'>
+                        👁️
+                      </div>
+                      <div>
+                        <p className='text-xs font-bold text-slate-800'>Visible para Coordinadores</p>
+                        <p className='text-[10px] text-slate-400'>
+                          Permite que los usuarios con perfil Coordinador vean y gestionen este evento.
+                        </p>
+                      </div>
+                    </div>
+                    <label className='relative inline-flex items-center cursor-pointer'>
+                      <input
+                        type='checkbox'
+                        checked={formData.visibleCoordinador}
+                        onChange={e => setFormData({ ...formData, visibleCoordinador: e.target.checked })}
+                        className='sr-only peer'
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-st-verde"></div>
+                    </label>
+                  </div>
+                )}
 
                 {editingEvento && (
                   <div className='pt-2'>

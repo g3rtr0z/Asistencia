@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Logo from '../../assets/logo3.png';
+import Logo from '../../assets/logopag.png';
 import { buscarAlumnoPorRutEnEvento } from '../../services/alumnosService';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRScanner from './QRScanner';
 
-const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminClick, errorVisual, showButtons = true }) => {
+const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminClick, onLogout, userRole = 'usuario', errorVisual, showButtons = true }) => {
   const [rut, setRut] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -20,30 +20,59 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
       const timer = setTimeout(() => {
         setResult(null);
         setRut('');
-        setErrorVisual(''); // Limpiar errores
-        // Enfocar el input después del auto-reset para poder escanear inmediatamente
-        setTimeout(() => {
-          if (rutInputRef.current) {
-            rutInputRef.current.focus();
-          }
-        }, 100);
+        setErrorVisual('');
       }, 30000); // 30s auto-reset
       return () => clearTimeout(timer);
+    } else {
+      // Cada vez que result pasa a null (por clic en botón o auto-reset), enfocar inmediatamente el input
+      const focusTimer = setTimeout(() => {
+        if (rutInputRef.current) {
+          rutInputRef.current.focus();
+        }
+      }, 50);
+      const focusTimer2 = setTimeout(() => {
+        if (rutInputRef.current) {
+          rutInputRef.current.focus();
+        }
+      }, 450); // Tras la animación de salida de Framer Motion
+      return () => {
+        clearTimeout(focusTimer);
+        clearTimeout(focusTimer2);
+      };
     }
   }, [result]);
 
   useEffect(() => {
-    // Focus only on desktop
-    if (window.innerWidth >= 768 && rutInputRef.current) {
-      rutInputRef.current.focus();
-    }
+    // Enfocar al cargar
+    const initialTimer = setTimeout(() => {
+      if (rutInputRef.current) {
+        rutInputRef.current.focus();
+      }
+    }, 100);
+    return () => clearTimeout(initialTimer);
   }, []);
 
+  const reiniciarIngreso = () => {
+    setResult(null);
+    setRut('');
+    setErrorVisual('');
+    if (rutInputRef.current) rutInputRef.current.value = '';
+  };
+
+  // Escuchar tecla Enter cuando se muestra la tarjeta de confirmación/resultado
   useEffect(() => {
-    return () => {
-      if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+    if (!result) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        reiniciarIngreso();
+      }
     };
-  }, []);
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [result]);
 
   const formatRut = value => {
     if (!value) return '';
@@ -176,8 +205,15 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
 
         {/* Left Section - Information */}
         <div className='bg-st-verde p-6 md:p-8 xl:p-12 text-white flex flex-row xl:flex-col justify-between items-center xl:items-start relative overflow-hidden shrink-0 xl:w-5/12'>
-          <div className='absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 pointer-events-none'></div>
-          <div className='absolute bottom-0 left-0 w-48 h-48 bg-black/20 rounded-full blur-2xl transform -translate-x-1/2 translate-y-1/2 pointer-events-none'></div>
+          {/* Background Image with blur and gradient overlay */}
+          <div 
+            className='absolute inset-0 bg-cover bg-center pointer-events-none transform scale-105 filter blur-[2px]'
+            style={{ backgroundImage: `url('/ST Manuel Rodriguez.webp')` }}
+          />
+          {/* Tint and gradient overlay for readability and smooth look */}
+          <div className='absolute inset-0 bg-gradient-to-tr from-[#003822]/90 via-st-verde/85 to-[#005a38]/80 pointer-events-none backdrop-blur-[1px]'></div>
+          <div className='absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 pointer-events-none'></div>
+          <div className='absolute bottom-0 left-0 w-48 h-48 bg-black/30 rounded-full blur-2xl transform -translate-x-1/2 translate-y-1/2 pointer-events-none'></div>
 
           <div className='relative z-10 flex items-center gap-4 xl:block'>
             <div className='w-10 h-10 md:w-16 md:h-16 bg-white/20 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center mb-0 xl:mb-8'>
@@ -241,37 +277,55 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
           {/* Top Actions - Fixed on mobile, absolute on desktop */}
           {(showButtons && !showScanner && !showCredits) && (
             <div className={`fixed xl:absolute top-4 right-4 xl:top-8 xl:right-8 flex items-center gap-2 md:gap-4 z-30 transition-opacity duration-200 ${isFocused ? 'opacity-0 pointer-events-none xl:opacity-100 xl:pointer-events-auto' : 'opacity-100'}`}>
-              {/* Info Button */}
+              {/* Info Button (Ver Lista de Alumnos) */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onInfoClick();
                 }}
                 className='w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white/90 md:bg-slate-50 text-slate-500 md:text-slate-400 border border-slate-200 shadow-lg md:shadow-sm hover:text-st-verde hover:border-st-verde/30 hover:shadow-md transition-all duration-300 flex items-center justify-center active:scale-95 pointer-events-auto'
-                title='Ver lista'
+                title='Ver lista de alumnos'
               >
                 <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-5 h-5 md:w-6 md:h-6'>
                   <path strokeLinecap='round' strokeLinejoin='round' d='M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z' />
                 </svg>
               </button>
 
-              {/* Admin Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAdminClick();
-                }}
-                className='w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white/90 md:bg-slate-50 text-slate-500 md:text-slate-400 border border-slate-200 shadow-lg md:shadow-sm hover:text-st-verde hover:border-st-verde/30 hover:shadow-md transition-all duration-300 flex items-center justify-center active:scale-95 pointer-events-auto'
-                title='Administración'
-              >
-                <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-5 h-5 md:w-6 md:h-6'>
-                  <path strokeLinecap='round' strokeLinejoin='round' d='M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z' />
-                </svg>
-              </button>
+              {/* Admin Panel Button (si tiene acceso al panel) */}
+              {onAdminClick && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAdminClick();
+                  }}
+                  className='w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white/90 md:bg-slate-50 text-slate-500 md:text-slate-400 border border-slate-200 shadow-lg md:shadow-sm hover:text-st-verde hover:border-st-verde/30 hover:shadow-md transition-all duration-300 flex items-center justify-center active:scale-95 pointer-events-auto'
+                  title='Ir al Panel de Gestión'
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 md:w-6 md:h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Botón Cerrar Sesión (para usuarios que no tienen acceso al panel desde aquí) */}
+              {!onAdminClick && onLogout && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLogout();
+                  }}
+                  className='w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white/90 md:bg-slate-50 text-red-500 hover:text-red-700 hover:bg-red-50 border border-slate-200 shadow-lg md:shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center active:scale-95 pointer-events-auto'
+                  title='Cerrar Sesión'
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 md:w-6 md:h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                  </svg>
+                </button>
+              )}
 
               <div className="w-px h-8 bg-slate-200 mx-1 hidden xl:block"></div>
 
-              <img src={Logo} alt="Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain opacity-90 hover:opacity-100 transition-all duration-500 hidden xl:block" />
+              <img src={Logo} alt="Logo" className="w-20 h-20 md:w-28 md:h-28 object-contain opacity-95 drop-shadow-sm hidden xl:block" />
             </div>
           )}
 
@@ -409,24 +463,13 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
 
                 <div className='mb-6'>
                   <button
-                    onClick={() => {
-                      setResult(null);
-                      setRut('');
-                      setErrorVisual(''); // Limpiar errores
-                      // Asegurar que el input reciba el foco para poder escanear inmediatamente
-                      setTimeout(() => {
-                        if (rutInputRef.current) {
-                          rutInputRef.current.focus();
-                          rutInputRef.current.select(); // Seleccionar el texto si hay alguno
-                        }
-                      }, 200); // Aumentado a 200ms para asegurar que el DOM se actualice
-                    }}
+                    onClick={reiniciarIngreso}
                     className='w-full py-3 md:py-4 rounded-xl bg-white border-2 border-slate-100 text-st-verde font-bold text-base md:text-lg hover:border-st-verde hover:bg-green-50/50 transition-all duration-200 flex items-center justify-center gap-2 group'
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    Ingresar otro asistente
+                    Ingresar otro asistente (Enter)
                   </button>
                 </div>
 
