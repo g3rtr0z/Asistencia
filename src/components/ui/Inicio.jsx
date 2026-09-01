@@ -139,10 +139,10 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
     // Limpiar timeout anterior
     if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
 
-    if (formatted.length >= 8 && formatted.length <= 9) {
+    if (formatted.length >= 7 && formatted.length <= 9) {
       scanTimeoutRef.current = setTimeout(() => {
         const currentValue = formatRut(rutInputRef.current?.value || '');
-        if (currentValue.length >= 8 && currentValue.length <= 9 && currentValue === formatted && !loading) {
+        if (currentValue.length >= 7 && currentValue.length <= 9 && currentValue === formatted && !loading) {
           procesarLogin(formatted);
         }
       }, 1500);

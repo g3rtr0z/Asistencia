@@ -6,8 +6,12 @@
 export const formatRut = rut => {
   if (!rut) return '';
 
-  // Limpiar el RUT de caracteres no válidos
-  let clean = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+  // Limpiar el RUT de espacios, caracteres no válidos y normalizar
+  let clean = String(rut)
+    .replace(/[\s\r\n\t.-]/g, '')
+    .replace(/[^0-9kK]/gi, '')
+    .toUpperCase()
+    .trim();
 
   // Limitar a 9 caracteres máximo
   clean = clean.slice(0, 9);
@@ -21,9 +25,11 @@ export const formatRut = rut => {
  * @returns {boolean} true si es válido
  */
 export const validateRut = rut => {
-  if (!rut || rut.length < 8) return false;
+  if (!rut) return false;
 
-  const cleanRut = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+  const cleanRut = String(rut).replace(/[^0-9kK]/gi, '').toUpperCase().trim();
+  if (cleanRut.length < 7 || cleanRut.length > 9) return false;
+
   const dv = cleanRut.slice(-1);
   const rutNumber = cleanRut.slice(0, -1);
 
