@@ -585,7 +585,7 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
         <div className='p-3 mt-auto border-t border-white/10'>
           <button
             onClick={onSalir}
-            className={`w-full flex items-center gap-3 px-3 py-3 text-red-100 hover:bg-white/10 rounded-lg transition text-sm font-medium ${!sidebarOpen && 'justify-center'}`}
+            className={`w-full flex items-center gap-3 px-3 py-3 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition text-sm font-medium ${!sidebarOpen && 'justify-center'}`}
             title={!sidebarOpen ? 'Cerrar Sesión' : ''}
           >
             <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
