@@ -25,8 +25,8 @@ function Loader() {
   return (
     <div className='min-h-screen bg-white flex flex-col items-center justify-center animate-fadeIn'>
       <div className='text-center flex flex-col items-center gap-4'>
-        <div className='h-16 w-16 border-4 border-green-300 border-t-green-700 rounded-full animate-spin' />
-        <p className='text-green-800 text-xl font-medium tracking-wide animate-pulse'>
+        <div className='h-16 w-16 border-4 border-[#006341]/20 border-t-[#006341] rounded-full animate-spin' />
+        <p className='text-st-verde text-xl font-bold tracking-wide animate-pulse'>
           Cargando datos...
         </p>
       </div>
