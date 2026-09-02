@@ -142,7 +142,7 @@ function AdminLogin({ onAuth, onSalir }) {
         )}
 
         {/* Wrapper central para Logo + Formulario */}
-        <div className='w-full max-w-md my-auto flex flex-col items-center relative z-10 -translate-y-[30px] lg:translate-y-0'>
+        <div className='w-full max-w-md my-auto flex flex-col items-center relative z-10 -translate-y-[20px] lg:translate-y-0'>
 
           {/* Logo institucional solo visible en móviles */}
           <div className='w-full lg:hidden flex flex-col items-center mb-4'>
