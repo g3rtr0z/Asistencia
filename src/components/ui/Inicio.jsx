@@ -207,8 +207,11 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
         <div className='bg-st-verde p-6 md:p-8 xl:p-12 text-white flex flex-row xl:flex-col justify-between items-center xl:items-start relative overflow-hidden shrink-0 xl:w-5/12'>
           {/* Background Image with blur and gradient overlay */}
           <div 
-            className='absolute inset-0 bg-cover bg-center pointer-events-none transform scale-105 filter blur-[2px]'
-            style={{ backgroundImage: `url('/ST Manuel Rodriguez.webp')` }}
+            className='absolute inset-0 bg-cover bg-center pointer-events-none transform scale-105'
+            style={{ 
+              backgroundImage: `url('/ST Manuel Rodriguez.webp')`,
+              filter: 'grayscale(100%) blur(2px)'
+            }}
           />
           {/* Tint and gradient overlay for readability and smooth look */}
           <div className='absolute inset-0 bg-gradient-to-tr from-[#003822]/90 via-st-verde/85 to-[#005a38]/80 pointer-events-none backdrop-blur-[1px]'></div>

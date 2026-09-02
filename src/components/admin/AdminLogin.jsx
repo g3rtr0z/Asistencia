@@ -67,8 +67,11 @@ function AdminLogin({ onAuth, onSalir }) {
       <div className='hidden lg:flex w-full lg:w-3/5 min-h-screen relative flex-col justify-between p-8 lg:p-16 text-white shrink-0 overflow-hidden'>
         {/* Imagen de Fondo ST Manuel Rodriguez */}
         <div 
-          className='absolute inset-0 bg-cover bg-center pointer-events-none transform scale-105 filter blur-[1.5px]'
-          style={{ backgroundImage: `url('/ST Manuel Rodriguez.webp')` }}
+          className='absolute inset-0 bg-cover bg-center pointer-events-none transform scale-105'
+          style={{ 
+            backgroundImage: `url('/ST Manuel Rodriguez.webp')`,
+            filter: 'grayscale(100%) blur(1.5px)'
+          }}
         />
         {/* Capa de degradado institucional verde oscuro */}
         <div className='absolute inset-0 bg-gradient-to-t from-slate-950/90 via-[#003822]/85 to-[#004b30]/75 pointer-events-none backdrop-blur-[1px]'></div>
@@ -81,10 +84,6 @@ function AdminLogin({ onAuth, onSalir }) {
         <div className='relative z-10 flex items-center gap-3'>
           <div className='w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-lg'>
             <span className='font-bold text-xl tracking-wider'>ST</span>
-          </div>
-          <div>
-            <div className='text-xs font-semibold uppercase tracking-widest text-white/70'>Santo Tomás</div>
-            <div className='text-sm font-bold'>Sede Temuco</div>
           </div>
         </div>
 
@@ -121,26 +120,35 @@ function AdminLogin({ onAuth, onSalir }) {
         
         {/* Fondo sutil en móvil con imagen difuminada muy suave */}
         <div 
-          className='lg:hidden absolute inset-0 bg-cover bg-center pointer-events-none opacity-5 filter blur-sm'
-          style={{ backgroundImage: `url('/ST Manuel Rodriguez.webp')` }}
+          className='lg:hidden absolute inset-0 bg-cover bg-center pointer-events-none opacity-5'
+          style={{ 
+            backgroundImage: `url('/ST Manuel Rodriguez.webp')`,
+            filter: 'grayscale(100%) blur(4px)'
+          }}
         />
 
         <div className='w-full max-w-md my-auto flex flex-col items-center relative z-10'>
           
-          {/* Logo institucional centrado arriba con botón volver opcional */}
+          {/* Botón volver opcional y Logo en móvil */}
           <div className='w-full flex flex-col items-center relative mb-6'>
             {onSalir && (
               <button
                 onClick={onSalir}
-                className='absolute left-0 top-0 px-3.5 py-2 rounded-xl bg-white text-slate-700 hover:text-st-verde border border-slate-200 shadow-sm hover:shadow-md flex items-center gap-2 transition-all duration-200 active:scale-95 group'
+                className='absolute left-0 top-0 px-3.5 py-2 rounded-xl bg-white text-slate-700 hover:text-st-verde border border-slate-200 shadow-sm hover:shadow-md flex items-center gap-2 transition-all duration-200 active:scale-95 group z-10'
                 title='Volver al inicio'
               >
                 <ArrowLeft className='w-4 h-4 transform group-hover:-translate-x-1 transition-transform' />
                 <span className='text-xs font-bold uppercase tracking-wider'>Volver</span>
               </button>
             )}
+            
+            {/* Logo institucional solo visible en móviles */}
+            <div className='lg:hidden flex items-center justify-center bg-white p-2 rounded-full shadow-sm border border-slate-100 aspect-square mb-2'>
+              <img src={Logo} alt="Santo Tomás Logo" className='w-16 h-16 object-contain' />
+            </div>
 
-            <img src={Logo} alt="Santo Tomás Logo" className='w-24 h-24 sm:w-28 sm:h-28 object-contain opacity-95 drop-shadow-sm' />
+            {/* Spacer para escritorio cuando hay botón volver pero no hay logo */}
+            {onSalir && <div className='hidden lg:block h-10'></div>}
           </div>
 
           <motion.div

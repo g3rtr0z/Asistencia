@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import AlumnosLista from '../alumnos/AlumnosLista';
 import EventosPanel from '../eventos/EventosPanel';
 import EventoActivoInfo from '../eventos/EventoActivoInfo';
@@ -57,6 +57,7 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
 
   // Estado para agregar/eliminar alumnos
   const [nuevoAlumno, setNuevoAlumno] = useState({
+    nombre: '',
     nombres: '',
     apellidos: '',
     rut: '',
@@ -67,8 +68,11 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
     establecimiento: '',
     carrera: '',
     institucion: '',
+    numeroLista: '',
     asiento: '',
     grupo: '',
+    distincion: '',
+    reconocimiento: '',
     departamento: '',
     observacion: '',
   });
@@ -83,13 +87,85 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
 
   const esEventoTrabajadores = eventoActivo?.tipo === 'trabajadores';
 
+  const columnasConDatos = useMemo(() => {
+    if (!alumnos || alumnos.length === 0) {
+      return {
+        rut: true,
+        nombreCompleto: true,
+        nombres: false,
+        apellidos: false,
+        telefono: true,
+        correo: true,
+        establecimiento: true,
+        cargo: true,
+        comuna: true,
+        carrera: true,
+        institucion: true,
+        numeroLista: true,
+        asiento: true,
+        grupo: true,
+        distincion: true,
+        reconocimiento: true,
+        departamento: true,
+        observacion: true,
+      };
+    }
+
+    const tieneCamposNuevos = alumnos.some(
+      a =>
+        (a.cargo != null && String(a.cargo).trim() !== '') ||
+        (a.comuna != null && String(a.comuna).trim() !== '') ||
+        (a.establecimiento != null && String(a.establecimiento).trim() !== '') ||
+        (a.telefono != null && String(a.telefono).trim() !== '') ||
+        (a.correo != null && String(a.correo).trim() !== '')
+    );
+
+    return {
+      rut: true,
+      nombreCompleto: true,
+      nombres: !tieneCamposNuevos && alumnos.some(a => a.nombres != null && String(a.nombres).trim() !== ''),
+      apellidos: !tieneCamposNuevos && alumnos.some(a => a.apellidos != null && String(a.apellidos).trim() !== ''),
+      telefono: alumnos.some(a => a.telefono != null && String(a.telefono).trim() !== ''),
+      correo: alumnos.some(a => a.correo != null && String(a.correo).trim() !== ''),
+      establecimiento: alumnos.some(a => (a.establecimiento != null && String(a.establecimiento).trim() !== '') || (a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General')),
+      cargo: alumnos.some(a => a.cargo != null && String(a.cargo).trim() !== ''),
+      comuna: alumnos.some(a => a.comuna != null && String(a.comuna).trim() !== ''),
+      carrera: alumnos.some(a => a.carrera != null && String(a.carrera).trim() !== '' && a.carrera !== 'General'),
+      institucion: !tieneCamposNuevos && alumnos.some(a => a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General'),
+      numeroLista: alumnos.some(a => a.numeroLista != null && String(a.numeroLista).trim() !== ''),
+      asiento: alumnos.some(a => a.asiento != null && String(a.asiento).trim() !== ''),
+      grupo: alumnos.some(a => a.grupo != null && String(a.grupo).trim() !== ''),
+      distincion: alumnos.some(a => Boolean(a.distincion) || (a.distincion != null && String(a.distincion).trim() !== '')),
+      reconocimiento: alumnos.some(a => Boolean(a.reconocimiento) || (a.reconocimiento != null && String(a.reconocimiento).trim() !== '')),
+      departamento: alumnos.some(a => a.departamento != null && String(a.departamento).trim() !== ''),
+      observacion: alumnos.some(a => a.observacion != null && String(a.observacion).trim() !== ''),
+    };
+  }, [alumnos]);
+
+  const opcionesUnicas = useMemo(() => {
+    if (!alumnos || alumnos.length === 0) return {};
+    const getOptions = (field) => {
+      const values = alumnos.map(a => a[field]).filter(val => val != null && String(val).trim() !== '');
+      return [...new Set(values)].sort();
+    };
+    return {
+      establecimiento: getOptions('establecimiento'),
+      institucion: getOptions('institucion'),
+      carrera: getOptions('carrera'),
+      cargo: getOptions('cargo'),
+      comuna: getOptions('comuna'),
+      departamento: getOptions('departamento'),
+      grupo: getOptions('grupo'),
+    };
+  }, [alumnos]);
+
   async function handleAgregarAlumno(e) {
     e.preventDefault();
     try {
       const payload = {
-        nombres: nuevoAlumno.nombres,
+        nombres: nuevoAlumno.nombre || nuevoAlumno.nombres,
         apellidos: nuevoAlumno.apellidos,
-        nombre: `${nuevoAlumno.nombres} ${nuevoAlumno.apellidos}`.trim(),
+        nombre: nuevoAlumno.nombre || `${nuevoAlumno.nombres} ${nuevoAlumno.apellidos}`.trim(),
         rut: nuevoAlumno.rut,
         telefono: nuevoAlumno.telefono,
         correo: nuevoAlumno.correo,
@@ -104,13 +180,17 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
       } else {
         payload.carrera = nuevoAlumno.carrera;
         payload.institucion = nuevoAlumno.institucion;
+        payload.numeroLista = nuevoAlumno.numeroLista;
         payload.asiento = nuevoAlumno.asiento;
         payload.grupo = nuevoAlumno.grupo;
+        payload.distincion = nuevoAlumno.distincion;
+        payload.reconocimiento = nuevoAlumno.reconocimiento;
       }
 
       await agregarAlumno(payload, eventoActivo?.id); // Pasar el eventoId
       setMensajeAdmin('Alumno agregado correctamente');
       setNuevoAlumno({
+        nombre: '',
         nombres: '',
         apellidos: '',
         rut: '',
@@ -121,8 +201,11 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
         establecimiento: '',
         carrera: '',
         institucion: '',
+        numeroLista: '',
         asiento: '',
         grupo: '',
+        distincion: '',
+        reconocimiento: '',
         departamento: '',
         observacion: '',
       });
@@ -633,157 +716,279 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
                 className='flex flex-col gap-4'
                 onSubmit={handleAgregarAlumno}
               >
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                {columnasConDatos.nombreCompleto && !columnasConDatos.nombres && (
                   <div className='space-y-1.5'>
-                    <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Nombres</label>
+                    <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Nombre Completo</label>
                     <input
                       className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                      placeholder='Ej: Juan Andrés'
-                      value={nuevoAlumno.nombres}
-                      onChange={e => setNuevoAlumno(a => ({ ...a, nombres: e.target.value }))}
+                      placeholder='Ej: Juan Andrés Pérez Gonzalez'
+                      value={nuevoAlumno.nombre || ''}
+                      onChange={e => setNuevoAlumno(a => ({ ...a, nombre: e.target.value }))}
                       required
                     />
                   </div>
-                  <div className='space-y-1.5'>
-                    <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Apellidos</label>
-                    <input
-                      className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                      placeholder='Ej: Pérez Gonzalez'
-                      value={nuevoAlumno.apellidos}
-                      onChange={e => setNuevoAlumno(a => ({ ...a, apellidos: e.target.value }))}
-                      required
-                    />
+                )}
+                
+                {(columnasConDatos.nombres || columnasConDatos.apellidos) && (
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                    {columnasConDatos.nombres && (
+                      <div className='space-y-1.5'>
+                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Nombres</label>
+                        <input
+                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                          placeholder='Ej: Juan Andrés'
+                          value={nuevoAlumno.nombres || ''}
+                          onChange={e => setNuevoAlumno(a => ({ ...a, nombres: e.target.value }))}
+                          required
+                        />
+                      </div>
+                    )}
+                    {columnasConDatos.apellidos && (
+                      <div className='space-y-1.5'>
+                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Apellidos</label>
+                        <input
+                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                          placeholder='Ej: Pérez Gonzalez'
+                          value={nuevoAlumno.apellidos || ''}
+                          onChange={e => setNuevoAlumno(a => ({ ...a, apellidos: e.target.value }))}
+                          required
+                        />
+                      </div>
+                    )}
                   </div>
-                </div>
-
-                <div className='space-y-1.5'>
-                  <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>RUT</label>
-                  <input
-                    className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                    placeholder='Ej: 12345678k'
-                    value={nuevoAlumno.rut}
-                    onChange={e => setNuevoAlumno(a => ({ ...a, rut: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                  <div className='space-y-1.5'>
-                    <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Teléfono</label>
-                    <input
-                      className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                      placeholder='Ej: +56912345678'
-                      value={nuevoAlumno.telefono}
-                      onChange={e => setNuevoAlumno(a => ({ ...a, telefono: e.target.value }))}
-                    />
-                  </div>
-                  <div className='space-y-1.5'>
-                    <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Correo Electrónico</label>
-                    <input
-                      type='email'
-                      className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                      placeholder='Ej: ejemplo@correo.com'
-                      value={nuevoAlumno.correo}
-                      onChange={e => setNuevoAlumno(a => ({ ...a, correo: e.target.value }))}
-                    />
-                  </div>
-                </div>
+                )}
 
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                  <div className='space-y-1.5'>
-                    <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Cargo</label>
-                    <input
-                      className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                      placeholder='Ej: Docente / Directivo'
-                      value={nuevoAlumno.cargo}
-                      onChange={e => setNuevoAlumno(a => ({ ...a, cargo: e.target.value }))}
-                    />
-                  </div>
-                  <div className='space-y-1.5'>
-                    <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Establecimiento</label>
-                    <input
-                      className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                      placeholder='Ej: Colegio San Agustín / Liceo N°1'
-                      value={nuevoAlumno.establecimiento}
-                      onChange={e => setNuevoAlumno(a => ({ ...a, establecimiento: e.target.value, institucion: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                <div className='space-y-1.5'>
-                  <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Comuna del Establecimiento</label>
-                  <input
-                    className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                    placeholder='Ej: Santiago'
-                    value={nuevoAlumno.comuna}
-                    onChange={e => setNuevoAlumno(a => ({ ...a, comuna: e.target.value }))}
-                  />
-                </div>
-
-                {esEventoTrabajadores ? (
-                  <>
+                  {columnasConDatos.rut && (
                     <div className='space-y-1.5'>
-                      <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Departamento</label>
+                      <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>RUT</label>
                       <input
                         className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                        placeholder='Ej: RRHH'
-                        value={nuevoAlumno.departamento}
-                        onChange={e => setNuevoAlumno(a => ({ ...a, departamento: e.target.value }))}
+                        placeholder='Ej: 12345678k'
+                        value={nuevoAlumno.rut}
+                        onChange={e => setNuevoAlumno(a => ({ ...a, rut: e.target.value }))}
                         required
                       />
                     </div>
+                  )}
+                  {columnasConDatos.establecimiento && (
                     <div className='space-y-1.5'>
-                      <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Observación</label>
+                      <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Establecimiento</label>
                       <input
+                        list='establecimiento-list'
                         className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                        placeholder='Opcional'
-                        value={nuevoAlumno.observacion}
-                        onChange={e => setNuevoAlumno(a => ({ ...a, observacion: e.target.value }))}
+                        placeholder='Ej: Colegio San Agustín'
+                        value={nuevoAlumno.establecimiento}
+                        onChange={e => setNuevoAlumno(a => ({ ...a, establecimiento: e.target.value, institucion: e.target.value }))}
                       />
+                      <datalist id='establecimiento-list'>
+                        {opcionesUnicas.establecimiento?.map(opt => <option key={opt} value={opt} />)}
+                      </datalist>
                     </div>
+                  )}
+                </div>
+                
+                {(columnasConDatos.telefono || columnasConDatos.correo) && (
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                    {columnasConDatos.telefono && (
+                      <div className='space-y-1.5'>
+                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Teléfono</label>
+                        <input
+                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                          placeholder='Ej: +56912345678'
+                          value={nuevoAlumno.telefono}
+                          onChange={e => setNuevoAlumno(a => ({ ...a, telefono: e.target.value }))}
+                        />
+                      </div>
+                    )}
+                    {columnasConDatos.correo && (
+                      <div className='space-y-1.5'>
+                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Correo Electrónico</label>
+                        <input
+                          type='email'
+                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                          placeholder='Ej: ejemplo@correo.com'
+                          value={nuevoAlumno.correo}
+                          onChange={e => setNuevoAlumno(a => ({ ...a, correo: e.target.value }))}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {(columnasConDatos.cargo || columnasConDatos.comuna) && (
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                    {columnasConDatos.cargo && (
+                      <div className='space-y-1.5'>
+                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Cargo</label>
+                        <input
+                          list='cargo-list'
+                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                          placeholder='Ej: Docente'
+                          value={nuevoAlumno.cargo}
+                          onChange={e => setNuevoAlumno(a => ({ ...a, cargo: e.target.value }))}
+                        />
+                        <datalist id='cargo-list'>
+                          {opcionesUnicas.cargo?.map(opt => <option key={opt} value={opt} />)}
+                        </datalist>
+                      </div>
+                    )}
+                    {columnasConDatos.comuna && (
+                      <div className='space-y-1.5'>
+                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Comuna</label>
+                        <input
+                          list='comuna-list'
+                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                          placeholder='Ej: Santiago'
+                          value={nuevoAlumno.comuna}
+                          onChange={e => setNuevoAlumno(a => ({ ...a, comuna: e.target.value }))}
+                        />
+                        <datalist id='comuna-list'>
+                          {opcionesUnicas.comuna?.map(opt => <option key={opt} value={opt} />)}
+                        </datalist>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {esEventoTrabajadores ? (
+                  <>
+                    {(columnasConDatos.departamento || columnasConDatos.observacion) && (
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                        {columnasConDatos.departamento && (
+                          <div className='space-y-1.5'>
+                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Departamento</label>
+                            <input
+                              list='departamento-list'
+                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                              placeholder='Ej: RRHH'
+                              value={nuevoAlumno.departamento}
+                              onChange={e => setNuevoAlumno(a => ({ ...a, departamento: e.target.value }))}
+                            />
+                            <datalist id='departamento-list'>
+                              {opcionesUnicas.departamento?.map(opt => <option key={opt} value={opt} />)}
+                            </datalist>
+                          </div>
+                        )}
+                        {columnasConDatos.observacion && (
+                          <div className='space-y-1.5'>
+                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Observación</label>
+                            <input
+                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                              placeholder='Opcional'
+                              value={nuevoAlumno.observacion}
+                              onChange={e => setNuevoAlumno(a => ({ ...a, observacion: e.target.value }))}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                      <div className='space-y-1.5'>
-                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Carrera</label>
-                        <input
-                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Opcional (Ej: Informática)'
-                          value={nuevoAlumno.carrera}
-                          onChange={e => setNuevoAlumno(a => ({ ...a, carrera: e.target.value }))}
-                        />
+                    {(columnasConDatos.carrera || columnasConDatos.institucion) && (
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                        {columnasConDatos.carrera && (
+                          <div className='space-y-1.5'>
+                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Carrera</label>
+                            <input
+                              list='carrera-list'
+                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                              placeholder='Ej: Informática'
+                              value={nuevoAlumno.carrera}
+                              onChange={e => setNuevoAlumno(a => ({ ...a, carrera: e.target.value }))}
+                            />
+                            <datalist id='carrera-list'>
+                              {opcionesUnicas.carrera?.map(opt => <option key={opt} value={opt} />)}
+                            </datalist>
+                          </div>
+                        )}
+                        {columnasConDatos.institucion && (
+                          <div className='space-y-1.5'>
+                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Institución</label>
+                            <input
+                              list='institucion-list'
+                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                              placeholder='Ej: Santo Tomás'
+                              value={nuevoAlumno.institucion}
+                              onChange={e => setNuevoAlumno(a => ({ ...a, institucion: e.target.value }))}
+                            />
+                            <datalist id='institucion-list'>
+                              {opcionesUnicas.institucion?.map(opt => <option key={opt} value={opt} />)}
+                            </datalist>
+                          </div>
+                        )}
                       </div>
-                      <div className='space-y-1.5'>
-                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Institución</label>
-                        <input
-                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Opcional (Ej: Santo Tomás)'
-                          value={nuevoAlumno.institucion}
-                          onChange={e => setNuevoAlumno(a => ({ ...a, institucion: e.target.value }))}
-                        />
+                    )}
+                    
+                    {(columnasConDatos.asiento || columnasConDatos.grupo || columnasConDatos.numeroLista) && (
+                      <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4'>
+                        {columnasConDatos.numeroLista && (
+                          <div className='space-y-1.5'>
+                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>N° Lista</label>
+                            <input
+                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                              placeholder='Opcional'
+                              value={nuevoAlumno.numeroLista}
+                              onChange={e => setNuevoAlumno(a => ({ ...a, numeroLista: e.target.value }))}
+                            />
+                          </div>
+                        )}
+                        {columnasConDatos.asiento && (
+                          <div className='space-y-1.5'>
+                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Asiento</label>
+                            <input
+                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                              placeholder='Opcional'
+                              value={nuevoAlumno.asiento}
+                              onChange={e => setNuevoAlumno(a => ({ ...a, asiento: e.target.value }))}
+                            />
+                          </div>
+                        )}
+                        {columnasConDatos.grupo && (
+                          <div className='space-y-1.5'>
+                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Grupo</label>
+                            <input
+                              list='grupo-list'
+                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
+                              placeholder='Opcional'
+                              value={nuevoAlumno.grupo}
+                              onChange={e => setNuevoAlumno(a => ({ ...a, grupo: e.target.value }))}
+                            />
+                            <datalist id='grupo-list'>
+                              {opcionesUnicas.grupo?.map(opt => <option key={opt} value={opt} />)}
+                            </datalist>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                      <div className='space-y-1.5'>
-                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Asiento</label>
-                        <input
-                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Opcional'
-                          value={nuevoAlumno.asiento}
-                          onChange={e => setNuevoAlumno(a => ({ ...a, asiento: e.target.value }))}
-                        />
+                    )}
+                    
+                    {(columnasConDatos.distincion || columnasConDatos.reconocimiento) && (
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4'>
+                        {columnasConDatos.distincion && (
+                          <div className='space-y-1.5'>
+                            <label className='text-xs font-semibold text-amber-600 uppercase tracking-wide'>Distinción</label>
+                            <input
+                              className='w-full border border-amber-200 bg-amber-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:bg-white focus:border-transparent transition outline-none'
+                              placeholder='Opcional'
+                              value={nuevoAlumno.distincion}
+                              onChange={e => setNuevoAlumno(a => ({ ...a, distincion: e.target.value }))}
+                            />
+                          </div>
+                        )}
+                        {columnasConDatos.reconocimiento && (
+                          <div className='space-y-1.5'>
+                            <label className='text-xs font-semibold text-purple-600 uppercase tracking-wide'>Reconocimiento</label>
+                            <input
+                              className='w-full border border-purple-200 bg-purple-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white focus:border-transparent transition outline-none'
+                              placeholder='Opcional'
+                              value={nuevoAlumno.reconocimiento}
+                              onChange={e => setNuevoAlumno(a => ({ ...a, reconocimiento: e.target.value }))}
+                            />
+                          </div>
+                        )}
                       </div>
-                      <div className='space-y-1.5'>
-                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Grupo</label>
-                        <input
-                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Opcional'
-                          value={nuevoAlumno.grupo}
-                          onChange={e => setNuevoAlumno(a => ({ ...a, grupo: e.target.value }))}
-                        />
-                      </div>
-                    </div>
+                    )}
                   </>
                 )}
 
