@@ -6,9 +6,48 @@ import Logo from '../../assets/logopag.png';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
 import { obtenerRolUsuario } from '../../services/authService';
 
-// Claves para localStorage
-const STORAGE_KEY_EMAIL = 'admin_remembered_email';
-const STORAGE_KEY_REMEMBER = 'admin_remember_me';
+// Manejo seguro de cookies para recordar credenciales (correo y contraseña protegida)
+const COOKIE_CORREO = 'admin_correo_recordado';
+const COOKIE_AUTH = 'admin_sesion_auth';
+const CLAVE_RECORDAR = 'admin_recordarme';
+
+const guardarCookie = (nombre, valor, dias = 30) => {
+  const expira = new Date(Date.now() + dias * 864e5).toUTCString();
+  document.cookie = `${nombre}=${encodeURIComponent(valor)}; expires=${expira}; path=/; SameSite=Lax`;
+};
+
+const obtenerCookie = (nombre) => {
+  const coincidencia = document.cookie.match(new RegExp(`(^| )${nombre}=([^;]+)`));
+  return coincidencia ? decodeURIComponent(coincidencia[2]) : null;
+};
+
+const eliminarCookie = (nombre) => {
+  document.cookie = `${nombre}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
+};
+
+// Cifrado reversible simple para ofuscar la contraseña
+const ofuscarPass = (texto) => {
+  if (!texto) return '';
+  try {
+    return btoa(encodeURIComponent(texto).split('').map((c, i) => 
+      String.fromCharCode(c.charCodeAt(0) ^ (0x53 + (i % 7)))
+    ).join(''));
+  } catch {
+    return btoa(texto);
+  }
+};
+
+const desofuscarPass = (hash) => {
+  if (!hash) return '';
+  try {
+    const decodificado = atob(hash).split('').map((c, i) => 
+      String.fromCharCode(c.charCodeAt(0) ^ (0x53 + (i % 7)))
+    ).join('');
+    return decodeURIComponent(decodificado);
+  } catch {
+    return '';
+  }
+};
 
 function AdminLogin({ onAuth, onSalir }) {
   const [email, setEmail] = useState('');
@@ -16,31 +55,45 @@ function AdminLogin({ onAuth, onSalir }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [recordarme, setRecordarme] = useState(false);
 
-  // Cargar credenciales guardadas al montar el componente
+  // Cargar credenciales guardadas en cookies al montar el componente
   useEffect(() => {
-    const savedEmail = localStorage.getItem(STORAGE_KEY_EMAIL);
-    const savedRemember = localStorage.getItem(STORAGE_KEY_REMEMBER);
+    localStorage.removeItem('admin_recordado_pass'); // Limpieza de versiones anteriores
 
-    if (savedRemember === 'true' && savedEmail) {
-      setEmail(savedEmail);
-      setRememberMe(true);
+    const recordarGuardado = localStorage.getItem(CLAVE_RECORDAR) === 'true';
+    const correoCookie = obtenerCookie(COOKIE_CORREO) || localStorage.getItem(COOKIE_CORREO);
+    const authCookie = obtenerCookie(COOKIE_AUTH);
+
+    if (recordarGuardado) {
+      if (correoCookie) setEmail(correoCookie);
+      if (authCookie) {
+        const passRestaurada = desofuscarPass(authCookie);
+        if (passRestaurada) setPass(passRestaurada);
+      }
+      setRecordarme(true);
     }
   }, []);
 
   const handleSubmit = async e => {
     e.preventDefault();
+    if (loading) return;
     setError('');
     setLoading(true);
+
     try {
-      if (rememberMe) {
-        localStorage.setItem(STORAGE_KEY_EMAIL, email);
-        localStorage.setItem(STORAGE_KEY_REMEMBER, 'true');
+      if (recordarme) {
+        guardarCookie(COOKIE_CORREO, email, 30);
+        guardarCookie(COOKIE_AUTH, ofuscarPass(pass), 30);
+        localStorage.setItem(COOKIE_CORREO, email);
+        localStorage.setItem(CLAVE_RECORDAR, 'true');
       } else {
-        localStorage.removeItem(STORAGE_KEY_EMAIL);
-        localStorage.removeItem(STORAGE_KEY_REMEMBER);
+        eliminarCookie(COOKIE_CORREO);
+        eliminarCookie(COOKIE_AUTH);
+        localStorage.removeItem(COOKIE_CORREO);
+        localStorage.removeItem(CLAVE_RECORDAR);
       }
+      localStorage.removeItem('admin_recordado_pass'); // Limpieza
 
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
       const rol = await obtenerRolUsuario(userCredential.user);
@@ -171,11 +224,12 @@ function AdminLogin({ onAuth, onSalir }) {
               animate={{ opacity: 1, filter: 'blur(0px)' }}
               transition={{ duration: 0.45, delay: 0.1 }}
               onSubmit={handleSubmit}
+              autoComplete='off'
               className='w-full flex flex-col gap-4 sm:gap-5'
             >
               {/* Correo */}
               <div className='group'>
-                <label className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1'>
+                <label htmlFor='admin-email' className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1'>
                   Correo institucional
                 </label>
                 <div className='relative flex items-center'>
@@ -183,20 +237,22 @@ function AdminLogin({ onAuth, onSalir }) {
                     <Mail className='w-5 h-5' />
                   </div>
                   <input
+                    id='admin-email'
+                    name='username'
                     type='email'
                     value={email}
                     required
                     onChange={e => setEmail(e.target.value)}
                     placeholder='correo@santotomas.cl'
                     className='w-full h-12 sm:h-14 pl-11 sm:pl-12 pr-4 bg-white border-2 border-slate-200 rounded-xl sm:rounded-2xl text-sm font-semibold text-slate-800 outline-none transition-all duration-300 focus:border-st-verde focus:ring-4 focus:ring-st-verde/10 focus:shadow-xl focus:shadow-st-verde/5'
-                    autoComplete='username'
+                    autoComplete='off'
                   />
                 </div>
               </div>
 
               {/* Contraseña */}
               <div className='group'>
-                <label className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1'>
+                <label htmlFor='admin-password' className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1'>
                   Contraseña
                 </label>
                 <div className='relative flex items-center'>
@@ -204,13 +260,15 @@ function AdminLogin({ onAuth, onSalir }) {
                     <Lock className='w-5 h-5' />
                   </div>
                   <input
+                    id='admin-password'
+                    name='password'
                     type={showPassword ? 'text' : 'password'}
                     value={pass}
                     required
                     onChange={e => setPass(e.target.value)}
                     placeholder='••••••••'
                     className='w-full h-12 sm:h-14 pl-11 sm:pl-12 pr-11 sm:pr-12 bg-white border-2 border-slate-200 rounded-xl sm:rounded-2xl text-sm font-semibold text-slate-800 outline-none transition-all duration-300 focus:border-st-verde focus:ring-4 focus:ring-st-verde/10 focus:shadow-xl focus:shadow-st-verde/5'
-                    autoComplete='current-password'
+                    autoComplete='off'
                   />
                   <button
                     type='button'
@@ -232,13 +290,14 @@ function AdminLogin({ onAuth, onSalir }) {
                 <label className='flex items-center gap-2.5 cursor-pointer select-none'>
                   <input
                     type='checkbox'
-                    id='rememberMe'
-                    checked={rememberMe}
-                    onChange={e => setRememberMe(e.target.checked)}
+                    id='recordarme'
+                    name='recordarme'
+                    checked={recordarme}
+                    onChange={e => setRecordarme(e.target.checked)}
                     className='w-4 h-4 rounded border-slate-300 text-st-verde focus:ring-st-verde cursor-pointer accent-st-verde'
                   />
                   <span className='text-xs font-medium text-slate-600 hover:text-slate-800 transition-colors'>
-                    Recordar mi correo
+                    Recordar con cookies para rellenar
                   </span>
                 </label>
               </div>
@@ -260,9 +319,11 @@ function AdminLogin({ onAuth, onSalir }) {
               {/* Botón de Enviar */}
               <button
                 type='submit'
-                disabled={loading || !email.trim() || !pass.trim()}
+                disabled={!email.trim() || !pass.trim()}
+                aria-busy={loading}
                 className={`w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl font-bold text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 shadow-lg mt-1 sm:mt-2
-                ${loading || !email.trim() || !pass.trim()
+                ${loading ? 'pointer-events-none opacity-85 ' : ''}
+                ${!email.trim() || !pass.trim()
                     ? 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed border border-slate-300'
                     : 'bg-st-verde text-white shadow-st-verde/25 hover:bg-[#004b30] hover:shadow-xl hover:shadow-st-verde/30 transform hover:-translate-y-0.5 active:translate-y-0'
                   }`}
