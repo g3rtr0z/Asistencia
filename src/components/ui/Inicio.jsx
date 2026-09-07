@@ -279,7 +279,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
 
           {/* Top Actions - Fixed on mobile, absolute on desktop */}
           {(showButtons && !showScanner && !showCredits) && (
-            <div className={`fixed xl:absolute top-4 right-4 xl:top-8 xl:right-8 flex items-center gap-2 md:gap-4 z-30 transition-opacity duration-200 ${isFocused ? 'opacity-0 pointer-events-none xl:opacity-100 xl:pointer-events-auto' : 'opacity-100'}`}>
+            <div className="fixed xl:absolute top-4 right-4 xl:top-8 xl:right-8 flex items-center gap-2 md:gap-4 z-30">
               {/* Info Button (Ver Lista de Alumnos) */}
               <button
                 onClick={(e) => {

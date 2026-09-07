@@ -103,21 +103,6 @@ function App() {
     };
   }, [showAlumnosModal]);
 
-  // Filtrado para el modal de alumnos (Inicio), incluyendo grupo
-  const alumnosFiltradosModal = useMemo(() => {
-    let filtrados = alumnos.filter(
-      alumno =>
-        (filtroCarrera === '' || alumno.carrera === filtroCarrera) &&
-        (filtroInstitucion === '' ||
-          alumno.institucion === filtroInstitucion) &&
-        (filtroRUT === '' || alumno.rut.includes(filtroRUT))
-    );
-    if (filtroGrupo) {
-      const grupoNum = Number(filtroGrupo);
-      filtrados = filtrados.filter(alumno => Number(alumno.grupo) === grupoNum);
-    }
-    return filtrados;
-  }, [alumnos, filtroCarrera, filtroInstitucion, filtroRUT, filtroGrupo]);
 
   // Login de alumno
   const handleLogin = async rut => {
@@ -271,13 +256,21 @@ function App() {
               </h2>
               {esEventoTrabajadores ? (
                 <TrabajadoresLista
-                  trabajadores={alumnosFiltradosModal}
+                  trabajadores={alumnos}
+                  trabajadoresCompletos={alumnos}
+                  soloPresentes={soloPresentes}
+                  setSoloPresentes={setSoloPresentes}
                   filtroRUT={filtroRUT}
                   setFiltroRUT={setFiltroRUT}
+                  eventoNombre={eventoActivo?.nombre || 'Evento'}
+                  tipoEvento='trabajadores'
                 />
               ) : (
                 <AlumnosLista
-                  alumnos={alumnosFiltradosModal}
+                  alumnos={alumnos}
+                  alumnosCompletos={alumnos}
+                  soloPresentes={soloPresentes}
+                  setSoloPresentes={setSoloPresentes}
                   filtroCarrera={filtroCarrera}
                   setFiltroCarrera={setFiltroCarrera}
                   filtroInstitucion={filtroInstitucion}
@@ -286,6 +279,8 @@ function App() {
                   setFiltroRUT={setFiltroRUT}
                   filtroGrupo={filtroGrupo}
                   setFiltroGrupo={setFiltroGrupo}
+                  eventoNombre={eventoActivo?.nombre || 'Evento'}
+                  tipoEvento={eventoActivo?.tipo || 'alumnos'}
                 />
               )}
             </motion.div>
