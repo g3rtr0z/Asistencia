@@ -36,7 +36,7 @@ function EstadisticasPanel({
       className='bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-sm mx-auto w-full'
     >
       <div className='flex items-center gap-2 mb-4'>
-        <div className='w-3 h-3 bg-blue-500 rounded-full'></div>
+        <div className='w-3 h-3 bg-st-verde rounded-full'></div>
         <h3 className='text-lg font-semibold text-slate-800'>
           Estadísticas de Asistencia
         </h3>
@@ -47,7 +47,7 @@ function EstadisticasPanel({
           <button
             onClick={() => setSoloPresentes && setSoloPresentes('')}
             className={`p-3 rounded-lg border transition-all duration-200 w-full ${soloPresentes === ''
-              ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200'
+              ? 'bg-st-pastel border-st-verde ring-2 ring-st-verde/20'
               : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
               }`}
           >
@@ -58,7 +58,7 @@ function EstadisticasPanel({
           </button>
           <button
             onClick={() => handleExportarFiltrado('')}
-            className='absolute -top-1 -right-1 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-700 transition-colors shadow-md'
+            className='absolute -top-1 -right-1 w-6 h-6 bg-st-verde text-white rounded-full flex items-center justify-center text-xs hover:bg-[#004f34] transition-colors shadow-md'
             title='Exportar todos a Excel'
           >
             <svg

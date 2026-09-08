@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // eslint-disable-next-line no-unused-vars
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   crearEvento,
   actualizarEvento,
@@ -15,6 +15,8 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
   const [showModal, setShowModal] = useState(false);
   const [editingEvento, setEditingEvento] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [eventoADesactivar, setEventoADesactivar] = useState(null);
+  const [desactivando, setDesactivando] = useState(false);
   const [filtroTipo, setFiltroTipo] = useState('alumnos'); // 'alumnos', 'trabajadores'
   const [formData, setFormData] = useState({
     nombre: '',
@@ -100,15 +102,10 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
         return;
       }
 
-      // Si el evento está activo, pedir confirmación para desactivarlo
+      // Si el evento está activo, pedir confirmación mediante popup modal para desactivarlo
       if (evento.activo) {
-        const confirmar = window.confirm(
-          `¿Estás seguro de que quieres desactivar el evento "${evento.nombre}"?\n\nEsto afectará el registro de asistencia.`
-        );
-        if (!confirmar) return;
-
-        await actualizarEvento(eventoId, { activo: false });
-        setMensaje('Evento desactivado correctamente');
+        setEventoADesactivar(evento);
+        return;
       } else {
         // Si el evento está inactivo, lo activamos
         await activarEvento(eventoId);
@@ -121,6 +118,24 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
       setMensaje(
         `Error al cambiar estado del evento: ${error.message || 'Error desconocido'}`
       );
+    }
+  };
+
+  const confirmarDesactivar = async () => {
+    if (!eventoADesactivar) return;
+    setDesactivando(true);
+    try {
+      await actualizarEvento(eventoADesactivar.id, { activo: false });
+      setMensaje('Evento desactivado correctamente');
+      setEventoADesactivar(null);
+      if (onEventoChange) onEventoChange();
+    } catch (error) {
+      console.error('Error al desactivar el evento:', error);
+      setMensaje(
+        `Error al desactivar el evento: ${error.message || 'Error desconocido'}`
+      );
+    } finally {
+      setDesactivando(false);
     }
   };
 
@@ -167,58 +182,73 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
 
   return (
     <div className='w-full'>
-      {/* Stats Header */}
-      <div className='grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6'>
-        <div className='bg-white rounded-xl p-4 border border-slate-200'>
-          <div className='flex items-center gap-3'>
-            <div className='w-10 h-10 bg-st-verde/10 rounded-lg flex items-center justify-center'>
-              <svg className='w-5 h-5 text-st-verde' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' />
-              </svg>
-            </div>
-            <div>
-              <p className='text-2xl font-bold text-slate-900'>{eventos.length}</p>
-              <p className='text-xs text-slate-500'>Total Eventos</p>
-            </div>
+      {/* Stats Header Minimalista */}
+      <div className='grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6'>
+        {/* Total Eventos */}
+        <div className='bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5 sm:gap-4'>
+          <div className='w-11 h-11 rounded-xl bg-st-pastel text-st-verde flex items-center justify-center shrink-0'>
+            <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' />
+            </svg>
+          </div>
+          <div className='min-w-0'>
+            <p className='text-2xl sm:text-3xl font-bold text-slate-800 leading-none mb-1.5'>
+              {eventos.length}
+            </p>
+            <p className='text-xs font-medium text-slate-500 truncate'>
+              Total Eventos
+            </p>
           </div>
         </div>
-        <div className='bg-white rounded-xl p-4 border border-slate-200'>
-          <div className='flex items-center gap-3'>
-            <div className='w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center'>
-              <svg className='w-5 h-5 text-green-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
-              </svg>
-            </div>
-            <div>
-              <p className='text-2xl font-bold text-slate-900'>{eventos.filter(e => e.activo).length}</p>
-              <p className='text-xs text-slate-500'>Activos</p>
-            </div>
+
+        {/* Activos */}
+        <div className='bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5 sm:gap-4'>
+          <div className='w-11 h-11 rounded-xl bg-st-pastel text-st-verde flex items-center justify-center shrink-0'>
+            <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
+            </svg>
+          </div>
+          <div className='min-w-0'>
+            <p className='text-2xl sm:text-3xl font-bold text-slate-800 leading-none mb-1.5'>
+              {eventos.filter(e => e.activo).length}
+            </p>
+            <p className='text-xs font-medium text-slate-500 truncate'>
+              Eventos Activos
+            </p>
           </div>
         </div>
-        <div className='bg-white rounded-xl p-4 border border-slate-200'>
-          <div className='flex items-center gap-3'>
-            <div className='w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
-              <svg className='w-5 h-5 text-blue-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' />
-              </svg>
-            </div>
-            <div>
-              <p className='text-2xl font-bold text-slate-900'>{eventos.filter(e => (e.tipo || 'alumnos') === 'alumnos').length}</p>
-              <p className='text-xs text-slate-500'>Alumnos</p>
-            </div>
+
+        {/* Alumnos */}
+        <div className='bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5 sm:gap-4'>
+          <div className='w-11 h-11 rounded-xl bg-st-pastel text-st-verde flex items-center justify-center shrink-0'>
+            <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' />
+            </svg>
+          </div>
+          <div className='min-w-0'>
+            <p className='text-2xl sm:text-3xl font-bold text-slate-800 leading-none mb-1.5'>
+              {eventos.filter(e => (e.tipo || 'alumnos') === 'alumnos').length}
+            </p>
+            <p className='text-xs font-medium text-slate-500 truncate'>
+              Eventos Alumnos
+            </p>
           </div>
         </div>
-        <div className='bg-white rounded-xl p-4 border border-slate-200'>
-          <div className='flex items-center gap-3'>
-            <div className='w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center'>
-              <svg className='w-5 h-5 text-purple-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' />
-              </svg>
-            </div>
-            <div>
-              <p className='text-2xl font-bold text-slate-900'>{eventos.filter(e => e.tipo === 'trabajadores').length}</p>
-              <p className='text-xs text-slate-500'>Funcionarios</p>
-            </div>
+
+        {/* Funcionarios */}
+        <div className='bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5 sm:gap-4'>
+          <div className='w-11 h-11 rounded-xl bg-st-pastel text-st-verde flex items-center justify-center shrink-0'>
+            <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' />
+            </svg>
+          </div>
+          <div className='min-w-0'>
+            <p className='text-2xl sm:text-3xl font-bold text-slate-800 leading-none mb-1.5'>
+              {eventos.filter(e => e.tipo === 'trabajadores').length}
+            </p>
+            <p className='text-xs font-medium text-slate-500 truncate'>
+              Eventos Funcionarios
+            </p>
           </div>
         </div>
       </div>
@@ -302,7 +332,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
                   <div className='flex items-center gap-2'>
                     {esSuperAdmin && (
                       <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${evento.visibleCoordinador !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-                        {evento.visibleCoordinador !== false ? '👁️ Coordinador' : '🔒 Solo Admin'}
+                        {evento.visibleCoordinador !== false ? '👁️ Coordinador' : 'Solo Admin'}
                       </span>
                     )}
                     <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${evento.tipo === 'trabajadores'
@@ -585,6 +615,99 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
           />
         </motion.div>
       )}
+
+      {/* Modal Popup para Confirmar Desactivación de Evento (Color Institucional Santo Tomás) */}
+      <AnimatePresence>
+        {eventoADesactivar && (
+          <motion.div
+            className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4'
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => !desactivando && setEventoADesactivar(null)}
+          >
+            <motion.div
+              className='bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100'
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Modal Header Institucional */}
+              <div className='bg-st-verde px-6 py-4 text-white'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-3'>
+                    <div className='w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white shrink-0'>
+                      <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className='text-lg font-bold leading-tight'>
+                        ¿Desactivar Evento?
+                      </h3>
+                      <p className='text-green-100 text-xs mt-0.5'>
+                        Confirmación de estado del evento
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => !desactivando && setEventoADesactivar(null)}
+                    className='w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors text-white'
+                  >
+                    <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className='p-6'>
+                <p className='text-sm text-slate-600 mb-3'>
+                  Estás a punto de desactivar el siguiente evento:
+                </p>
+
+                <div className='w-full bg-st-pastel/70 border border-st-verde/20 rounded-xl p-3.5 mb-4'>
+                  <p className='font-bold text-st-verde text-sm md:text-base leading-snug break-words'>
+                    {eventoADesactivar.nombre}
+                  </p>
+                </div>
+
+                <p className='text-xs text-slate-500 leading-relaxed mb-6'>
+                  Al desactivarlo, los participantes no podrán registrar su asistencia en el sistema hasta que el evento vuelva a ser activado.
+                </p>
+
+                <div className='flex items-center gap-3 w-full'>
+                  <button
+                    type='button'
+                    onClick={() => setEventoADesactivar(null)}
+                    disabled={desactivando}
+                    className='flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition-all disabled:opacity-50'
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type='button'
+                    onClick={confirmarDesactivar}
+                    disabled={desactivando}
+                    className='flex-1 py-2.5 px-4 bg-st-verde hover:bg-[#004b30] active:scale-98 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-st-verde/20 flex items-center justify-center gap-2 disabled:opacity-50'
+                  >
+                    {desactivando ? (
+                      <>
+                        <div className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin' />
+                        Desactivando...
+                      </>
+                    ) : (
+                      'Sí, desactivar'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

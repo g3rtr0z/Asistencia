@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx';
 import { exportarAExcel } from '../admin/exportarAExcel.jsx';
+import { deleteAlumno } from '../../services/alumnosService';
 
 const TrabajadoresLista = ({
   trabajadores = [],
@@ -13,6 +14,7 @@ const TrabajadoresLista = ({
   onAgregarTrabajadores,
   onEliminarTrabajadores,
   updateTrabajador,
+  deleteTrabajador,
   esAdmin = false,
   eventoNombre = 'Evento',
   tipoEvento = 'trabajadores',
@@ -72,6 +74,32 @@ const TrabajadoresLista = ({
       alert('Error al guardar los cambios');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Delete states
+  const [trabajadorAEliminar, setTrabajadorAEliminar] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleEliminarClick = (trabajador) => {
+    setTrabajadorAEliminar(trabajador);
+  };
+
+  const handleConfirmarEliminar = async () => {
+    if (!trabajadorAEliminar) return;
+    setIsDeleting(true);
+    try {
+      if (deleteTrabajador) {
+        await deleteTrabajador(trabajadorAEliminar.eventoId, trabajadorAEliminar.id);
+      } else {
+        await deleteAlumno(trabajadorAEliminar.eventoId, trabajadorAEliminar.id);
+      }
+      setTrabajadorAEliminar(null);
+    } catch (error) {
+      console.error('Error al eliminar funcionario:', error);
+      alert('Error al eliminar el funcionario: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -333,9 +361,9 @@ const TrabajadoresLista = ({
 
         <button
           onClick={() => setSoloPresentes && setSoloPresentes('confirmados')}
-          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${soloPresentes === 'confirmados' ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'}`}
+          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${soloPresentes === 'confirmados' ? 'bg-st-verde text-white border-st-verde shadow-md' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'}`}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${soloPresentes === 'confirmados' ? 'bg-white/20' : 'bg-blue-50 text-blue-600'}`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${soloPresentes === 'confirmados' ? 'bg-white/20' : 'bg-st-pastel text-st-verde'}`}>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -682,15 +710,26 @@ const TrabajadoresLista = ({
                     )}
                     {esAdmin && (
                       <td className="py-4 px-4 text-center">
-                        <button
-                          onClick={() => handleEditarClick(trabajador)}
-                          className="text-slate-400 hover:text-st-verde transition-colors p-1.5 rounded-lg hover:bg-green-50"
-                          title="Editar"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => handleEditarClick(trabajador)}
+                            className="text-slate-400 hover:text-st-verde transition-colors p-1.5 rounded-lg hover:bg-green-50"
+                            title="Editar"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleEliminarClick(trabajador)}
+                            className="text-slate-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50"
+                            title="Eliminar"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -782,6 +821,84 @@ const TrabajadoresLista = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {trabajadorAEliminar && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
+            {/* Header Institucional de Eliminación */}
+            <div className="bg-red-600 px-6 py-4 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold leading-tight">¿Eliminar Funcionario?</h3>
+                  <p className="text-red-100 text-xs mt-0.5">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+              <button
+                onClick={() => !isDeleting && setTrabajadorAEliminar(null)}
+                className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors text-white"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6">
+              <p className="text-sm text-slate-600 mb-3">
+                ¿Estás seguro de que deseas eliminar permanentemente a este funcionario?
+              </p>
+
+              <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 mb-4">
+                <p className="font-bold text-slate-800 text-base leading-snug break-words">
+                  {trabajadorAEliminar.nombre || `${trabajadorAEliminar.nombres || ''} ${trabajadorAEliminar.apellidos || ''}`.trim() || 'Sin Nombre'}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  RUT: <span className="font-semibold text-slate-700">{trabajadorAEliminar.rut || '-'}</span>
+                  {trabajadorAEliminar.departamento && ` · ${trabajadorAEliminar.departamento}`}
+                </p>
+              </div>
+
+              <p className="text-xs text-slate-500 leading-relaxed mb-6">
+                El funcionario será eliminado de este evento y ya no aparecerá en las listas ni en las estadísticas.
+              </p>
+
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => setTrabajadorAEliminar(null)}
+                  disabled={isDeleting}
+                  className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition-all disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminar}
+                  disabled={isDeleting}
+                  className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 active:scale-98 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-red-600/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    'Sí, eliminar'
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>,
         document.body

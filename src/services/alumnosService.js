@@ -239,6 +239,21 @@ export const getAlumnos = async () => {
   }
 };
 
+// Eliminar un alumno/participante por ID de evento y ID de alumno
+export const deleteAlumno = async (eventoId, alumnoId) => {
+  try {
+    if (!eventoId || !alumnoId) {
+      throw new Error('Se requiere eventoId y alumnoId para eliminar');
+    }
+    const alumnoRef = doc(db, `eventos/${eventoId}/alumnos`, alumnoId);
+    await deleteDoc(alumnoRef);
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar alumno:', error);
+    throw error;
+  }
+};
+
 // Actualizar un alumno
 export const updateAlumno = async (eventoId, alumnoId, data) => {
   try {
