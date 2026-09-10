@@ -748,7 +748,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
                     <div className='flex items-center gap-2'>
                       <span className='w-2 h-2 rounded-full bg-st-verde'></span>
                       <span className='text-xs font-bold text-st-verde uppercase tracking-wider'>
-                        Configuración de Acreditación (Pantalla RUT)
+                        Configuración de Acreditación
                       </span>
                     </div>
                     <div className='flex items-center gap-2'>
@@ -782,8 +782,8 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
                           }}
                           className='w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all'
                         >
-                          <option value='completo'>Nombre Completo (Nombres y Apellidos)</option>
-                          <option value='soloNombre'>Solo Nombre(s) (Sin apellidos)</option>
+                          <option value='completo'>Nombre Completo</option>
+                          <option value='soloNombre'>Solo Nombres</option>
                           <option value='primerNombre'>Únicamente Primer Nombre</option>
                           <option value='separado'>Nombres y Apellidos en Filas Separadas</option>
                         </select>
