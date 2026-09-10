@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,26 +9,70 @@ import {
   eliminarEvento,
   probarConexionFirestore,
 } from '../../services/eventosService';
+import { getAlumnosPorEvento } from '../../services/alumnosService';
 import ImportExcel from '../admin/ImportExcel';
+import { ChevronDown, ChevronUp, X, Eye, CheckCircle2, AlertCircle } from 'lucide-react';
+
+export const DEFAULT_CONFIG_ASISTENCIA = {
+  modoNombre: 'completo', // 'completo' | 'soloNombre' | 'primerNombre' | 'separado'
+  mostrarRut: true,
+  mostrarCarrera: true,
+  mostrarInstitucion: true,
+  mostrarCargo: true,
+  mostrarComuna: true,
+  mostrarAsiento: true,
+  mostrarGrupo: true,
+  mostrarNumeroLista: true,
+  mostrarDistincion: true,
+  mostrarReconocimiento: true,
+};
+
+const getInitialFormData = () => ({
+  nombre: '',
+  descripcion: '',
+  fechaInicio: '',
+  fechaFin: '',
+  activo: false,
+  visibleCoordinador: true,
+  tipo: 'alumnos',
+  configuracionAsistencia: { ...DEFAULT_CONFIG_ASISTENCIA },
+});
 
 function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, userRole = 'admin' }) {
   const esSuperAdmin = userRole === 'admin';
   const [showModal, setShowModal] = useState(false);
   const [editingEvento, setEditingEvento] = useState(null);
+  const [camposDisponiblesEvento, setCamposDisponiblesEvento] = useState(null);
+  const [sampleAlumno, setSampleAlumno] = useState(null);
+  const [cargandoCampos, setCargandoCampos] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [eventoADesactivar, setEventoADesactivar] = useState(null);
   const [desactivando, setDesactivando] = useState(false);
   const [filtroTipo, setFiltroTipo] = useState('alumnos'); // 'alumnos', 'trabajadores'
-  const [formData, setFormData] = useState({
-    nombre: '',
-    descripcion: '',
-    fechaInicio: '',
-    fechaFin: '',
-    activo: false,
-    visibleCoordinador: true,
-    tipo: 'alumnos',
-  });
+  const [formData, setFormData] = useState(getInitialFormData());
   const [mensaje, setMensaje] = useState('');
+  const [seccionesModal, setSeccionesModal] = useState({
+    fechas: true,
+    acreditacion: true,
+    permisos: true,
+    vistaPrevia: false,
+  });
+
+  // Auto-cierre del popup de notificación después de 4 segundos
+  useEffect(() => {
+    if (!mensaje) return;
+    const timer = setTimeout(() => {
+      setMensaje('');
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [mensaje]);
+
+  const toggleSeccionModal = (seccion) => {
+    setSeccionesModal(prev => ({
+      ...prev,
+      [seccion]: !prev[seccion]
+    }));
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -46,29 +91,15 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
         setMensaje('Evento actualizado correctamente');
         setShowModal(false);
         setEditingEvento(null);
-        setFormData({
-          nombre: '',
-          descripcion: '',
-          fechaInicio: '',
-          fechaFin: '',
-          activo: false,
-          visibleCoordinador: true,
-          tipo: 'alumnos',
-        });
+        setCamposDisponiblesEvento(null);
+        setSampleAlumno(null);
+        setFormData(getInitialFormData());
       } else {
         // Crear el evento y cerrar el modal
         await crearEvento(formData);
         setMensaje('Evento creado correctamente');
         setShowModal(false);
-        setFormData({
-          nombre: '',
-          descripcion: '',
-          fechaInicio: '',
-          fechaFin: '',
-          activo: false,
-          visibleCoordinador: true,
-          tipo: 'alumnos',
-        });
+        setFormData(getInitialFormData());
       }
 
       if (onEventoChange) onEventoChange();
@@ -80,16 +111,61 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
     }
   };
 
-  const handleEdit = evento => {
+  const handleEdit = async evento => {
     setEditingEvento(evento);
+    setCamposDisponiblesEvento(null);
+    setSampleAlumno(null);
+    setCargandoCampos(true);
+
+    let camposDetectados = null;
+    let sample = null;
+
+    try {
+      const alumnos = await getAlumnosPorEvento(evento.id);
+      if (alumnos && alumnos.length > 0) {
+        sample = alumnos[0];
+        camposDetectados = {
+          mostrarRut: alumnos.some(a => Boolean(a.rut || a.RUT)),
+          mostrarCarrera: alumnos.some(a => Boolean(a.carrera || a.Carrera)),
+          mostrarInstitucion: alumnos.some(a => Boolean(a.institucion || a.establecimiento || a.Establecimiento || a['Institución'])),
+          mostrarCargo: alumnos.some(a => Boolean(a.cargo || a.Cargo)),
+          mostrarComuna: alumnos.some(a => Boolean(a.comuna || a['Comuna del Establecimiento'])),
+          mostrarAsiento: alumnos.some(a => Boolean(a.asiento || a.Asiento)),
+          mostrarGrupo: alumnos.some(a => a.grupo !== null && a.grupo !== undefined && a.grupo !== ''),
+          mostrarNumeroLista: alumnos.some(a => Boolean(a.numeroLista || a.NumeroLista)),
+          mostrarDistincion: alumnos.some(a => Boolean(a.distincion && a.distincion !== 'false' && a.distincion !== false)),
+          mostrarReconocimiento: alumnos.some(a => Boolean(a.reconocimiento && a.reconocimiento !== 'false' && a.reconocimiento !== false)),
+        };
+        setCamposDisponiblesEvento(camposDetectados);
+        setSampleAlumno(sample);
+      }
+    } catch (err) {
+      console.warn('Error al verificar campos de alumnos:', err);
+    } finally {
+      setCargandoCampos(false);
+    }
+
+    const cfgOriginal = evento.configuracionAsistencia || {};
+    const configBase = { ...DEFAULT_CONFIG_ASISTENCIA, ...cfgOriginal };
+
+    if (camposDetectados) {
+      // Los campos que no existen en el Excel se desactivan por defecto
+      Object.keys(camposDetectados).forEach(k => {
+        if (!camposDetectados[k]) {
+          configBase[k] = false;
+        }
+      });
+    }
+
     setFormData({
-      nombre: evento.nombre,
-      descripcion: evento.descripcion,
-      fechaInicio: evento.fechaInicio,
-      fechaFin: evento.fechaFin,
-      activo: evento.activo,
-      visibleCoordinador: evento.visibleCoordinador !== undefined ? evento.visibleCoordinador : true,
+      nombre: evento.nombre || '',
+      descripcion: evento.descripcion || '',
+      fechaInicio: evento.fechaInicio || '',
+      fechaFin: evento.fechaFin || '',
+      activo: Boolean(evento.activo),
+      visibleCoordinador: evento.visibleCoordinador !== undefined ? Boolean(evento.visibleCoordinador) : true,
       tipo: evento.tipo || 'alumnos',
+      configuracionAsistencia: configBase,
     });
     setShowModal(true);
   };
@@ -158,14 +234,9 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
     setShowModal(false);
     setShowImportModal(false);
     setEditingEvento(null);
-    setFormData({
-      nombre: '',
-      descripcion: '',
-      fechaInicio: '',
-      fechaFin: '',
-      activo: false,
-      tipo: 'alumnos',
-    });
+    setCamposDisponiblesEvento(null);
+    setSampleAlumno(null);
+    setFormData(getInitialFormData());
   };
 
   const formatDate = dateString => {
@@ -293,21 +364,69 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
         </div>
       </div>
 
-      {/* Message Toast */}
-      {mensaje && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${mensaje.includes('Error')
-            ? 'bg-red-50 border border-red-200 text-red-700'
-            : 'bg-green-50 border border-green-200 text-green-700'
-            }`}
-        >
-          <svg className={`w-5 h-5 ${mensaje.includes('Error') ? 'text-red-500' : 'text-green-500'}`} fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d={mensaje.includes('Error') ? 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' : 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'} />
-          </svg>
-          <span className='text-sm font-medium'>{mensaje}</span>
-        </motion.div>
+      {/* Popup Notificación Flotante Superior Derecho */}
+      {createPortal(
+        <AnimatePresence>
+          {mensaje && (
+            <motion.div
+              key="popup-toast-notificacion"
+              initial={{ opacity: 0, y: -20, x: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, x: 20, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="fixed top-5 right-5 z-[99999] pointer-events-auto max-w-sm w-full"
+            >
+              <div
+                className={`flex items-start gap-3 p-4 rounded-xl shadow-2xl border backdrop-blur-md transition-all ${
+                  mensaje.includes('Error')
+                    ? 'bg-white/95 border-red-200 border-l-4 border-l-red-500'
+                    : mensaje.toLowerCase().includes('desactivado')
+                    ? 'bg-white/95 border-amber-200 border-l-4 border-l-amber-500'
+                    : 'bg-white/95 border-emerald-200 border-l-4 border-l-st-verde'
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-lg flex-shrink-0 ${
+                    mensaje.includes('Error')
+                      ? 'bg-red-100 text-red-600'
+                      : mensaje.toLowerCase().includes('desactivado')
+                      ? 'bg-amber-100 text-amber-600'
+                      : 'bg-emerald-100 text-st-verde'
+                  }`}
+                >
+                  {mensaje.includes('Error') ? (
+                    <AlertCircle className="w-5 h-5" />
+                  ) : (
+                    <CheckCircle2 className="w-5 h-5" />
+                  )}
+                </div>
+
+                <div className="flex-1 pt-0.5 min-w-0">
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+                    {mensaje.includes('Error')
+                      ? 'Error'
+                      : mensaje.toLowerCase().includes('desactivado')
+                      ? 'Estado del Evento'
+                      : 'Estado del Evento'}
+                  </h4>
+                  <p className="text-sm font-semibold text-slate-800 leading-snug">
+                    {mensaje}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setMensaje('')}
+                  className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors flex-shrink-0 -mr-1 -mt-1"
+                  title="Cerrar notificación"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
 
       {/* Events Grid */}
@@ -425,171 +544,480 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
         </div>
       )}
 
-      {/* Create/Edit Modal */}
+      {/* Create/Edit Modal Minimalista e Institucional */}
       {showModal && (
         <motion.div
-          className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4'
+          className='fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4'
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleCerrarModal}
         >
           <motion.div
-            className='bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden'
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            className='bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden border border-slate-200 my-8 max-h-[90vh] flex flex-col'
+            initial={{ opacity: 0, scale: 0.96, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            exit={{ opacity: 0, scale: 0.96, y: 15 }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className='bg-st-verde px-6 py-4 text-white'>
-              <div className='flex items-center justify-between'>
+            {/* Modal Header con Color Institucional */}
+            <div className='bg-st-verde px-6 py-4.5 text-white flex justify-between items-center flex-shrink-0 shadow-xs'>
+              <div className='flex items-center gap-3'>
+                <div className='w-1.5 h-6 bg-emerald-300 rounded-full'></div>
                 <div>
-                  <h3 className='text-lg font-bold'>
+                  <h3 className='text-base font-bold text-white tracking-tight'>
                     {editingEvento ? 'Editar Evento' : 'Nuevo Evento'}
                   </h3>
-                  <p className='text-green-100 text-sm'>
-                    {editingEvento ? 'Modifica los datos del evento' : 'Completa los datos para crear un evento'}
+                  <p className='text-xs text-emerald-100/90 font-medium'>
+                    {editingEvento ? editingEvento.nombre : 'Configuración institucional del evento'}
                   </p>
                 </div>
-                <button
-                  onClick={handleCerrarModal}
-                  className='w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors'
-                >
-                  <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-                  </svg>
-                </button>
               </div>
+              <button
+                type='button'
+                onClick={handleCerrarModal}
+                className='text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors'
+                title='Cerrar'
+              >
+                <X className='w-5 h-5' />
+              </button>
             </div>
 
             {/* Modal Content */}
-            <div className='p-6 max-h-[60vh] overflow-y-auto'>
-              <form onSubmit={handleSubmit} className='space-y-5'>
-                <div>
-                  <label className='block text-sm font-medium text-slate-700 mb-1.5'>Nombre del Evento</label>
-                  <input
-                    type='text'
-                    value={formData.nombre}
-                    onChange={e => setFormData({ ...formData, nombre: e.target.value })}
-                    className='w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-st-verde focus:ring-1 focus:ring-st-verde outline-none transition-colors text-sm'
-                    placeholder='Ej: Ceremonia de Graduación'
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className='block text-sm font-medium text-slate-700 mb-1.5'>Descripción</label>
-                  <textarea
-                    value={formData.descripcion}
-                    onChange={e => setFormData({ ...formData, descripcion: e.target.value })}
-                    rows={3}
-                    className='w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-st-verde focus:ring-1 focus:ring-st-verde outline-none transition-colors text-sm resize-none'
-                    placeholder='Describe el evento...'
-                  />
-                </div>
-
-                <div className='grid grid-cols-2 gap-4'>
+            <div className='p-6 overflow-y-auto flex-1 text-slate-800'>
+              <form onSubmit={handleSubmit} className='space-y-4'>
+                
+                {/* 1. Información Principal con acento institucional */}
+                <div className='bg-white border border-slate-200 rounded-xl p-4 space-y-4 border-l-4 border-l-st-verde shadow-xs'>
                   <div>
-                    <label className='block text-sm font-medium text-slate-700 mb-1.5'>Fecha Inicio</label>
+                    <div className='flex items-center gap-1.5 mb-1'>
+                      <span className='w-1.5 h-1.5 rounded-full bg-st-verde'></span>
+                      <label className='text-xs font-bold text-st-verde uppercase tracking-wider'>
+                        Nombre del Evento
+                      </label>
+                    </div>
                     <input
-                      type='datetime-local'
-                      value={formData.fechaInicio}
-                      onChange={e => setFormData({ ...formData, fechaInicio: e.target.value })}
-                      className='w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-st-verde focus:ring-1 focus:ring-st-verde outline-none transition-colors text-sm'
+                      type='text'
+                      value={formData.nombre}
+                      onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+                      className='w-full px-3 py-2 text-sm bg-slate-50/50 border border-slate-300 rounded-lg text-slate-900 font-semibold focus:bg-white focus:border-st-verde focus:ring-2 focus:ring-st-verde/20 outline-none transition-all'
+                      placeholder='Ej: Titulación IP/CFT - 14 Sep'
                       required
                     />
                   </div>
-                  <div>
-                    <label className='block text-sm font-medium text-slate-700 mb-1.5'>Fecha Fin</label>
-                    <input
-                      type='datetime-local'
-                      value={formData.fechaFin}
-                      onChange={e => setFormData({ ...formData, fechaFin: e.target.value })}
-                      className='w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-st-verde focus:ring-1 focus:ring-st-verde outline-none transition-colors text-sm'
-                      required
-                    />
-                  </div>
-                </div>
 
-                <div>
-                  <label className='block text-sm font-medium text-slate-700 mb-1.5'>Tipo de Evento</label>
-                  <div className='flex gap-3'>
-                    <button
-                      type='button'
-                      onClick={() => setFormData({ ...formData, tipo: 'alumnos' })}
-                      className={`flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${formData.tipo === 'alumnos'
-                        ? 'border-st-verde bg-st-verde/10 text-st-verde'
-                        : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                        }`}
-                    >
-                      Alumnos
-                    </button>
-                    <button
-                      type='button'
-                      onClick={() => setFormData({ ...formData, tipo: 'trabajadores' })}
-                      className={`flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${formData.tipo === 'trabajadores'
-                        ? 'border-st-verde bg-st-verde/10 text-st-verde'
-                        : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                        }`}
-                    >
-                      Funcionarios
-                    </button>
-                  </div>
-                </div>
+                  {/* Tipo de Evento (Dropdown institucional) y Estado */}
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                    <div>
+                      <label className='text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1'>
+                        Tipo de Participantes
+                      </label>
+                      <select
+                        value={formData.tipo || 'alumnos'}
+                        onChange={e => setFormData({ ...formData, tipo: e.target.value })}
+                        className='w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all'
+                      >
+                        <option value='alumnos'>Estudiantes / Asistentes Generales</option>
+                        <option value='trabajadores'>Funcionarios / Trabajadores</option>
+                      </select>
+                    </div>
 
-                {/* Visibilidad para Coordinador (solo visible para Administrador) */}
-                {esSuperAdmin && (
-                  <div className='p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between'>
-                    <div className='flex items-center gap-2.5'>
-                      <div className='w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm'>
-                        👁️
-                      </div>
-                      <div>
-                        <p className='text-xs font-bold text-slate-800'>Visible para Coordinadores</p>
-                        <p className='text-[10px] text-slate-400'>
-                          Permite que los usuarios con perfil Coordinador vean y gestionen este evento.
-                        </p>
+                    <div>
+                      <label className='text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1'>
+                        Estado
+                      </label>
+                      <div className='flex items-center h-[38px] px-3 bg-slate-50 border border-slate-200 rounded-lg'>
+                        <span className={`inline-flex items-center text-xs font-semibold ${
+                          formData.activo ? 'text-st-verde' : 'text-slate-500'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full mr-2 ${formData.activo ? 'bg-st-verde' : 'bg-slate-400'}`}></span>
+                          {formData.activo ? 'Evento Activo' : 'Evento Inactivo'}
+                        </span>
                       </div>
                     </div>
-                    <label className='relative inline-flex items-center cursor-pointer'>
-                      <input
-                        type='checkbox'
-                        checked={formData.visibleCoordinador}
-                        onChange={e => setFormData({ ...formData, visibleCoordinador: e.target.checked })}
-                        className='sr-only peer'
-                      />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-st-verde"></div>
+                  </div>
+
+                  <div>
+                    <label className='text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1'>
+                      Descripción (Opcional)
                     </label>
+                    <textarea
+                      value={formData.descripcion || ''}
+                      onChange={e => setFormData({ ...formData, descripcion: e.target.value })}
+                      rows={2}
+                      className='w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all resize-none'
+                      placeholder='Detalles o notas sobre la ceremonia...'
+                    />
+                  </div>
+                </div>
+
+                {/* 2. Sección Desplegable: Fechas y Horarios con Cabecera Institucional */}
+                <div className='border border-emerald-200/80 rounded-xl overflow-hidden shadow-xs'>
+                  <button
+                    type='button'
+                    onClick={() => toggleSeccionModal('fechas')}
+                    className='w-full flex items-center justify-between px-4 py-2.5 bg-emerald-50/80 hover:bg-emerald-100/70 border-b border-emerald-100 text-left transition-colors'
+                  >
+                    <div className='flex items-center gap-2'>
+                      <span className='w-2 h-2 rounded-full bg-st-verde'></span>
+                      <span className='text-xs font-bold text-st-verde uppercase tracking-wider'>
+                        Fechas y Horarios
+                      </span>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      {formData.fechaInicio && (
+                        <span className='text-[11px] font-semibold text-st-verde bg-white px-2 py-0.5 rounded border border-emerald-200 shadow-2xs'>
+                          Programado
+                        </span>
+                      )}
+                      <ChevronDown className={`w-4 h-4 text-st-verde transform transition-transform duration-200 ${seccionesModal.fechas ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+                  {seccionesModal.fechas && (
+                    <div className='p-4 bg-white grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                      <div>
+                        <label className='text-xs font-semibold text-st-verde uppercase tracking-wider block mb-1'>
+                          Fecha y Hora de Inicio
+                        </label>
+                        <input
+                          type='datetime-local'
+                          value={formData.fechaInicio}
+                          onChange={e => setFormData({ ...formData, fechaInicio: e.target.value })}
+                          className='w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all font-medium'
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className='text-xs font-semibold text-st-verde uppercase tracking-wider block mb-1'>
+                          Fecha y Hora de Fin
+                        </label>
+                        <input
+                          type='datetime-local'
+                          value={formData.fechaFin}
+                          onChange={e => setFormData({ ...formData, fechaFin: e.target.value })}
+                          className='w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all font-medium'
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Sección Desplegable: Permisos y Visibilidad (solo superadmin) */}
+                {esSuperAdmin && (
+                  <div className='border border-slate-200 rounded-xl overflow-hidden shadow-xs'>
+                    <button
+                      type='button'
+                      onClick={() => toggleSeccionModal('permisos')}
+                      className='w-full flex items-center justify-between px-4 py-2.5 bg-slate-50 hover:bg-slate-100/80 text-left transition-colors'
+                    >
+                      <span className='text-xs font-bold text-slate-700 uppercase tracking-wider'>
+                        Permisos y Visibilidad
+                      </span>
+                      <ChevronDown className={`w-4 h-4 text-slate-400 transform transition-transform duration-200 ${seccionesModal.permisos ? 'rotate-180' : ''}`} />
+                    </button>
+                    {seccionesModal.permisos && (
+                      <div className='p-4 bg-white border-t border-slate-200 flex items-center justify-between'>
+                        <div>
+                          <p className='text-xs font-bold text-slate-800'>Visible para Coordinadores</p>
+                          <p className='text-xs text-slate-500'>
+                            Permite que los usuarios con perfil de Coordinador puedan ver y gestionar este evento.
+                          </p>
+                        </div>
+                        <label className='relative inline-flex items-center cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={formData.visibleCoordinador}
+                            onChange={e => setFormData({ ...formData, visibleCoordinador: e.target.checked })}
+                            className='sr-only peer'
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-st-verde"></div>
+                        </label>
+                      </div>
+                    )}
                   </div>
                 )}
 
+                {/* 4. Sección Desplegable: Configuración de Acreditación con Cabecera Institucional */}
+                <div className='border border-emerald-200/80 rounded-xl overflow-hidden shadow-xs'>
+                  <button
+                    type='button'
+                    onClick={() => toggleSeccionModal('acreditacion')}
+                    className='w-full flex items-center justify-between px-4 py-2.5 bg-emerald-50/80 hover:bg-emerald-100/70 border-b border-emerald-100 text-left transition-colors'
+                  >
+                    <div className='flex items-center gap-2'>
+                      <span className='w-2 h-2 rounded-full bg-st-verde'></span>
+                      <span className='text-xs font-bold text-st-verde uppercase tracking-wider'>
+                        Configuración de Acreditación (Pantalla RUT)
+                      </span>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      {camposDisponiblesEvento && (
+                        <span className='text-[10px] text-st-verde font-bold bg-white px-2 py-0.5 rounded border border-emerald-200 shadow-2xs'>
+                          Excel Vinculado
+                        </span>
+                      )}
+                      <ChevronDown className={`w-4 h-4 text-st-verde transform transition-transform duration-200 ${seccionesModal.acreditacion ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+                  {seccionesModal.acreditacion && (
+                    <div className='p-4 bg-white space-y-4'>
+                      
+                      {/* Formato del Nombre (Dropdown select institucional) */}
+                      <div>
+                        <label className='text-xs font-bold text-st-verde uppercase tracking-wider block mb-1'>
+                          Formato del Nombre en Pantalla
+                        </label>
+                        <select
+                          value={formData.configuracionAsistencia?.modoNombre || 'completo'}
+                          onChange={e => {
+                            const modo = e.target.value;
+                            setFormData(prev => ({
+                              ...prev,
+                              configuracionAsistencia: {
+                                ...(prev.configuracionAsistencia || DEFAULT_CONFIG_ASISTENCIA),
+                                modoNombre: modo,
+                              },
+                            }));
+                          }}
+                          className='w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all'
+                        >
+                          <option value='completo'>Nombre Completo (Nombres y Apellidos)</option>
+                          <option value='soloNombre'>Solo Nombre(s) (Sin apellidos)</option>
+                          <option value='primerNombre'>Únicamente Primer Nombre</option>
+                          <option value='separado'>Nombres y Apellidos en Filas Separadas</option>
+                        </select>
+                      </div>
+
+                      {/* Casillas Visibles en Pantalla */}
+                      <div>
+                        <div className='flex items-center justify-between mb-2'>
+                          <label className='text-xs font-bold text-st-verde uppercase tracking-wider block'>
+                            Casillas Mostradas al Ingresar el RUT
+                          </label>
+                          {camposDisponiblesEvento && (
+                            <span className='text-[10px] text-slate-500 font-medium'>
+                              Filtrado por columnas del Excel
+                            </span>
+                          )}
+                        </div>
+
+                        {cargandoCampos ? (
+                          <p className='text-xs text-slate-400 py-2'>Analizando campos del Excel...</p>
+                        ) : (
+                          <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
+                            {[
+                              { key: 'mostrarRut', label: 'RUT' },
+                              { key: 'mostrarCarrera', label: 'Carrera' },
+                              { key: 'mostrarInstitucion', label: 'Institución' },
+                              { key: 'mostrarCargo', label: 'Cargo' },
+                              { key: 'mostrarComuna', label: 'Comuna' },
+                              { key: 'mostrarAsiento', label: 'Asiento' },
+                              { key: 'mostrarGrupo', label: 'Grupo' },
+                              { key: 'mostrarNumeroLista', label: 'N° de Lista' },
+                              { key: 'mostrarDistincion', label: 'Distinción' },
+                              { key: 'mostrarReconocimiento', label: 'Reconocimiento' },
+                            ]
+                            .filter(item => {
+                              if (camposDisponiblesEvento) {
+                                return Boolean(camposDisponiblesEvento[item.key]);
+                              }
+                              return true;
+                            })
+                            .map(item => {
+                              const checked = formData.configuracionAsistencia?.[item.key] !== false;
+                              return (
+                                <button
+                                  key={item.key}
+                                  type='button'
+                                  onClick={() => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      configuracionAsistencia: {
+                                        ...(prev.configuracionAsistencia || DEFAULT_CONFIG_ASISTENCIA),
+                                        [item.key]: !checked,
+                                      },
+                                    }));
+                                  }}
+                                  className={`flex items-center justify-between px-3 py-2 rounded-lg border text-left transition-colors cursor-pointer select-none text-xs ${
+                                    checked
+                                      ? 'bg-emerald-50/70 border-st-verde text-slate-900 font-semibold shadow-2xs'
+                                      : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100/60'
+                                  }`}
+                                >
+                                  <span>{item.label}</span>
+                                  <div
+                                    className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors ml-1.5 ${
+                                      checked ? 'bg-st-verde border-st-verde text-white' : 'border-slate-300 bg-white'
+                                    }`}
+                                  >
+                                    {checked && (
+                                      <svg className='w-2.5 h-2.5' fill='none' viewBox='0 0 24 24' stroke='currentColor' strokeWidth={3}>
+                                        <path strokeLinecap='round' strokeLinejoin='round' d='M5 13l4 4L19 7' />
+                                      </svg>
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Vista Previa Desplegable */}
+                      <div className='border border-slate-200 rounded-lg overflow-hidden'>
+                        <button
+                          type='button'
+                          onClick={() => toggleSeccionModal('vistaPrevia')}
+                          className='w-full flex items-center justify-between px-3.5 py-2 bg-slate-50 hover:bg-emerald-50/40 text-left transition-colors'
+                        >
+                          <div className='flex items-center gap-2'>
+                            <Eye className='w-3.5 h-3.5 text-st-verde' />
+                            <span className='text-[11px] font-bold text-st-verde uppercase tracking-wider'>
+                              Vista Previa en Pantalla de Acreditación
+                            </span>
+                          </div>
+                          <ChevronDown className={`w-3.5 h-3.5 text-st-verde transform transition-transform duration-200 ${seccionesModal.vistaPrevia ? 'rotate-180' : ''}`} />
+                        </button>
+                        {seccionesModal.vistaPrevia && (
+                          <div className='p-3.5 bg-white border-t border-slate-100 divide-y divide-slate-100 text-xs'>
+                            {(() => {
+                              const modo = formData.configuracionAsistencia?.modoNombre || 'completo';
+                              const nomSample = sampleAlumno?.nombres || 'Vicente Augusto';
+                              const apeSample = sampleAlumno?.apellidos || 'Flores Topp';
+                              const nomCompletoSample = sampleAlumno?.nombre || `${nomSample} ${apeSample}`.trim();
+                              if (modo === 'soloNombre') {
+                                return (
+                                  <div className='flex justify-between py-1'>
+                                    <span className='text-slate-500'>Nombre</span>
+                                    <span className='text-st-verde font-bold'>{nomSample}</span>
+                                  </div>
+                                );
+                              }
+                              if (modo === 'primerNombre') {
+                                return (
+                                  <div className='flex justify-between py-1'>
+                                    <span className='text-slate-500'>Nombre</span>
+                                    <span className='text-st-verde font-bold'>{nomSample.split(' ')[0]}</span>
+                                  </div>
+                                );
+                              }
+                              if (modo === 'separado') {
+                                return (
+                                  <>
+                                    <div className='flex justify-between py-1'>
+                                      <span className='text-slate-500'>Nombres</span>
+                                      <span className='text-st-verde font-bold'>{nomSample}</span>
+                                    </div>
+                                    <div className='flex justify-between py-1'>
+                                      <span className='text-slate-500'>Apellidos</span>
+                                      <span className='text-slate-800 font-semibold'>{apeSample}</span>
+                                    </div>
+                                  </>
+                                );
+                              }
+                              return (
+                                <div className='flex justify-between py-1'>
+                                  <span className='text-slate-500'>Nombre Completo</span>
+                                  <span className='text-st-verde font-bold'>{nomCompletoSample}</span>
+                                </div>
+                              );
+                            })()}
+                            {formData.configuracionAsistencia?.mostrarRut !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarRut) && (
+                              <div className='flex justify-between py-1'>
+                                <span className='text-slate-500'>RUT</span>
+                                <span className='text-slate-800 font-semibold'>{sampleAlumno?.rut || '21.394.866-0'}</span>
+                              </div>
+                            )}
+                            {formData.configuracionAsistencia?.mostrarCarrera !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarCarrera) && (
+                              <div className='flex justify-between py-1'>
+                                <span className='text-slate-500'>Carrera</span>
+                                <span className='text-slate-800 font-semibold'>{sampleAlumno?.carrera || 'Ingeniería en Informática'}</span>
+                              </div>
+                            )}
+                            {formData.configuracionAsistencia?.mostrarInstitucion !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarInstitucion) && (
+                              <div className='flex justify-between py-1'>
+                                <span className='text-slate-500'>Institución</span>
+                                <span className='text-slate-800 font-semibold'>{sampleAlumno?.institucion || sampleAlumno?.establecimiento || 'Santo Tomás'}</span>
+                              </div>
+                            )}
+                            {formData.configuracionAsistencia?.mostrarCargo !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarCargo) && (
+                              <div className='flex justify-between py-1'>
+                                <span className='text-slate-500'>Cargo</span>
+                                <span className='text-slate-800 font-semibold'>{sampleAlumno?.cargo || 'Coordinador'}</span>
+                              </div>
+                            )}
+                            {formData.configuracionAsistencia?.mostrarComuna !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarComuna) && (
+                              <div className='flex justify-between py-1'>
+                                <span className='text-slate-500'>Comuna</span>
+                                <span className='text-slate-800 font-semibold'>{sampleAlumno?.comuna || 'Santiago'}</span>
+                              </div>
+                            )}
+                            {formData.configuracionAsistencia?.mostrarAsiento !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarAsiento) && (
+                              <div className='flex justify-between py-1'>
+                                <span className='text-slate-500'>Asiento</span>
+                                <span className='text-slate-800 font-semibold'>{sampleAlumno?.asiento || 'C7'}</span>
+                              </div>
+                            )}
+                            {formData.configuracionAsistencia?.mostrarGrupo !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarGrupo) && (
+                              <div className='flex justify-between py-1'>
+                                <span className='text-slate-500'>Grupo</span>
+                                <span className='text-slate-800 font-semibold'>{sampleAlumno?.grupo ? `Grupo ${sampleAlumno.grupo}` : 'Grupo 1'}</span>
+                              </div>
+                            )}
+                            {formData.configuracionAsistencia?.mostrarNumeroLista !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarNumeroLista) && (
+                              <div className='flex justify-between py-1'>
+                                <span className='text-slate-500'>N° de Lista</span>
+                                <span className='text-slate-800 font-semibold'>{sampleAlumno?.numeroLista || '15'}</span>
+                              </div>
+                            )}
+                            {formData.configuracionAsistencia?.mostrarDistincion !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarDistincion) && (
+                              <div className='flex justify-between py-1'>
+                                <span className='text-slate-500'>Distinción</span>
+                                <span className='text-slate-800 font-semibold'>Distinción Máxima</span>
+                              </div>
+                            )}
+                            {formData.configuracionAsistencia?.mostrarReconocimiento !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarReconocimiento) && (
+                              <div className='flex justify-between py-1'>
+                                <span className='text-slate-500'>Reconocimiento</span>
+                                <span className='text-slate-800 font-semibold'>Reconocimiento Especial</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 5. Carga de Participantes desde Excel */}
                 {editingEvento && (
-                  <div className='pt-2'>
+                  <div className='pt-1'>
                     <button
                       type='button'
                       onClick={() => setShowImportModal(true)}
-                      className='w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-st-verde hover:text-st-verde transition-colors text-sm'
+                      className='w-full flex items-center justify-center gap-2 py-2 px-4 border border-dashed border-slate-300 rounded-lg text-xs font-semibold text-slate-600 hover:border-st-verde hover:text-st-verde hover:bg-emerald-50/20 transition-colors'
                     >
-                      <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                      <svg className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10' />
                       </svg>
-                      Importar desde Excel
+                      Importar o Actualizar Participantes desde Excel
                     </button>
                   </div>
                 )}
 
-                <div className='flex gap-3 pt-4'>
+                {/* Botones de Acción */}
+                <div className='pt-3 flex gap-3 justify-end border-t border-slate-100'>
                   <button
                     type='button'
                     onClick={handleCerrarModal}
-                    className='flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition-colors text-sm'
+                    className='px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors'
                   >
                     Cancelar
                   </button>
                   <button
                     type='submit'
-                    className='flex-1 py-2.5 bg-st-verde text-white rounded-lg font-medium hover:bg-[#004b30] transition-colors text-sm'
+                    className='px-5 py-2 text-sm bg-st-verde text-white font-semibold rounded-lg hover:bg-[#004b30] transition-all shadow-sm'
                   >
                     {editingEvento ? 'Guardar Cambios' : 'Crear Evento'}
                   </button>

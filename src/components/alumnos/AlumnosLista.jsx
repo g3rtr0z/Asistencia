@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { updateAlumno, deleteAlumno } from '../../services/alumnosService';
 import { createPortal } from 'react-dom';
 import { exportarAExcel } from '../admin/exportarAExcel';
-import { Star, Award } from 'lucide-react';
+import { Star, Award, ChevronDown, ChevronUp, X } from 'lucide-react';
 
 const INSTITUCIONES = [
   { value: 'CFT', label: 'Centro de Formación Técnica' },
@@ -30,6 +30,12 @@ function normalizarCarreraLabel(valor) {
   return mapa[llave] || valor.trim();
 }
 
+function esEventoTitulacion(nombre) {
+  if (!nombre) return false;
+  const n = String(nombre).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  return n.includes('titulacion');
+}
+
 const AlumnosLista = ({
   alumnos = [],
   alumnosCompletos,
@@ -53,11 +59,31 @@ const AlumnosLista = ({
   const alumnosParaStats = alumnosCompletos || alumnos;
   // Normaliza solo para vista (no altera exportación)
   const alumnosNormalizados = useMemo(() => (
-    alumnos.map(a => ({
-      ...a,
-      carreraNormalizada: normalizarCarreraLabel(a.carrera),
-    }))
+    alumnos.map(a => {
+      const nombreFinal = (a.nombres && a.apellidos)
+        ? `${a.nombres} ${a.apellidos}`.trim()
+        : (a.nombre && a.apellidos && !a.nombre.toLowerCase().includes(a.apellidos.toLowerCase().trim())
+          ? `${a.nombre} ${a.apellidos}`.trim()
+          : (a.nombre || `${a.nombres || ''} ${a.apellidos || ''}`.trim()));
+      return {
+        ...a,
+        nombre: nombreFinal,
+        carreraNormalizada: normalizarCarreraLabel(a.carrera),
+      };
+    })
   ), [alumnos]);
+
+  const soloInstitucion = useMemo(() => {
+    if (esEventoTitulacion(eventoNombre)) return true;
+    const tieneCamposColegio = alumnosNormalizados.some(a =>
+      (a.cargo != null && String(a.cargo).trim() !== '') ||
+      (a.comuna != null && String(a.comuna).trim() !== '')
+    );
+    const tieneInstitucion = alumnosNormalizados.some(a =>
+      a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General'
+    );
+    return tieneInstitucion && !tieneCamposColegio;
+  }, [eventoNombre, alumnosNormalizados]);
   // Local state for filters (for compatibility with admin)
   const [localCarrera, setLocalCarrera] = useState('');
   const [localRUT, setLocalRUT] = useState('');
@@ -116,20 +142,37 @@ const AlumnosLista = ({
   const [alumnoAEditar, setAlumnoAEditar] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [editFormData, setEditFormData] = useState({});
+  const [seccionesEditAbiertas, setSeccionesEditAbiertas] = useState({
+    contacto: true,
+    academico: true,
+    ubicacion: true,
+    distinciones: true,
+  });
+
+  const toggleSeccionEdit = (seccion) => {
+    setSeccionesEditAbiertas(prev => ({
+      ...prev,
+      [seccion]: !prev[seccion]
+    }));
+  };
 
   const handleEditarClick = (alumno) => {
     setEditFormData({
       nombres: alumno.nombres || '',
       apellidos: alumno.apellidos || '',
-      nombre: alumno.nombre || '', // Cargar nombre completo
+      nombre: (alumno.nombres && alumno.apellidos)
+        ? `${alumno.nombres} ${alumno.apellidos}`.trim()
+        : (alumno.nombre && alumno.apellidos && !alumno.nombre.toLowerCase().includes(alumno.apellidos.toLowerCase().trim())
+          ? `${alumno.nombre} ${alumno.apellidos}`.trim()
+          : (alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim())),
       rut: alumno.rut || '',
       telefono: alumno.telefono || '',
       correo: alumno.correo || '',
       cargo: alumno.cargo || '',
       comuna: alumno.comuna || '',
-      establecimiento: alumno.establecimiento || alumno.institucion || '',
+      establecimiento: soloInstitucion ? '' : (alumno.establecimiento || ''),
       carrera: alumno.carrera || '',
-      institucion: alumno.institucion || '',
+      institucion: soloInstitucion ? (alumno.institucion || '') : '',
       numeroLista: alumno.numeroLista || '',
       grupo: alumno.grupo || '',
       asiento: alumno.asiento || '',
@@ -192,13 +235,13 @@ const AlumnosLista = ({
         nombreCompleto: true,
         telefono: true,
         correo: true,
-        establecimiento: true,
+        establecimiento: !soloInstitucion,
         cargo: true,
         comuna: true,
         nombres: false,
         apellidos: false,
         carrera: false,
-        institucion: false,
+        institucion: soloInstitucion,
         numeroLista: false,
         grupo: false,
         asiento: false,
@@ -225,17 +268,19 @@ const AlumnosLista = ({
       apellidos: !tieneCamposNuevos && alumnosNormalizados.some(a => a.apellidos != null && String(a.apellidos).trim() !== ''),
       telefono: alumnosNormalizados.some(a => a.telefono != null && String(a.telefono).trim() !== ''),
       correo: alumnosNormalizados.some(a => a.correo != null && String(a.correo).trim() !== ''),
-      establecimiento: alumnosNormalizados.some(a => (a.establecimiento != null && String(a.establecimiento).trim() !== '') || (a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General')),
+      establecimiento: !soloInstitucion && alumnosNormalizados.some(a => a.establecimiento != null && String(a.establecimiento).trim() !== ''),
       cargo: alumnosNormalizados.some(a => a.cargo != null && String(a.cargo).trim() !== ''),
-      comuna: alumnosNormalizados.some(a => a.comuna != null && String(a.comuna).trim() !== ''),
-      institucion: !tieneCamposNuevos && alumnosNormalizados.some(a => a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General'),
+      comuna: !soloInstitucion && alumnosNormalizados.some(a => a.comuna != null && String(a.comuna).trim() !== ''),
+      institucion: soloInstitucion
+        ? alumnosNormalizados.some(a => a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General')
+        : (!tieneCamposNuevos && alumnosNormalizados.some(a => a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General')),
       numeroLista: alumnosNormalizados.some(a => a.numeroLista != null && String(a.numeroLista).trim() !== ''),
       grupo: alumnosNormalizados.some(a => a.grupo != null && String(a.grupo).trim() !== ''),
       asiento: alumnosNormalizados.some(a => a.asiento != null && String(a.asiento).trim() !== ''),
       distincion: alumnosNormalizados.some(a => Boolean(a.distincion)),
       reconocimiento: alumnosNormalizados.some(a => Boolean(a.reconocimiento)),
     };
-  }, [alumnosNormalizados]);
+  }, [alumnosNormalizados, soloInstitucion]);
 
   // Column visibility config
   const [columnasVisibles, setColumnasVisibles] = useState({
@@ -244,13 +289,13 @@ const AlumnosLista = ({
     nombreCompleto: true,
     telefono: true,
     correo: true,
-    establecimiento: true,
+    establecimiento: !soloInstitucion,
     cargo: true,
     comuna: true,
     nombres: false,
     apellidos: false,
     carrera: false,
-    institucion: false,
+    institucion: soloInstitucion,
     numeroLista: false,
     asiento: false,
     grupo: false,
@@ -286,7 +331,10 @@ const AlumnosLista = ({
   function mostrarTodasLasColumnas() {
     setColumnasVisibles({
       estado: true, rut: true, nombreCompleto: true, nombres: true, apellidos: true,
-      telefono: true, correo: true, establecimiento: true, cargo: true, comuna: true,
+      telefono: true, correo: true,
+      establecimiento: !soloInstitucion,
+      cargo: true,
+      comuna: !soloInstitucion,
       carrera: true, institucion: true, numeroLista: true, asiento: true, grupo: true,
       distincion: true, reconocimiento: true,
     });
@@ -350,6 +398,17 @@ const AlumnosLista = ({
     Object.keys(grupos).forEach(inst => { grupos[inst] = [...grupos[inst]].sort(); });
     return grupos;
   }, [alumnosParaOpciones]);
+
+  const carrerasUnicas = useMemo(() => {
+    const set = new Set();
+    alumnosNormalizados.forEach(a => {
+      const val = a.carreraNormalizada || a.carrera;
+      if (val && String(val).trim() && val !== 'General') {
+        set.add(String(val).trim());
+      }
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [alumnosNormalizados]);
 
   const gruposUnicos = useMemo(() => {
     const set = new Set();
@@ -621,7 +680,7 @@ const AlumnosLista = ({
               {[...new Set(alumnosParaStats.map(a => (a.establecimiento || a.institucion || '').trim()).filter(Boolean))].length}
             </p>
             <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-400 truncate">
-              {alumnosParaStats.some(a => a.establecimiento) ? 'Establecimientos' : 'Instituciones'}
+              {(!soloInstitucion && alumnosParaStats.some(a => a.establecimiento)) ? 'Establecimientos' : 'Instituciones'}
             </p>
           </div>
         </div>
@@ -1191,197 +1250,574 @@ const AlumnosLista = ({
         <PaginationControls />
       </div>
 
-      {/* Edit Modal */}
+      {/* Modal Editar Registro Minimalista e Institucional */}
       {
         alumnoAEditar && createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8 max-h-[90vh] flex flex-col overflow-hidden">
-              <div className="bg-st-verde px-6 py-4 flex justify-between items-center flex-shrink-0">
-                <h3 className="text-xl font-bold text-white">Editar Participante</h3>
-                <button onClick={() => setAlumnoAEditar(null)} className="text-white/80 hover:text-white transition-colors">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl my-8 max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+              
+              {/* Encabezado Institucional */}
+              <div className="bg-st-verde px-6 py-4.5 flex justify-between items-center flex-shrink-0 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+                  <div>
+                    <h3 className="text-base font-bold text-white tracking-tight">Editar Registro</h3>
+                    <p className="text-xs text-emerald-100/90 font-medium">
+                      {editFormData.rut ? `RUT: ${editFormData.rut}` : 'Participante'}
+                      {editFormData.nombre ? ` • ${editFormData.nombre}` : ''}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAlumnoAEditar(null)}
+                  className="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                  title="Cerrar"
+                >
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleGuardarEdicion} className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto flex-1">
-                {/* Estado de Asistencia (Presente / Ausente) */}
-                <div className="flex flex-col gap-1.5 sm:col-span-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                  <label className="text-sm font-semibold text-slate-700 flex items-center justify-between">
-                    <span>Estado de Asistencia</span>
-                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${editFormData.presente ? 'bg-st-verde/10 text-st-verde' : 'bg-red-100 text-red-700'}`}>
-                      {editFormData.presente ? 'Presente' : 'Ausente'}
-                    </span>
-                  </label>
-                  <select
-                    value={editFormData.presente ? 'presente' : 'ausente'}
-                    onChange={e => setEditFormData({ ...editFormData, presente: e.target.value === 'presente' })}
-                    className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all bg-white font-medium text-sm"
-                  >
-                    <option value="presente">🟢 Presente</option>
-                    <option value="ausente">🔴 Ausente</option>
-                  </select>
-                </div>
-
-                {/* RUT - Always visible as it's the identifier */}
-                <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <label className="text-sm font-semibold text-slate-700">RUT</label>
-                  <input type="text" required value={editFormData.rut} onChange={e => setEditFormData({ ...editFormData, rut: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all bg-slate-50" />
-                </div>
-
-                {/* Nombre Completo */}
-                {(columnasVisibles.nombreCompleto || (!columnasVisibles.nombres && !columnasVisibles.apellidos)) && (
-                  <div className="flex flex-col gap-1.5 sm:col-span-2">
-                    <label className="text-sm font-semibold text-slate-700">Nombre Completo</label>
-                    <input
-                      type="text"
-                      required
-                      value={editFormData.nombre || `${editFormData.nombres || ''} ${editFormData.apellidos || ''}`.trim()}
-                      onChange={e => setEditFormData({ ...editFormData, nombre: e.target.value })}
-                      className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all"
-                    />
-                  </div>
-                )}
-
-                {/* Nombres - Only if visible */}
-                {columnasVisibles.nombres && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Nombres</label>
-                    <input type="text" value={editFormData.nombres} onChange={e => setEditFormData({ ...editFormData, nombres: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                  </div>
-                )}
-
-                {/* Apellidos - Only if visible */}
-                {columnasVisibles.apellidos && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Apellidos</label>
-                    <input type="text" value={editFormData.apellidos} onChange={e => setEditFormData({ ...editFormData, apellidos: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                  </div>
-                )}
-
-                {/* Cargo */}
-                {(columnasConDatos.cargo || Boolean(editFormData.cargo)) && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Cargo</label>
-                    <input type="text" value={editFormData.cargo || ''} onChange={e => setEditFormData({ ...editFormData, cargo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                  </div>
-                )}
-
-                {/* Comuna del Establecimiento */}
-                {(columnasConDatos.comuna || Boolean(editFormData.comuna)) && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Comuna del Establecimiento</label>
-                    <input type="text" value={editFormData.comuna || ''} onChange={e => setEditFormData({ ...editFormData, comuna: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                  </div>
-                )}
-
-                {/* Establecimiento */}
-                {(columnasConDatos.establecimiento || Boolean(editFormData.establecimiento)) && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Establecimiento</label>
-                    <input type="text" value={editFormData.establecimiento || ''} onChange={e => setEditFormData({ ...editFormData, establecimiento: e.target.value, institucion: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                  </div>
-                )}
-
-                {/* Teléfono */}
-                {(columnasConDatos.telefono || Boolean(editFormData.telefono)) && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Teléfono</label>
-                    <input type="text" value={editFormData.telefono || ''} onChange={e => setEditFormData({ ...editFormData, telefono: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                  </div>
-                )}
-
-                {/* Correo Electrónico */}
-                {(columnasConDatos.correo || Boolean(editFormData.correo)) && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Correo Electrónico</label>
-                    <input type="email" value={editFormData.correo || ''} onChange={e => setEditFormData({ ...editFormData, correo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                  </div>
-                )}
-
-                {/* Carrera */}
-                {(columnasConDatos.carrera || Boolean(editFormData.carrera)) && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Carrera</label>
-                    <input type="text" value={editFormData.carrera} onChange={e => setEditFormData({ ...editFormData, carrera: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
-                  </div>
-                )}
-
-                {/* Institución */}
-                {(columnasConDatos.institucion || Boolean(editFormData.institucion)) && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Institución</label>
-                    <select value={editFormData.institucion} onChange={e => setEditFormData({ ...editFormData, institucion: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all">
-                      <option value="">Seleccionar...</option>
-                      {INSTITUCIONES.map(inst => <option key={inst.value} value={inst.value}>{inst.label}</option>)}
+              {/* Formulario con Secciones Desplegables (Dropdowns) */}
+              <form onSubmit={handleGuardarEdicion} className="p-6 space-y-4 overflow-y-auto flex-1 text-slate-800">
+                
+                {/* 1. Sección Principal: Identificación y Estado con acento institucional */}
+                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-4 border-l-4 border-l-st-verde shadow-xs">
+                  
+                  {/* Estado de Asistencia (Dropdown institucional sin emojis) */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-st-verde uppercase tracking-wider">
+                        Estado de Asistencia
+                      </label>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
+                        editFormData.presente
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-slate-200/70 text-slate-600 border border-slate-300'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${editFormData.presente ? 'bg-emerald-600' : 'bg-slate-500'}`}></span>
+                        {editFormData.presente ? 'Presente' : 'Ausente'}
+                      </span>
+                    </div>
+                    <select
+                      value={editFormData.presente ? 'presente' : 'ausente'}
+                      onChange={e => setEditFormData({ ...editFormData, presente: e.target.value === 'presente' })}
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                    >
+                      <option value="presente">Presente</option>
+                      <option value="ausente">Ausente</option>
                     </select>
                   </div>
-                )}
 
-                {/* N° de Lista */}
-                {(columnasConDatos.numeroLista || Boolean(editFormData.numeroLista)) && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">N° de Lista</label>
-                    <input type="text" value={editFormData.numeroLista} onChange={e => setEditFormData({ ...editFormData, numeroLista: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                  {/* RUT y Nombre Completo */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                        RUT
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editFormData.rut || ''}
+                        onChange={e => setEditFormData({ ...editFormData, rut: e.target.value })}
+                        className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 font-mono focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* Nombre(s) o Nombre Completo */}
+                    {columnasVisibles.nombres && columnasVisibles.apellidos ? (
+                      <div>
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                          Nombres
+                        </label>
+                        <input
+                          type="text"
+                          value={editFormData.nombres || ''}
+                          onChange={e => {
+                            const n = e.target.value;
+                            setEditFormData(prev => ({
+                              ...prev,
+                              nombres: n,
+                              nombre: `${n} ${prev.apellidos || ''}`.trim()
+                            }));
+                          }}
+                          className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                          Nombre Completo
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editFormData.nombre || ''}
+                          onChange={e => setEditFormData({ ...editFormData, nombre: e.target.value })}
+                          className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                        />
+                      </div>
+                    )}
+
+                    {columnasVisibles.nombres && columnasVisibles.apellidos && (
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                          Apellidos
+                        </label>
+                        <input
+                          type="text"
+                          value={editFormData.apellidos || ''}
+                          onChange={e => {
+                            const a = e.target.value;
+                            setEditFormData(prev => ({
+                              ...prev,
+                              apellidos: a,
+                              nombre: `${prev.nombres || ''} ${a}`.trim()
+                            }));
+                          }}
+                          className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Sección Desplegable: Datos de Contacto */}
+                {(columnasConDatos.correo || columnasConDatos.telefono || Boolean(editFormData.correo) || Boolean(editFormData.telefono)) && (
+                  <div className="border border-emerald-200/80 rounded-xl overflow-hidden shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => toggleSeccionEdit('contacto')}
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-50/70 hover:bg-emerald-100/60 border-b border-emerald-100 text-left transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-st-verde"></span>
+                        <span className="text-xs font-bold text-st-verde uppercase tracking-wider">
+                          Datos de Contacto
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {(editFormData.correo || editFormData.telefono) && (
+                          <span className="text-[11px] font-semibold text-st-verde bg-white px-2 py-0.5 rounded border border-emerald-200 shadow-2xs">
+                            Registrado
+                          </span>
+                        )}
+                        <ChevronDown className={`w-4 h-4 text-st-verde transform transition-transform duration-200 ${seccionesEditAbiertas.contacto ? 'rotate-180' : ''}`} />
+                      </div>
+                    </button>
+                    {seccionesEditAbiertas.contacto && (
+                      <div className="p-4 bg-white border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {(columnasConDatos.correo || Boolean(editFormData.correo)) && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              Correo Electrónico
+                            </label>
+                            <input
+                              type="email"
+                              value={editFormData.correo || ''}
+                              onChange={e => setEditFormData({ ...editFormData, correo: e.target.value })}
+                              placeholder="ejemplo@santotomas.cl"
+                              className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                            />
+                          </div>
+                        )}
+                        {(columnasConDatos.telefono || Boolean(editFormData.telefono)) && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              Teléfono
+                            </label>
+                            <input
+                              type="tel"
+                              value={editFormData.telefono || ''}
+                              onChange={e => setEditFormData({ ...editFormData, telefono: e.target.value })}
+                              placeholder="+56 9 ..."
+                              className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Grupo */}
-                {(columnasConDatos.grupo || Boolean(editFormData.grupo)) && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Grupo</label>
-                    <input type="text" value={editFormData.grupo} onChange={e => setEditFormData({ ...editFormData, grupo: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                {/* 3. Sección Desplegable: Información Académica e Institucional */}
+                {((columnasConDatos.carrera || Boolean(editFormData.carrera)) ||
+                  (columnasConDatos.institucion && soloInstitucion || Boolean(editFormData.institucion)) ||
+                  (columnasConDatos.establecimiento && !soloInstitucion || Boolean(editFormData.establecimiento)) ||
+                  (columnasConDatos.cargo || Boolean(editFormData.cargo)) ||
+                  (columnasConDatos.comuna || Boolean(editFormData.comuna))) && (
+                  <div className="border border-emerald-200/80 rounded-xl overflow-hidden shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => toggleSeccionEdit('academico')}
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-50/70 hover:bg-emerald-100/60 border-b border-emerald-100 text-left transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-st-verde"></span>
+                        <span className="text-xs font-bold text-st-verde uppercase tracking-wider">
+                          Información Académica e Institucional
+                        </span>
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-st-verde transform transition-transform duration-200 ${seccionesEditAbiertas.academico ? 'rotate-180' : ''}`} />
+                    </button>
+                    {seccionesEditAbiertas.academico && (
+                      <div className="p-4 bg-white border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        
+                        {/* Carrera (Dropdown select con carreras del evento) */}
+                        {(columnasConDatos.carrera || Boolean(editFormData.carrera)) && (
+                          <div className="sm:col-span-2">
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              Carrera
+                            </label>
+                            {carrerasUnicas.length > 0 ? (
+                              <select
+                                value={editFormData.carrera || ''}
+                                onChange={e => setEditFormData({ ...editFormData, carrera: e.target.value })}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all font-medium"
+                              >
+                                <option value="">Seleccionar Carrera...</option>
+                                {carrerasUnicas.map(c => <option key={c} value={c}>{c}</option>)}
+                                {editFormData.carrera && !carrerasUnicas.includes(editFormData.carrera) && (
+                                  <option value={editFormData.carrera}>{editFormData.carrera}</option>
+                                )}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                value={editFormData.carrera || ''}
+                                onChange={e => setEditFormData({ ...editFormData, carrera: e.target.value })}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {/* Institución (Dropdown selector institucional) */}
+                        {(columnasConDatos.institucion && soloInstitucion || Boolean(editFormData.institucion)) && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              Institución
+                            </label>
+                            <select
+                              value={editFormData.institucion || ''}
+                              onChange={e => setEditFormData({ ...editFormData, institucion: e.target.value })}
+                              className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                            >
+                              <option value="">Seleccionar Institución...</option>
+                              {INSTITUCIONES.map(inst => (
+                                <option key={inst.value} value={inst.value}>{inst.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        {/* Establecimiento (Dropdown o input si no es evento soloInstitucion) */}
+                        {(columnasConDatos.establecimiento && !soloInstitucion || Boolean(editFormData.establecimiento)) && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              Establecimiento
+                            </label>
+                            {establecimientosUnicos.length > 0 ? (
+                              <select
+                                value={editFormData.establecimiento || ''}
+                                onChange={e => setEditFormData({ ...editFormData, establecimiento: e.target.value })}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                              >
+                                <option value="">Seleccionar Establecimiento...</option>
+                                {establecimientosUnicos.map(est => <option key={est} value={est}>{est}</option>)}
+                                {editFormData.establecimiento && !establecimientosUnicos.includes(editFormData.establecimiento) && (
+                                  <option value={editFormData.establecimiento}>{editFormData.establecimiento}</option>
+                                )}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                value={editFormData.establecimiento || ''}
+                                onChange={e => setEditFormData({ ...editFormData, establecimiento: e.target.value })}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {/* Cargo (Dropdown o input) */}
+                        {(columnasConDatos.cargo || Boolean(editFormData.cargo)) && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              Cargo
+                            </label>
+                            {cargosUnicos.length > 0 ? (
+                              <select
+                                value={editFormData.cargo || ''}
+                                onChange={e => setEditFormData({ ...editFormData, cargo: e.target.value })}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                              >
+                                <option value="">Seleccionar Cargo...</option>
+                                {cargosUnicos.map(c => <option key={c} value={c}>{c}</option>)}
+                                {editFormData.cargo && !cargosUnicos.includes(editFormData.cargo) && (
+                                  <option value={editFormData.cargo}>{editFormData.cargo}</option>
+                                )}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                value={editFormData.cargo || ''}
+                                onChange={e => setEditFormData({ ...editFormData, cargo: e.target.value })}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {/* Comuna (Dropdown o input) */}
+                        {(columnasConDatos.comuna || Boolean(editFormData.comuna)) && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              Comuna
+                            </label>
+                            {comunasUnicas.length > 0 ? (
+                              <select
+                                value={editFormData.comuna || ''}
+                                onChange={e => setEditFormData({ ...editFormData, comuna: e.target.value })}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                              >
+                                <option value="">Seleccionar Comuna...</option>
+                                {comunasUnicas.map(c => <option key={c} value={c}>{c}</option>)}
+                                {editFormData.comuna && !comunasUnicas.includes(editFormData.comuna) && (
+                                  <option value={editFormData.comuna}>{editFormData.comuna}</option>
+                                )}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                value={editFormData.comuna || ''}
+                                onChange={e => setEditFormData({ ...editFormData, comuna: e.target.value })}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Asiento */}
-                {(columnasConDatos.asiento || Boolean(editFormData.asiento)) && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Asiento</label>
-                    <input type="text" value={editFormData.asiento} onChange={e => setEditFormData({ ...editFormData, asiento: e.target.value })} className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-st-verde focus:border-transparent outline-none transition-all" />
+                {/* 4. Sección Desplegable: Ubicación en Ceremonia */}
+                {((columnasConDatos.asiento || Boolean(editFormData.asiento)) ||
+                  (columnasConDatos.grupo || Boolean(editFormData.grupo)) ||
+                  (columnasConDatos.numeroLista || Boolean(editFormData.numeroLista))) && (
+                  <div className="border border-emerald-200/80 rounded-xl overflow-hidden shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => toggleSeccionEdit('ubicacion')}
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-50/70 hover:bg-emerald-100/60 border-b border-emerald-100 text-left transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-st-verde"></span>
+                        <span className="text-xs font-bold text-st-verde uppercase tracking-wider">
+                          Ubicación en Ceremonia
+                        </span>
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-st-verde transform transition-transform duration-200 ${seccionesEditAbiertas.ubicacion ? 'rotate-180' : ''}`} />
+                    </button>
+                    {seccionesEditAbiertas.ubicacion && (
+                      <div className="p-4 bg-white border-t border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        
+                        {/* Grupo (Dropdown) */}
+                        {(columnasConDatos.grupo || Boolean(editFormData.grupo)) && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              Grupo
+                            </label>
+                            {gruposUnicos.length > 0 ? (
+                              <select
+                                value={editFormData.grupo || ''}
+                                onChange={e => setEditFormData({ ...editFormData, grupo: e.target.value })}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                              >
+                                <option value="">Sin grupo</option>
+                                {gruposUnicos.map(g => <option key={g} value={g}>Grupo {g}</option>)}
+                                {editFormData.grupo && !gruposUnicos.includes(editFormData.grupo) && (
+                                  <option value={editFormData.grupo}>{editFormData.grupo}</option>
+                                )}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                value={editFormData.grupo || ''}
+                                onChange={e => setEditFormData({ ...editFormData, grupo: e.target.value })}
+                                placeholder="Ej: 1"
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {/* Asiento */}
+                        {(columnasConDatos.asiento || Boolean(editFormData.asiento)) && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              Asiento
+                            </label>
+                            <input
+                              type="text"
+                              value={editFormData.asiento || ''}
+                              onChange={e => setEditFormData({ ...editFormData, asiento: e.target.value })}
+                              placeholder="Ej: A-12"
+                              className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                            />
+                          </div>
+                        )}
+
+                        {/* N° de Lista */}
+                        {(columnasConDatos.numeroLista || Boolean(editFormData.numeroLista)) && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              N° de Lista
+                            </label>
+                            <input
+                              type="text"
+                              value={editFormData.numeroLista || ''}
+                              onChange={e => setEditFormData({ ...editFormData, numeroLista: e.target.value })}
+                              placeholder="Ej: 15"
+                              className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Distinción */}
-                {(columnasConDatos.distincion || Boolean(editFormData.distincion)) && (
-                  <div className="flex flex-col gap-1.5 sm:col-span-2 bg-amber-50/80 p-3.5 rounded-xl border border-amber-200/80 mt-1">
-                    <label className="text-sm font-bold text-amber-900 flex items-center gap-2">
-                      <Star className="w-4 h-4 text-amber-600 fill-amber-500" />
-                      Distinción
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej: Distinción Máxima, Distinción Unánime"
-                      value={typeof editFormData.distincion === 'string' ? editFormData.distincion : editFormData.distincion ? 'Distinción Máxima' : ''}
-                      onChange={e => setEditFormData({ ...editFormData, distincion: e.target.value })}
-                      className="px-3 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all bg-white text-sm"
-                    />
+                {/* 5. Sección Desplegable: Distinciones y Reconocimientos */}
+                {((columnasConDatos.distincion || Boolean(editFormData.distincion)) ||
+                  (columnasConDatos.reconocimiento || Boolean(editFormData.reconocimiento))) && (
+                  <div className="border border-emerald-200/80 rounded-xl overflow-hidden shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => toggleSeccionEdit('distinciones')}
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-50/70 hover:bg-emerald-100/60 border-b border-emerald-100 text-left transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-st-verde"></span>
+                        <span className="text-xs font-bold text-st-verde uppercase tracking-wider">
+                          Distinciones y Reconocimientos
+                        </span>
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-st-verde transform transition-transform duration-200 ${seccionesEditAbiertas.distinciones ? 'rotate-180' : ''}`} />
+                    </button>
+                    {seccionesEditAbiertas.distinciones && (
+                      <div className="p-4 bg-white border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        
+                        {/* Distinción (Dropdown select) */}
+                        {(columnasConDatos.distincion || Boolean(editFormData.distincion)) && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              Distinción
+                            </label>
+                            <select
+                              value={
+                                !editFormData.distincion || editFormData.distincion === false
+                                  ? ''
+                                  : ['Distinción Máxima', 'Distinción Unánime', ...distincionesUnicas].includes(editFormData.distincion)
+                                    ? editFormData.distincion
+                                    : '__custom__'
+                              }
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (val === '__custom__') {
+                                  setEditFormData({ ...editFormData, distincion: 'Distinción Especial' });
+                                } else {
+                                  setEditFormData({ ...editFormData, distincion: val });
+                                }
+                              }}
+                              className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                            >
+                              <option value="">Sin distinción</option>
+                              <option value="Distinción Máxima">Distinción Máxima</option>
+                              <option value="Distinción Unánime">Distinción Unánime</option>
+                              {distincionesUnicas
+                                .filter(d => d !== 'Distinción Máxima' && d !== 'Distinción Unánime')
+                                .map(d => <option key={d} value={d}>{d}</option>)
+                              }
+                              <option value="__custom__">Personalizada...</option>
+                            </select>
+                            {Boolean(editFormData.distincion) && !['Distinción Máxima', 'Distinción Unánime', ...distincionesUnicas.filter(d => d !== 'Distinción Máxima' && d !== 'Distinción Unánime')].includes(editFormData.distincion) && (
+                              <input
+                                type="text"
+                                placeholder="Escriba la distinción..."
+                                value={typeof editFormData.distincion === 'string' ? editFormData.distincion : ''}
+                                onChange={e => setEditFormData({ ...editFormData, distincion: e.target.value })}
+                                className="mt-2 w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {/* Reconocimiento (Dropdown select) */}
+                        {(columnasConDatos.reconocimiento || Boolean(editFormData.reconocimiento)) && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
+                              Reconocimiento
+                            </label>
+                            <select
+                              value={
+                                !editFormData.reconocimiento || editFormData.reconocimiento === false
+                                  ? ''
+                                  : ['Sí', 'Reconocimiento', 'Reconocimiento Especial', 'Mejor Compañero', ...reconocimientosUnicos].includes(editFormData.reconocimiento)
+                                    ? editFormData.reconocimiento
+                                    : '__custom__'
+                              }
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (val === '__custom__') {
+                                  setEditFormData({ ...editFormData, reconocimiento: 'Reconocimiento Especial' });
+                                } else {
+                                  setEditFormData({ ...editFormData, reconocimiento: val });
+                                }
+                              }}
+                              className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                            >
+                              <option value="">Sin reconocimiento</option>
+                              <option value="Sí">Sí (Reconocimiento estándar)</option>
+                              <option value="Reconocimiento Especial">Reconocimiento Especial</option>
+                              <option value="Mejor Compañero">Mejor Compañero</option>
+                              {reconocimientosUnicos
+                                .filter(r => !['Sí', 'Reconocimiento', 'Reconocimiento Especial', 'Mejor Compañero'].includes(r))
+                                .map(r => <option key={r} value={r}>{r}</option>)
+                              }
+                              <option value="__custom__">Personalizado...</option>
+                            </select>
+                            {Boolean(editFormData.reconocimiento) && !['Sí', 'Reconocimiento', 'Reconocimiento Especial', 'Mejor Compañero', ...reconocimientosUnicos].includes(editFormData.reconocimiento) && (
+                              <input
+                                type="text"
+                                placeholder="Escriba el reconocimiento..."
+                                value={typeof editFormData.reconocimiento === 'string' ? editFormData.reconocimiento : ''}
+                                onChange={e => setEditFormData({ ...editFormData, reconocimiento: e.target.value })}
+                                className="mt-2 w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Reconocimiento */}
-                {(columnasConDatos.reconocimiento || Boolean(editFormData.reconocimiento)) && (
-                  <div className="flex flex-col gap-1.5 sm:col-span-2 bg-purple-50/80 p-3.5 rounded-xl border border-purple-200/80">
-                    <label className="text-sm font-bold text-purple-900 flex items-center gap-2">
-                      <Award className="w-4 h-4 text-purple-600" />
-                      Reconocimiento
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej: Reconocimiento Especial, Mejor Compañero, o marca con 'Sí'"
-                      value={typeof editFormData.reconocimiento === 'string' ? editFormData.reconocimiento : editFormData.reconocimiento ? 'Sí' : ''}
-                      onChange={e => setEditFormData({ ...editFormData, reconocimiento: e.target.value })}
-                      className="px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white text-sm"
-                    />
-                  </div>
-                )}
-
-                <div className="sm:col-span-2 pt-4 flex gap-3 justify-end border-t border-slate-100 mt-2">
-                  <button type="button" onClick={() => setAlumnoAEditar(null)} className="px-4 py-2 text-slate-700 font-medium hover:bg-slate-100 rounded-lg transition-colors">
+                {/* Botones de Acción */}
+                <div className="pt-3 flex gap-3 justify-end border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setAlumnoAEditar(null)}
+                    className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
                     Cancelar
                   </button>
-                  <button type="submit" disabled={isSaving} className="px-6 py-2 bg-st-verde text-white font-bold rounded-lg hover:bg-[#004b30] transition-all shadow-md disabled:opacity-50 flex items-center gap-2">
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="px-5 py-2 text-sm bg-st-verde text-white font-semibold rounded-lg hover:bg-[#004b30] transition-all shadow-sm disabled:opacity-50 flex items-center gap-2"
+                  >
                     {isSaving ? (
                       <>
                         <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">

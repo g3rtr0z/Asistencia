@@ -143,17 +143,29 @@ function mapFirestoreData(doc) {
     data.reconocimiento;
   return {
     id: doc.id,
-    nombres: data['Nombres'] ?? null,
-    apellidos: data['Apellidos'] ?? null,
-    nombre:
-      data['Nombre Completo'] ??
-      data['Nombre completo'] ??
-      data['nombreCompleto'] ??
-      data['Nombre'] ??
-      data['nombre'] ??
-      (data['Nombres'] && data['Apellidos']
-        ? `${data['Nombres']} ${data['Apellidos']}`
-        : null),
+    nombres: data['Nombres'] ?? data['nombres'] ?? null,
+    apellidos: data['Apellidos'] ?? data['apellidos'] ?? null,
+    nombre: (() => {
+      const nom = data['Nombres'] ?? data['nombres'] ?? null;
+      const ape = data['Apellidos'] ?? data['apellidos'] ?? null;
+      if (nom && ape) {
+        return `${nom} ${ape}`.trim();
+      }
+      let n =
+        data['Nombre Completo'] ??
+        data['Nombre completo'] ??
+        data['nombreCompleto'] ??
+        data['Nombre'] ??
+        data['nombre'] ??
+        null;
+      if (n && ape && !n.toLowerCase().includes(ape.toLowerCase().trim())) {
+        return `${n} ${ape}`.trim();
+      }
+      if (!n && (nom || ape)) {
+        return `${nom || ''} ${ape || ''}`.trim();
+      }
+      return n;
+    })(),
     rut: data['RUT'],
     telefono:
       data['Teléfono'] ??
@@ -192,17 +204,20 @@ function mapFirestoreData(doc) {
     asiste: parseBooleanField(asisteValor) ?? false,
     distincion: parseDistincionField(distincionValor),
     reconocimiento: parseReconocimientoField(reconocimientoValor),
-    asiento: data['asiento'] ?? null,
-    grupo: data['grupo'] ?? null,
+    asiento: data['asiento'] ?? data['Asiento'] ?? data['ASIENTO'] ?? data['Fila'] ?? data['fila'] ?? null,
+    grupo: data['grupo'] ?? data['Grupo'] ?? data['GRUPO'] ?? null,
     numeroLista: (() => {
       const valor = data['numeroLista'] ??
+        data['NumeroLista'] ??
         data['N° de Lista'] ??
         data['N de Lista'] ??
         data['numero de lista'] ??
         data['nro de lista'] ??
         data['N° de lista'] ??
-        data['N de lista'];
-      return valor != null ? String(valor) : null;
+        data['N de lista'] ??
+        data['Lista'] ??
+        data['lista'];
+      return valor != null && String(valor).trim() !== '' ? String(valor) : null;
     })(),
     fechaRegistro: data.fechaRegistro ?? null,
     ultimaActualizacion: data.ultimaActualizacion ?? null,
@@ -271,7 +286,19 @@ export const updateAlumno = async (eventoId, alumnoId, data) => {
     if (data.nombres !== undefined) updateData['Nombres'] = capitalizarPalabras(data.nombres);
     if (data.apellidos !== undefined) updateData['Apellidos'] = capitalizarPalabras(data.apellidos);
 
-    if (data.nombre !== undefined && String(data.nombre).trim() !== '') {
+    if (data.nombres !== undefined || data.apellidos !== undefined) {
+      const nom = data.nombres !== undefined ? capitalizarPalabras(data.nombres) : (data.originalData?.nombres || '');
+      const ape = data.apellidos !== undefined ? capitalizarPalabras(data.apellidos) : (data.originalData?.apellidos || '');
+      if (nom && ape) {
+        const nombreCompleto = `${nom} ${ape}`.trim();
+        updateData['Nombre Completo'] = nombreCompleto;
+        updateData['nombre'] = nombreCompleto;
+      } else if (data.nombre !== undefined && String(data.nombre).trim() !== '') {
+        const nombreCap = capitalizarPalabras(data.nombre);
+        updateData['Nombre Completo'] = nombreCap;
+        updateData['nombre'] = nombreCap;
+      }
+    } else if (data.nombre !== undefined && String(data.nombre).trim() !== '') {
       const nombreCap = capitalizarPalabras(data.nombre);
       updateData['Nombre Completo'] = nombreCap;
       updateData['nombre'] = nombreCap;
@@ -281,14 +308,6 @@ export const updateAlumno = async (eventoId, alumnoId, data) => {
         if (!data.apellidos) {
           updateData['Apellidos'] = partes.slice(1).join(' ') || '';
         }
-      }
-    } else if (data.nombres !== undefined || data.apellidos !== undefined) {
-      const nombres = capitalizarPalabras(data.nombres) ?? (data.originalData?.nombres || '');
-      const apellidos = capitalizarPalabras(data.apellidos) ?? (data.originalData?.apellidos || '');
-      const nombreCompleto = `${nombres} ${apellidos}`.trim();
-      if (nombreCompleto) {
-        updateData['Nombre Completo'] = nombreCompleto;
-        updateData['nombre'] = nombreCompleto;
       }
     }
 
@@ -300,10 +319,9 @@ export const updateAlumno = async (eventoId, alumnoId, data) => {
     if (data.establecimiento !== undefined) {
       const estCap = capitalizarPalabras(data.establecimiento);
       updateData['Establecimiento'] = estCap;
-      updateData['Institución'] = estCap;
     }
     if (data.carrera !== undefined) updateData['Carrera'] = capitalizarPalabras(data.carrera);
-    if (data.institucion !== undefined) updateData['Institución'] = capitalizarPalabras(data.institucion);
+    if (data.institucion !== undefined) updateData['Institución'] = data.institucion ? capitalizarPalabras(data.institucion) : null;
     if (data.grupo !== undefined) updateData['grupo'] = data.grupo;
     if (data.asiento !== undefined) updateData['asiento'] = data.asiento;
     if (data.numeroLista !== undefined) updateData['numeroLista'] = data.numeroLista;
@@ -716,10 +734,20 @@ export const agregarAlumno = async (alumno, eventoId) => {
       ? (alumno.fechaRegistro instanceof Date ? alumno.fechaRegistro : new Date(alumno.fechaRegistro))
       : (alumno.presente ? new Date() : null);
 
-    const nombreRaw = alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim();
-    const nombreFinal = capitalizarPalabras(nombreRaw);
-    const nombresFinal = capitalizarPalabras(alumno.nombres) || (nombreFinal ? nombreFinal.split(' ')[0] : null);
-    const apellidosFinal = capitalizarPalabras(alumno.apellidos) || (nombreFinal ? nombreFinal.split(' ').slice(1).join(' ') : null);
+    const nomClean = capitalizarPalabras(alumno.nombres);
+    const apeClean = capitalizarPalabras(alumno.apellidos);
+    let nombreFinal = null;
+    if (nomClean && apeClean) {
+      nombreFinal = `${nomClean} ${apeClean}`.trim();
+    } else {
+      const nombreRaw = alumno.nombre || `${nomClean || ''} ${apeClean || ''}`.trim();
+      nombreFinal = capitalizarPalabras(nombreRaw);
+      if (nombreFinal && apeClean && !nombreFinal.toLowerCase().includes(apeClean.toLowerCase().trim())) {
+        nombreFinal = `${nombreFinal} ${apeClean}`.trim();
+      }
+    }
+    const nombresFinal = nomClean || (nombreFinal ? nombreFinal.split(' ')[0] : null);
+    const apellidosFinal = apeClean || (nombreFinal ? nombreFinal.split(' ').slice(1).join(' ') : null);
     const rutClean = alumno.rut ? String(alumno.rut).replace(/[^0-9kK]/gi, '').trim().toUpperCase() : null;
     const correoClean = alumno.correo ? String(alumno.correo).trim().toLowerCase() : null;
     
@@ -1019,9 +1047,16 @@ export const importarAlumnosDesdeExcel = async (
 
         const nombres = capitalizarPalabras(nombresRaw);
         const apellidos = capitalizarPalabras(apellidosRaw);
-        let nombreCompleto = capitalizarPalabras(nombreCompletoRaw);
+        let nombreCompleto = null;
 
-        if (!nombreCompleto && (nombres || apellidos)) {
+        if (nombres && apellidos) {
+          nombreCompleto = `${nombres} ${apellidos}`.trim();
+        } else if (nombreCompletoRaw) {
+          nombreCompleto = capitalizarPalabras(nombreCompletoRaw);
+          if (apellidos && !nombreCompleto.toLowerCase().includes(apellidos.toLowerCase().trim())) {
+            nombreCompleto = `${nombreCompleto} ${apellidos}`.trim();
+          }
+        } else if (nombres || apellidos) {
           nombreCompleto = `${nombres || ''} ${apellidos || ''}`.trim();
         }
 

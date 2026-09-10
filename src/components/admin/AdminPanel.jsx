@@ -85,7 +85,26 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
   const [filtroGrupo, setFiltroGrupo] = useState('');
   const [soloPresentes, setSoloPresentes] = useState('');
 
+function esEventoTitulacion(nombre) {
+  if (!nombre) return false;
+  const n = String(nombre).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  return n.includes('titulacion');
+}
+
   const esEventoTrabajadores = eventoActivo?.tipo === 'trabajadores';
+
+  const soloInstitucion = useMemo(() => {
+    if (esEventoTitulacion(eventoActivo?.nombre)) return true;
+    if (!alumnos || alumnos.length === 0) return false;
+    const tieneCamposColegio = alumnos.some(a =>
+      (a.cargo != null && String(a.cargo).trim() !== '') ||
+      (a.comuna != null && String(a.comuna).trim() !== '')
+    );
+    const tieneInstitucion = alumnos.some(a =>
+      a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General'
+    );
+    return tieneInstitucion && !tieneCamposColegio;
+  }, [eventoActivo?.nombre, alumnos]);
 
   const columnasConDatos = useMemo(() => {
     if (!alumnos || alumnos.length === 0) {
@@ -96,7 +115,7 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
         apellidos: false,
         telefono: true,
         correo: true,
-        establecimiento: true,
+        establecimiento: !soloInstitucion,
         cargo: true,
         comuna: true,
         carrera: true,
@@ -127,11 +146,13 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
       apellidos: !tieneCamposNuevos && alumnos.some(a => a.apellidos != null && String(a.apellidos).trim() !== ''),
       telefono: alumnos.some(a => a.telefono != null && String(a.telefono).trim() !== ''),
       correo: alumnos.some(a => a.correo != null && String(a.correo).trim() !== ''),
-      establecimiento: alumnos.some(a => (a.establecimiento != null && String(a.establecimiento).trim() !== '') || (a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General')),
+      establecimiento: !soloInstitucion && alumnos.some(a => a.establecimiento != null && String(a.establecimiento).trim() !== ''),
       cargo: alumnos.some(a => a.cargo != null && String(a.cargo).trim() !== ''),
-      comuna: alumnos.some(a => a.comuna != null && String(a.comuna).trim() !== ''),
+      comuna: !soloInstitucion && alumnos.some(a => a.comuna != null && String(a.comuna).trim() !== ''),
       carrera: alumnos.some(a => a.carrera != null && String(a.carrera).trim() !== '' && a.carrera !== 'General'),
-      institucion: !tieneCamposNuevos && alumnos.some(a => a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General'),
+      institucion: soloInstitucion
+        ? alumnos.some(a => a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General')
+        : (!tieneCamposNuevos && alumnos.some(a => a.institucion != null && String(a.institucion).trim() !== '' && a.institucion !== 'General')),
       numeroLista: alumnos.some(a => a.numeroLista != null && String(a.numeroLista).trim() !== ''),
       asiento: alumnos.some(a => a.asiento != null && String(a.asiento).trim() !== ''),
       grupo: alumnos.some(a => a.grupo != null && String(a.grupo).trim() !== ''),
@@ -140,7 +161,7 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
       departamento: alumnos.some(a => a.departamento != null && String(a.departamento).trim() !== ''),
       observacion: alumnos.some(a => a.observacion != null && String(a.observacion).trim() !== ''),
     };
-  }, [alumnos]);
+  }, [alumnos, soloInstitucion]);
 
   const opcionesUnicas = useMemo(() => {
     if (!alumnos || alumnos.length === 0) return {};
@@ -752,7 +773,7 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
                       />
                     </div>
                   )}
-                  {columnasConDatos.establecimiento && (
+                  {columnasConDatos.establecimiento && !soloInstitucion && (
                     <div className='space-y-1.5'>
                       <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Establecimiento</label>
                       <input
@@ -760,7 +781,7 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
                         className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
                         placeholder='Ej: Colegio San Agustín'
                         value={nuevoAlumno.establecimiento}
-                        onChange={e => setNuevoAlumno(a => ({ ...a, establecimiento: e.target.value, institucion: e.target.value }))}
+                        onChange={e => setNuevoAlumno(a => ({ ...a, establecimiento: e.target.value }))}
                       />
                       <datalist id='establecimiento-list'>
                         {opcionesUnicas.establecimiento?.map(opt => <option key={opt} value={opt} />)}

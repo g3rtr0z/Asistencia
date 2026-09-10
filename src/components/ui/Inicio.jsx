@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Logo from '../../assets/logopag.png';
 import { buscarAlumnoPorRutEnEvento } from '../../services/alumnosService';
+import { subscribeToEventoActivo } from '../../services/eventosService';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../connection/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRScanner from './QRScanner';
 
@@ -11,8 +14,22 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
   const [showScanner, setShowScanner] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
   const [isFocused, setIsFocused] = useState(false); // Track input focus
+  const [eventoLocal, setEventoLocal] = useState(eventoActivo);
   const rutInputRef = useRef(null);
   const scanTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    setEventoLocal(eventoActivo);
+  }, [eventoActivo]);
+
+  useEffect(() => {
+    const unsub = subscribeToEventoActivo(ev => {
+      if (ev) setEventoLocal(ev);
+    });
+    return () => {
+      if (unsub) unsub();
+    };
+  }, []);
 
   // Auto-reset
   useEffect(() => {
@@ -56,7 +73,10 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
     setResult(null);
     setRut('');
     setErrorVisual('');
-    if (rutInputRef.current) rutInputRef.current.value = '';
+    if (rutInputRef.current) {
+      rutInputRef.current.value = '';
+      rutInputRef.current.focus();
+    }
   };
 
   // Escuchar tecla Enter cuando se muestra la tarjeta de confirmación/resultado
@@ -93,23 +113,37 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
       return;
     }
 
+    const activeEv = eventoLocal || eventoActivo;
+    if (!activeEv?.id) {
+      setErrorVisual('No hay un evento activo disponible.');
+      return;
+    }
+
     setLoading(true);
     setResult(null);
     setErrorVisual('');
 
     let resultadoEstablecido = false;
+    let freshConfig = activeEv.configuracionAsistencia || {};
 
     try {
-      if (!eventoActivo?.id) {
-        setErrorVisual('No hay un evento activo disponible.');
-        setLoading(false);
-        return;
+      // Revalidar en tiempo real la configuración exacta del evento en Firestore
+      try {
+        const evSnap = await getDoc(doc(db, 'eventos', activeEv.id));
+        if (evSnap.exists()) {
+          const evData = evSnap.data();
+          if (evData.configuracionAsistencia) {
+            freshConfig = evData.configuracionAsistencia;
+          }
+        }
+      } catch (errConfig) {
+        console.warn('Error al verificar configuración fresca de evento:', errConfig);
       }
 
       // Buscar el alumno primero para verificar que existe
       const alumno = await buscarAlumnoPorRutEnEvento(
         rutValue.trim(),
-        eventoActivo.id
+        activeEv.id
       );
 
       if (!alumno) {
@@ -125,7 +159,12 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
         ? { ...res, presente: true }
         : { ...alumno, presente: true };
       
-      setResult({ data: datosAlumno, rut: rutValue });
+      setResult({
+        data: datosAlumno,
+        rut: rutValue,
+        config: freshConfig,
+        evento: { ...activeEv, configuracionAsistencia: freshConfig }
+      });
       resultadoEstablecido = true;
 
       setRut('');
@@ -137,10 +176,15 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
         try {
           const alumnoError = await buscarAlumnoPorRutEnEvento(
             rutValue.trim(),
-            eventoActivo.id
+            activeEv.id
           );
           if (alumnoError) {
-            setResult({ data: { ...alumnoError, presente: true }, rut: rutValue });
+            setResult({
+              data: { ...alumnoError, presente: true },
+              rut: rutValue,
+              config: freshConfig,
+              evento: { ...activeEv, configuracionAsistencia: freshConfig }
+            });
             setRut('');
           } else {
             setErrorVisual('Error al procesar la asistencia. Inténtalo de nuevo.');
@@ -178,7 +222,69 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
     }
   };
 
-  const esEventoFuncionarios = eventoActivo?.tipo === 'trabajadores';
+  const currentEvento = result?.evento || eventoLocal || eventoActivo;
+  const esEventoFuncionarios = currentEvento?.tipo === 'trabajadores';
+  const cfg = result?.config || currentEvento?.configuracionAsistencia || {};
+  const modoNombre = cfg.modoNombre || 'completo';
+
+  const getDato = (obj, keys) => {
+    if (!obj) return null;
+    for (const k of keys) {
+      if (obj[k] !== undefined && obj[k] !== null) {
+        const val = typeof obj[k] === 'string' ? obj[k].trim() : obj[k];
+        if (val !== '' && val !== 'null' && val !== 'undefined') return val;
+      }
+    }
+    return null;
+  };
+
+  const formatNombresData = (data) => {
+    if (!data) return { nombreCompleto: '', soloNombres: '', primerNombre: '', apellidos: '' };
+
+    const ape = String(data.apellidos ?? data.Apellidos ?? '').trim();
+    const nom = String(data.nombres ?? data.Nombres ?? '').trim();
+    const nombreRaw = String(data.nombre ?? data.Nombre ?? data['Nombre Completo'] ?? data['Nombre completo'] ?? '').trim();
+
+    const nombreCompleto =
+      (nom && ape)
+        ? `${nom} ${ape}`.trim()
+        : (nombreRaw && ape && !nombreRaw.toLowerCase().includes(ape.toLowerCase())
+          ? `${nombreRaw} ${ape}`.trim()
+          : (nombreRaw || `${nom} ${ape}`.trim()));
+
+    const soloNombres = (() => {
+      if (nom) return nom;
+      if (nombreRaw) {
+        if (ape) {
+          const apeLower = ape.toLowerCase();
+          const nomLower = nombreRaw.toLowerCase();
+          if (nomLower.includes(apeLower)) {
+            const extracted = nombreRaw.substring(0, nomLower.lastIndexOf(apeLower)).trim();
+            if (extracted) return extracted;
+          }
+        }
+        const parts = nombreRaw.split(/\s+/);
+        if (parts.length > 2) return parts.slice(0, parts.length - 2).join(' ');
+        return parts[0];
+      }
+      return '';
+    })();
+
+    const primerNombre = (() => {
+      const base = soloNombres || nombreCompleto || '';
+      return base.split(/\s+/)[0] || '';
+    })();
+
+    const apellidos = (() => {
+      if (ape) return ape;
+      if (nombreRaw && soloNombres && nombreRaw.startsWith(soloNombres)) {
+        return nombreRaw.slice(soloNombres.length).trim();
+      }
+      return '';
+    })();
+
+    return { nombreCompleto, soloNombres, primerNombre, apellidos };
+  };
 
   const handleQRScan = (scannedRut) => {
     const formatted = formatRut(scannedRut);
@@ -438,27 +544,114 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                 <div className='bg-slate-50 rounded-2xl p-5 md:p-6 border border-slate-100 space-y-1 mb-6'>
                   {esEventoFuncionarios ? (
                     <>
-                      <InfoRow label="Funcionario" value={`${result.data.nombres || ''} ${result.data.apellidos || ''}`} highlight />
-                      <InfoRow label="RUT" value={result.rut} />
-                      <InfoRow label="Departamento" value={result.data.departamento} />
+                      {(() => {
+                        const { nombreCompleto, soloNombres, primerNombre, apellidos } = formatNombresData(result.data);
+                        if (modoNombre === 'soloNombre') {
+                          return <InfoRow label="Funcionario" value={soloNombres || nombreCompleto} highlight />;
+                        }
+                        if (modoNombre === 'primerNombre') {
+                          return <InfoRow label="Funcionario" value={primerNombre || soloNombres || nombreCompleto} highlight />;
+                        }
+                        if (modoNombre === 'separado') {
+                          return (
+                            <>
+                              <InfoRow label="Nombres" value={soloNombres || nombreCompleto} highlight />
+                              <InfoRow label="Apellidos" value={apellidos} />
+                            </>
+                          );
+                        }
+                        return <InfoRow label="Funcionario" value={nombreCompleto || `${result.data.nombres || ''} ${result.data.apellidos || ''}`.trim()} highlight />;
+                      })()}
+                      {cfg.mostrarRut !== false && cfg.mostrarRut !== 'false' && <InfoRow label="RUT" value={result.rut} />}
+                      {cfg.mostrarInstitucion !== false && cfg.mostrarInstitucion !== 'false' && result.data.departamento && <InfoRow label="Departamento" value={result.data.departamento} />}
                       <div className='pt-2 mt-2 border-t border-slate-200'>
                         <InfoRow label="Confirmación" value={result.data.asiste ? 'Pre-Confirmada' : 'En Puerta'} border={false} />
                       </div>
                     </>
                   ) : (
                     <>
-                      <InfoRow
-                        label="Nombre Completo"
-                        value={result.data.nombre ?? `${result.data.nombres ?? ''} ${result.data.apellidos ?? ''}`.trim()}
-                        highlight
-                      />
-                      <InfoRow label="RUT" value={result.rut} />
-                      {result.data.carrera && <InfoRow label="Carrera" value={result.data.carrera} />}
-                      {result.data.cargo && <InfoRow label="Cargo" value={result.data.cargo} />}
-                      {(result.data.establecimiento || result.data.institucion) && (
-                        <InfoRow label="Establecimiento" value={result.data.establecimiento || result.data.institucion} />
-                      )}
-                      {result.data.comuna && <InfoRow label="Comuna del Establecimiento" value={result.data.comuna} border={false} />}
+                      {(() => {
+                        const { nombreCompleto, soloNombres, primerNombre, apellidos } = formatNombresData(result.data);
+                        if (modoNombre === 'soloNombre') {
+                          return <InfoRow label="Nombre" value={soloNombres || nombreCompleto} highlight />;
+                        }
+                        if (modoNombre === 'primerNombre') {
+                          return <InfoRow label="Nombre" value={primerNombre || soloNombres || nombreCompleto} highlight />;
+                        }
+                        if (modoNombre === 'separado') {
+                          return (
+                            <>
+                              <InfoRow label="Nombres" value={soloNombres || nombreCompleto} highlight />
+                              <InfoRow label="Apellidos" value={apellidos} />
+                            </>
+                          );
+                        }
+                        return <InfoRow label="Nombre Completo" value={nombreCompleto} highlight />;
+                      })()}
+
+                      {cfg.mostrarRut !== false && cfg.mostrarRut !== 'false' && <InfoRow label="RUT" value={result.rut} />}
+                      {(() => {
+                        const carreraVal = getDato(result.data, ['carrera', 'Carrera', 'CARRERA']);
+                        return (cfg.mostrarCarrera !== false && cfg.mostrarCarrera !== 'false' && carreraVal) ? (
+                          <InfoRow label="Carrera" value={carreraVal} />
+                        ) : null;
+                      })()}
+                      {(() => {
+                        const cargoVal = getDato(result.data, ['cargo', 'Cargo', 'Puesto', 'puesto']);
+                        return (cfg.mostrarCargo !== false && cfg.mostrarCargo !== 'false' && cargoVal) ? (
+                          <InfoRow label="Cargo" value={cargoVal} />
+                        ) : null;
+                      })()}
+                      {(() => {
+                        if (cfg.mostrarInstitucion === false || cfg.mostrarInstitucion === 'false') return null;
+                        const instRaw = getDato(result.data, ['institucion', 'Institución', 'Institucion', 'establecimiento', 'Establecimiento']);
+                        if (!instRaw) return null;
+                        const nombreNorm = (currentEvento?.nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                        const esTitulacion = nombreNorm.includes('titulacion');
+                        const cargoVal = getDato(result.data, ['cargo', 'Cargo']);
+                        const comunaVal = getDato(result.data, ['comuna', 'Comuna']);
+                        const soloInst = esTitulacion || (Boolean(instRaw) && !cargoVal && !comunaVal);
+                        return <InfoRow label={soloInst ? "Institución" : "Establecimiento"} value={instRaw} />;
+                      })()}
+                      {(() => {
+                        if (cfg.mostrarComuna === false || cfg.mostrarComuna === 'false') return null;
+                        const nombreNorm = (currentEvento?.nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                        if (nombreNorm.includes('titulacion')) return null;
+                        const comunaVal = getDato(result.data, ['comuna', 'Comuna', 'Comuna del Establecimiento', 'comunaEstablecimiento']);
+                        return comunaVal ? <InfoRow label="Comuna del Establecimiento" value={comunaVal} /> : null;
+                      })()}
+                      {(() => {
+                        const asientoVal = getDato(result.data, ['asiento', 'Asiento', 'ASIENTO', 'Fila', 'fila']);
+                        return (cfg.mostrarAsiento !== false && cfg.mostrarAsiento !== 'false' && asientoVal) ? (
+                          <InfoRow label="Asiento" value={asientoVal} />
+                        ) : null;
+                      })()}
+                      {(() => {
+                        const grupoVal = getDato(result.data, ['grupo', 'Grupo', 'GRUPO']);
+                        return (cfg.mostrarGrupo !== false && cfg.mostrarGrupo !== 'false' && (grupoVal !== null && grupoVal !== undefined)) ? (
+                          <InfoRow label="Grupo" value={String(grupoVal).toLowerCase().startsWith('grupo') ? grupoVal : `Grupo ${grupoVal}`} />
+                        ) : null;
+                      })()}
+                      {(() => {
+                        const nListaVal = getDato(result.data, ['numeroLista', 'NumeroLista', 'N° de Lista', 'N de Lista', 'numero de lista', 'nro de lista', 'Lista']);
+                        return (cfg.mostrarNumeroLista !== false && cfg.mostrarNumeroLista !== 'false' && nListaVal) ? (
+                          <InfoRow label="N° de Lista" value={nListaVal} />
+                        ) : null;
+                      })()}
+                      {(() => {
+                        if (cfg.mostrarDistincion === false || cfg.mostrarDistincion === 'false') return null;
+                        const raw = getDato(result.data, ['distincion', 'Distinción', 'Distincion', 'distincionMaxima']);
+                        if (!raw || raw === false || raw === 'false' || raw === '0') return null;
+                        const distText = (raw === true || raw === 'true' || raw === '1') ? 'Distinción' : String(raw);
+                        return <InfoRow label="Distinción" value={distText} />;
+                      })()}
+                      {(() => {
+                        if (cfg.mostrarReconocimiento === false || cfg.mostrarReconocimiento === 'false') return null;
+                        const raw = getDato(result.data, ['reconocimiento', 'Reconocimiento', 'Reconocimiento Especial']);
+                        if (!raw || raw === false || raw === 'false' || raw === '0') return null;
+                        const recText = (raw === true || raw === 'true' || raw === '1') ? 'Reconocimiento Especial' : String(raw);
+                        return <InfoRow label="Reconocimiento" value={recText} />;
+                      })()}
                     </>
                   )}
                 </div>

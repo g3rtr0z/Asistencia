@@ -25,6 +25,7 @@ function mapFirestoreEventData(doc) {
     activo: Boolean(data.activo),
     visibleCoordinador: data.visibleCoordinador !== undefined ? Boolean(data.visibleCoordinador) : true,
     tipo: data.tipo || 'alumnos',
+    configuracionAsistencia: data.configuracionAsistencia || null,
     fechaCreacion: data.fechaCreacion,
     fechaActualizacion: data.fechaActualizacion,
   };
@@ -86,6 +87,7 @@ export const crearEvento = async evento => {
       activo: Boolean(evento.activo),
       visibleCoordinador: evento.visibleCoordinador !== undefined ? Boolean(evento.visibleCoordinador) : true,
       tipo: evento.tipo || 'alumnos',
+      configuracionAsistencia: evento.configuracionAsistencia || null,
       fechaCreacion: new Date(),
       fechaActualizacion: new Date(),
     });
@@ -103,6 +105,7 @@ export const crearEvento = async evento => {
       activo: true,
       visibleCoordinador: evento.visibleCoordinador !== undefined ? Boolean(evento.visibleCoordinador) : true,
       tipo: evento.tipo || 'alumnos',
+      configuracionAsistencia: evento.configuracionAsistencia || null,
       fechaCreacion: new Date(),
       fechaActualizacion: new Date(),
     };

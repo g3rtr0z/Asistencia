@@ -95,7 +95,11 @@ export const exportarAExcel = (
       if (alumno.rut) fila['RUT'] = alumno.rut;
 
       // Nombre Completo
-      const nombreCompleto = alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim();
+      const nombreCompleto = (alumno.nombres && alumno.apellidos)
+        ? `${alumno.nombres} ${alumno.apellidos}`.trim()
+        : (alumno.nombre && alumno.apellidos && !alumno.nombre.toLowerCase().includes(alumno.apellidos.toLowerCase().trim())
+          ? `${alumno.nombre} ${alumno.apellidos}`.trim()
+          : (alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim()));
       if (nombreCompleto) {
         fila['Nombre Completo'] = nombreCompleto;
       }
@@ -112,8 +116,13 @@ export const exportarAExcel = (
       // Correo electrónico
       if (alumno.correo) fila['Correo electrónico'] = alumno.correo;
 
+      const nombreNorm = (nombreEvento || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+      const esTitulacion = nombreNorm.includes('titulacion');
+      const tieneCamposColegio = alumnosFiltrados.some(a => a.cargo || a.comuna);
+      const soloInst = esTitulacion || (alumnosFiltrados.some(a => a.institucion) && !tieneCamposColegio);
+
       // Establecimiento
-      if (alumno.establecimiento) {
+      if (alumno.establecimiento && !soloInst) {
         fila['Establecimiento'] = alumno.establecimiento;
       }
 
@@ -121,15 +130,19 @@ export const exportarAExcel = (
       if (alumno.cargo) fila['Cargo'] = alumno.cargo;
 
       // Comuna del Establecimiento
-      if (alumno.comuna) fila['Comuna del Establecimiento'] = alumno.comuna;
+      if (alumno.comuna && !soloInst) fila['Comuna del Establecimiento'] = alumno.comuna;
 
       // Carrera
       if (alumno.carrera && alumno.carrera !== 'General' && alumno.carrera !== 'Colaboradores Santo Tomás') {
         fila['Carrera'] = alumno.carrera;
       }
 
-      // Institución (solo si es distinta de establecimiento)
-      if (alumno.institucion && alumno.institucion !== alumno.establecimiento) {
+      // Institución
+      if (soloInst) {
+        if (alumno.institucion || alumno.establecimiento) {
+          fila['Institución'] = alumno.institucion || alumno.establecimiento;
+        }
+      } else if (alumno.institucion && alumno.institucion !== alumno.establecimiento) {
         fila['Institución'] = alumno.institucion;
       }
 
