@@ -539,7 +539,6 @@ const TrabajadoresLista = ({
                     Estado
                   </th>
                 )}
-                {esAdmin && <th className="py-4 px-4 text-center font-semibold min-w-20">Acciones</th>}
                 {columnasVisibles.rut && (
                   <th className="py-4 px-4 text-left font-semibold min-w-32">
                     RUT
@@ -600,13 +599,14 @@ const TrabajadoresLista = ({
                     Observación
                   </th>
                 )}
+                {esAdmin && <th className="py-4 px-4 text-center font-semibold min-w-20">Acciones</th>}
               </tr>
             </thead>
             <tbody>
               {trabajadoresPagina.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={Object.values(columnasVisibles).filter(Boolean).length}
+                    colSpan={Object.values(columnasVisibles).filter(Boolean).length + (esAdmin ? 1 : 0)}
                     className="py-16 text-center"
                   >
                     <div className="flex flex-col items-center gap-4">

@@ -211,7 +211,7 @@ export default function UsuariosPanel() {
                 Gestión de Usuarios y Permisos
               </h2>
               <p className='text-xs sm:text-sm text-slate-500'>
-                Define roles (Admin, Coordinador, Operador) y personaliza los módulos permitidos.
+                Define roles y personaliza los módulos permitidos.
               </p>
             </div>
           </div>
@@ -506,7 +506,7 @@ export default function UsuariosPanel() {
                 {!editandoId && (
                   <div>
                     <label className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5'>
-                      Contraseña de Acceso (Authentication) *
+                      Contraseña de Acceso *
                     </label>
                     <div className='relative flex items-center'>
                       <Lock className='w-4 h-4 absolute left-3.5 text-slate-400' />
