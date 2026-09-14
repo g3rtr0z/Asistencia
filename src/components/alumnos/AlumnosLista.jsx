@@ -519,18 +519,43 @@ const AlumnosLista = ({
 
   // Sorted students
   const alumnosOrdenados = useMemo(() => {
+    const getApellido = (item) => {
+      if (item.apellidos && item.apellidos.trim()) {
+        return item.apellidos.trim();
+      }
+      const nombreCompleto = (item.nombre || '').trim();
+      if (nombreCompleto) {
+        const partes = nombreCompleto.split(/\s+/);
+        if (partes.length > 1) {
+          return partes.slice(1).join(' ');
+        }
+        return partes[0] || '';
+      }
+      return (item.nombres || '').trim();
+    };
+
     return [...alumnosFiltrados].sort((a, b) => {
       let campoA, campoB;
       if (ordenCampo === 'apellidos') {
-        campoA = (a.apellidos ?? (a.nombre ? a.nombre.split(' ').slice(1).join(' ') : '')).trim().toLowerCase();
-        campoB = (b.apellidos ?? (b.nombre ? b.nombre.split(' ').slice(1).join(' ') : '')).trim().toLowerCase();
+        campoA = getApellido(a).toLowerCase();
+        campoB = getApellido(b).toLowerCase();
       } else {
-        campoA = (a.nombres ?? a.nombre ?? '').trim().toLowerCase();
-        campoB = (b.nombres ?? b.nombre ?? '').trim().toLowerCase();
+        campoA = (a.nombres || a.nombre || '').trim().toLowerCase();
+        campoB = (b.nombres || b.nombre || '').trim().toLowerCase();
       }
-      return ordenAlfabetico === 'asc'
+
+      const resultado = ordenAlfabetico === 'asc'
         ? campoA.localeCompare(campoB, 'es', { sensitivity: 'accent' })
         : campoB.localeCompare(campoA, 'es', { sensitivity: 'accent' });
+
+      if (resultado !== 0) return resultado;
+
+      // En caso de igual apellido, desempatar alfabéticamente por nombre
+      const nombreA = (a.nombres || a.nombre || '').trim().toLowerCase();
+      const nombreB = (b.nombres || b.nombre || '').trim().toLowerCase();
+      return ordenAlfabetico === 'asc'
+        ? nombreA.localeCompare(nombreB, 'es', { sensitivity: 'accent' })
+        : nombreB.localeCompare(nombreA, 'es', { sensitivity: 'accent' });
     });
   }, [alumnosFiltrados, ordenCampo, ordenAlfabetico]);
 
@@ -1046,10 +1071,14 @@ const AlumnosLista = ({
                 {columnasVisibles.estado && <th className="py-3 px-4 text-center font-semibold">Estado</th>}
                 {columnasVisibles.rut && <th className="py-3 px-4 text-left font-semibold">RUT</th>}
                 {columnasVisibles.nombreCompleto && (
-                  <th className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors" onClick={() => handleOrdenarPor('nombre')}>
+                  <th
+                    className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors select-none"
+                    onClick={() => handleOrdenarPor('apellidos')}
+                    title="Ordenar por apellido"
+                  >
                     <div className="flex items-center gap-2">
                       Nombre Completo
-                      {ordenCampo === 'nombre' && (
+                      {ordenCampo === 'apellidos' && (
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                           <path d={ordenAlfabetico === 'asc' ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z'} />
                         </svg>
@@ -1058,10 +1087,36 @@ const AlumnosLista = ({
                   </th>
                 )}
                 {columnasVisibles.nombres && !columnasVisibles.nombreCompleto && (
-                  <th className="py-3 px-4 text-left font-semibold">Nombres</th>
+                  <th
+                    className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors select-none"
+                    onClick={() => handleOrdenarPor('nombre')}
+                    title="Ordenar por nombres"
+                  >
+                    <div className="flex items-center gap-2">
+                      Nombres
+                      {ordenCampo === 'nombre' && (
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d={ordenAlfabetico === 'asc' ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z'} />
+                        </svg>
+                      )}
+                    </div>
+                  </th>
                 )}
                 {columnasVisibles.apellidos && !columnasVisibles.nombreCompleto && (
-                  <th className="py-3 px-4 text-left font-semibold">Apellidos</th>
+                  <th
+                    className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors select-none"
+                    onClick={() => handleOrdenarPor('apellidos')}
+                    title="Ordenar por apellidos"
+                  >
+                    <div className="flex items-center gap-2">
+                      Apellidos
+                      {ordenCampo === 'apellidos' && (
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d={ordenAlfabetico === 'asc' ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z'} />
+                        </svg>
+                      )}
+                    </div>
+                  </th>
                 )}
                 {columnasVisibles.telefono && <th className="py-3 px-4 text-left font-semibold">Teléfono</th>}
                 {columnasVisibles.correo && <th className="py-3 px-4 text-left font-semibold">Correo electrónico</th>}
