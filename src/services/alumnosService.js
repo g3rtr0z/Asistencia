@@ -1028,7 +1028,7 @@ export const importarAlumnosDesdeExcel = async (
     alumnosExistentes.forEach(a => {
       if (a.rut) {
         const rutNorm = String(a.rut).replace(/[^0-9kK]/gi, '').trim().toUpperCase();
-        mapRutsExistentes.set(rutNorm, a.id);
+        mapRutsExistentes.set(rutNorm, a);
       }
     });
 
@@ -1068,17 +1068,21 @@ export const importarAlumnosDesdeExcel = async (
           nombreCompleto = `${nombres || ''} ${apellidos || ''}`.trim();
         }
 
-        if (estaVacio(nombreCompleto) && estaVacio(nombres) && estaVacio(apellidos)) {
-          errorCount++;
-          continue;
-        }
-
         const rutRaw = obtenerValorCampo(filaNormalizada, aliasCampos.rut, aliasKeywords.rut);
         const rut = rutRaw != null
           ? String(rutRaw).replace(/[^0-9kK]/gi, '').trim().toUpperCase()
           : null;
 
         if (estaVacio(rut)) {
+          errorCount++;
+          continue;
+        }
+
+        const rutNormalizado = rut;
+        const existingAlumno = mapRutsExistentes.get(rutNormalizado);
+
+        // Si el alumno no existe en la BD, es obligatorio que tenga nombre para poder crearlo
+        if (!existingAlumno && estaVacio(nombreCompleto) && estaVacio(nombres) && estaVacio(apellidos)) {
           errorCount++;
           continue;
         }
@@ -1152,10 +1156,7 @@ export const importarAlumnosDesdeExcel = async (
 
 
 
-        const rutNormalizado = String(rut).replace(/[^0-9kK]/gi, '').trim().toUpperCase();
-        const existingId = mapRutsExistentes.get(rutNormalizado);
-
-        if (existingId) {
+        if (existingAlumno) {
           const updateObj = {
             nombres,
             apellidos,
@@ -1178,15 +1179,25 @@ export const importarAlumnosDesdeExcel = async (
             asiste: asiste ?? false,
           };
 
-          // Limpiar propiedades nulas para no sobreescribir datos manuales con vacíos del excel
+          // Limpiar propiedades nulas o que ya tienen valor en Firestore
           Object.keys(updateObj).forEach(key => {
-            if (updateObj[key] === null) {
+            const excelValue = updateObj[key];
+            const dbValue = existingAlumno[key];
+            
+            const excelIsEmpty = excelValue === null || excelValue === undefined || excelValue === '' || excelValue === false;
+            const dbHasValue = dbValue !== null && dbValue !== undefined && dbValue !== '' && dbValue !== false;
+            
+            if (excelIsEmpty || dbHasValue) {
               delete updateObj[key];
             }
           });
 
-          await updateAlumno(eventoId, existingId, updateObj);
-          updatedCount++;
+          if (Object.keys(updateObj).length > 0) {
+            await updateAlumno(eventoId, existingAlumno.id, updateObj);
+            updatedCount++;
+          } else {
+            skippedCount++;
+          }
           continue;
         }
 
