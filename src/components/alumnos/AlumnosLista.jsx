@@ -1169,21 +1169,21 @@ const AlumnosLista = ({
                       {columnasVisibles.rut && <td className="py-3 px-4 font-mono text-slate-700">{alumno.rut}</td>}
                       {columnasVisibles.nombreCompleto && (
                         <td className="py-3 px-4 text-slate-800 font-medium">
-                          <div className="truncate max-w-[200px]" title={alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim()}>
+                          <div title={alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim()}>
                             {(alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim()) || '-'}
                           </div>
                         </td>
                       )}
                       {columnasVisibles.nombres && !columnasVisibles.nombreCompleto && (
                         <td className="py-3 px-4 text-slate-800 font-medium">
-                          <div className="truncate max-w-[150px]" title={alumno.nombres ?? alumno.nombre ?? '-'}>
+                          <div title={alumno.nombres ?? alumno.nombre ?? '-'}>
                             {alumno.nombres ?? alumno.nombre ?? '-'}
                           </div>
                         </td>
                       )}
                       {columnasVisibles.apellidos && !columnasVisibles.nombreCompleto && (
                         <td className="py-3 px-4 text-slate-800 font-medium">
-                          <div className="truncate max-w-[150px]" title={alumno.apellidos ?? '-'}>
+                          <div title={alumno.apellidos ?? '-'}>
                             {alumno.apellidos ?? '-'}
                           </div>
                         </td>
