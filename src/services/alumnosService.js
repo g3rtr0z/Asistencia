@@ -204,6 +204,7 @@ function mapFirestoreData(doc) {
     asiste: parseBooleanField(asisteValor) ?? false,
     distincion: parseDistincionField(distincionValor),
     reconocimiento: parseReconocimientoField(reconocimientoValor),
+    ubicacion: data['Ubicación'] ?? data['Ubicacion'] ?? data['ubicacion'] ?? data['Ubicación en Ceremonia'] ?? null,
     asiento: data['asiento'] ?? data['Asiento'] ?? data['ASIENTO'] ?? data['Fila'] ?? data['fila'] ?? null,
     grupo: data['grupo'] ?? data['Grupo'] ?? data['GRUPO'] ?? null,
     numeroLista: (() => {
@@ -345,6 +346,7 @@ export const updateAlumno = async (eventoId, alumnoId, data) => {
       updateData['Reconocimiento'] = recVal;
       updateData['reconocimiento'] = recVal;
     }
+    if (data.ubicacion !== undefined) updateData['ubicacion'] = data.ubicacion;
 
     updateData['ultimaActualizacion'] = new Date().toISOString();
 
@@ -771,6 +773,7 @@ export const agregarAlumno = async (alumno, eventoId) => {
       distincion: parseDistincionField(alumno.distincion),
       'Reconocimiento': parseReconocimientoField(alumno.reconocimiento),
       reconocimiento: parseReconocimientoField(alumno.reconocimiento),
+      ubicacion: alumno.ubicacion ?? null,
       asiento: alumno.asiento ?? null,
       grupo: alumno.grupo ?? null,
       numeroLista: alumno.numeroLista ?? null,
@@ -978,6 +981,7 @@ export const importarAlumnosDesdeExcel = async (
       establecimiento: normalizarAlias(['establecimiento', 'nombre del establecimiento', 'establecimiento de origen', 'colegio', 'escuela', 'liceo', 'centro educativo', 'establecimiento educacional', 'unidad educativa', 'lugar de procedencia', 'rbd']),
       distincion: normalizarAlias(['distincion', 'distinción', 'distincion maxima', 'distinción máxima', 'distincion unanime', 'distinción unánime', 'distincion unánime', 'distinción unanime', 'distincion unanime (si/no)', 'distinción unánime (si/no)', 'distincion unanime (sí/no)', 'distinción unánime (sí/no)', 'distincion maxima (si/no)', 'distinción máxima (si/no)', 'distincion maxima (sí/no)', 'distinción máxima (sí/no)', 'distincion (si/no)', 'distinción (si/no)', 'distincion (sí/no)', 'distinción (sí/no)', 'tiene distincion', 'tiene distinción', 'distincion max', 'distinción máx', 'distincion_maxima', 'distincionmaxima', 'distincion_unanime', 'distincionunanime']),
       reconocimiento: normalizarAlias(['reconocimiento', 'reconocimientos', 'reconocimiento especial', 'reconocimiento (si/no)', 'reconocimiento (sí/no)', 'tiene reconocimiento', 'reconocimiento_especial', 'tipo de reconocimiento', 'tipo reconocimiento']),
+      ubicacion: normalizarAlias(['ubicacion', 'ubicación', 'ubicacion en ceremonia', 'ubicación en ceremonia', 'ubicación alumno', 'ubicacion alumno']),
     };
 
     const aliasKeywords = {
@@ -992,6 +996,7 @@ export const importarAlumnosDesdeExcel = async (
       cargo: ['cargo', 'puesto', 'funcion', 'rol'],
       comuna: ['comuna', 'municipio', 'ciudad'],
       establecimiento: ['establecimiento', 'colegio', 'escuela', 'liceo', 'rbd'],
+      ubicacion: ['ubicacion', 'ubicación'],
     };
 
     const obtenerValorCampo = (fila, alias, keywords = []) => {
@@ -1019,15 +1024,18 @@ export const importarAlumnosDesdeExcel = async (
     const esEventoTrabajadores = tipoEvento === 'trabajadores';
 
     const alumnosExistentes = await getAlumnosPorEvento(eventoId);
-    const rutsExistentes = new Set(
-      alumnosExistentes
-        .map(a => a.rut && String(a.rut).replace(/[.-]/g, '').trim().toUpperCase())
-        .filter(Boolean)
-    );
+    const mapRutsExistentes = new Map();
+    alumnosExistentes.forEach(a => {
+      if (a.rut) {
+        const rutNorm = String(a.rut).replace(/[^0-9kK]/gi, '').trim().toUpperCase();
+        mapRutsExistentes.set(rutNorm, a.id);
+      }
+    });
 
     let successCount = 0;
     let errorCount = 0;
     let skippedCount = 0;
+    let updatedCount = 0;
 
     for (const alumno of jsonData) {
       try {
@@ -1108,6 +1116,9 @@ export const importarAlumnosDesdeExcel = async (
         const reconocimientoValor = obtenerValorCampo(filaNormalizada, aliasCampos.reconocimiento);
         const reconocimiento = parseReconocimientoField(reconocimientoValor);
         
+        const ubicacionRaw = obtenerValorCampo(filaNormalizada, aliasCampos.ubicacion, aliasKeywords.ubicacion);
+        const ubicacion = capitalizarPalabras(ubicacionRaw);
+        
         const telefono = obtenerValorCampo(filaNormalizada, aliasCampos.telefono, aliasKeywords.telefono);
 
         const correoRaw = obtenerValorCampo(filaNormalizada, aliasCampos.correo, aliasKeywords.correo);
@@ -1141,9 +1152,41 @@ export const importarAlumnosDesdeExcel = async (
 
 
 
-        const rutNormalizado = String(rut).toUpperCase();
-        if (rutsExistentes.has(rutNormalizado)) {
-          skippedCount++;
+        const rutNormalizado = String(rut).replace(/[^0-9kK]/gi, '').trim().toUpperCase();
+        const existingId = mapRutsExistentes.get(rutNormalizado);
+
+        if (existingId) {
+          const updateObj = {
+            nombres,
+            apellidos,
+            nombre: nombreCompleto,
+            telefono: telefono ? String(telefono).trim() : null,
+            correo: correo ? String(correo).trim() : null,
+            cargo: cargo ? String(cargo).trim() : null,
+            comuna: comuna ? String(comuna).trim() : null,
+            establecimiento: establecimiento ? String(establecimiento).trim() : null,
+            carrera: carreraFinal || null,
+            institucion: esEventoTrabajadores ? null : (institucionFinal ? String(institucionFinal).trim() : null),
+            asiento: esEventoTrabajadores ? null : asiento,
+            grupo: esEventoTrabajadores ? null : grupo,
+            numeroLista: esEventoTrabajadores ? null : numeroLista,
+            distincion: distincion ?? false,
+            reconocimiento: reconocimiento ?? false,
+            ubicacion: ubicacion || null,
+            departamento: esEventoTrabajadores ? departamentoFinal : null,
+            observacion: esEventoTrabajadores ? (observacion ?? null) : null,
+            asiste: asiste ?? false,
+          };
+
+          // Limpiar propiedades nulas para no sobreescribir datos manuales con vacíos del excel
+          Object.keys(updateObj).forEach(key => {
+            if (updateObj[key] === null) {
+              delete updateObj[key];
+            }
+          });
+
+          await updateAlumno(eventoId, existingId, updateObj);
+          updatedCount++;
           continue;
         }
 
@@ -1166,6 +1209,7 @@ export const importarAlumnosDesdeExcel = async (
             presente: presente ?? false,
             distincion: distincion ?? false,
             reconocimiento: reconocimiento ?? false,
+            ubicacion: ubicacion || null,
             departamento: esEventoTrabajadores ? departamentoFinal : null,
             observacion: esEventoTrabajadores ? (observacion ?? null) : null,
             asiste: asiste ?? false,
@@ -1181,12 +1225,13 @@ export const importarAlumnosDesdeExcel = async (
       }
     }
 
-    if (successCount === 0) {
+    if (successCount === 0 && updatedCount === 0) {
       if (skippedCount > 0 && errorCount === 0) {
         return {
           successCount: 0,
           errorCount: 0,
           skippedCount,
+          updatedCount: 0,
           message: `Todos los participantes (${skippedCount}) ya están registrados en este evento.`,
         };
       }
@@ -1195,7 +1240,8 @@ export const importarAlumnosDesdeExcel = async (
           successCount: 0,
           errorCount,
           skippedCount,
-          message: `No se agregaron nuevos participantes: ${skippedCount} ya están registrados en este evento (${errorCount} filas omitidas por faltar Nombre o RUT).`,
+          updatedCount: 0,
+          message: `No se agregaron ni actualizaron participantes: ${skippedCount} omitidos (${errorCount} errores).`,
         };
       }
       throw new Error(`No se pudo importar ningún alumno. Asegúrese de que el archivo Excel contenga columnas con al menos el Nombre y el RUT del participante.`);
@@ -1205,7 +1251,8 @@ export const importarAlumnosDesdeExcel = async (
       successCount,
       errorCount,
       skippedCount,
-      message: `Importación completada: ${successCount} agregados, ${skippedCount} duplicados omitidos, ${errorCount} errores`,
+      updatedCount,
+      message: `Importación completada: ${successCount} nuevos, ${updatedCount} actualizados, ${skippedCount} omitidos, ${errorCount} errores.`,
     };
   } catch (error) {
     console.error('Error en importarAlumnosDesdeExcel:', error);

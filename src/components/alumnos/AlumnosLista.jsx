@@ -179,6 +179,7 @@ const AlumnosLista = ({
       presente: Boolean(alumno.presente),
       distincion: alumno.distincion ?? false,
       reconocimiento: alumno.reconocimiento ?? false,
+      ubicacion: alumno.ubicacion || '',
       // Guardar datos originales para sincronización en alumnosService
       originalData: {
         nombres: alumno.nombres,
@@ -247,6 +248,7 @@ const AlumnosLista = ({
         asiento: false,
         distincion: false,
         reconocimiento: false,
+        ubicacion: false,
       };
     }
 
@@ -279,6 +281,7 @@ const AlumnosLista = ({
       asiento: alumnosNormalizados.some(a => a.asiento != null && String(a.asiento).trim() !== ''),
       distincion: alumnosNormalizados.some(a => Boolean(a.distincion)),
       reconocimiento: alumnosNormalizados.some(a => Boolean(a.reconocimiento)),
+      ubicacion: alumnosNormalizados.some(a => a.ubicacion != null && String(a.ubicacion).trim() !== ''),
     };
   }, [alumnosNormalizados, soloInstitucion]);
 
@@ -301,6 +304,7 @@ const AlumnosLista = ({
     grupo: false,
     distincion: false,
     reconocimiento: false,
+    ubicacion: false,
   });
 
   // Sync visibility with presence of data
@@ -336,7 +340,7 @@ const AlumnosLista = ({
       cargo: true,
       comuna: !soloInstitucion,
       carrera: true, institucion: true, numeroLista: true, asiento: true, grupo: true,
-      distincion: true, reconocimiento: true,
+      distincion: true, reconocimiento: true, ubicacion: true,
     });
   }
 
@@ -1029,7 +1033,8 @@ const AlumnosLista = ({
                     grupo: 'Grupo',
                     asiento: 'Asiento',
                     distincion: 'Distinción',
-                    reconocimiento: 'Reconocimiento'
+                    reconocimiento: 'Reconocimiento',
+                    ubicacion: 'Ubicación en Ceremonia'
                   })
                   .filter(([key]) => columnasConDatos[key])
                   .map(([key, label]) => (
@@ -1130,6 +1135,7 @@ const AlumnosLista = ({
                 {columnasVisibles.grupo && <th className="py-3 px-4 text-center font-semibold">Grupo</th>}
                 {columnasVisibles.distincion && <th className="py-3 px-4 text-center font-semibold">Distinción</th>}
                 {columnasVisibles.reconocimiento && <th className="py-3 px-4 text-center font-semibold">Reconocimiento</th>}
+                {columnasVisibles.ubicacion && <th className="py-3 px-4 text-center font-semibold">Ubicación</th>}
                 {esAdmin && <th className="py-3 px-4 text-center font-semibold">Acciones</th>}
               </tr>
             </thead>
@@ -1265,6 +1271,17 @@ const AlumnosLista = ({
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full bg-purple-100 text-purple-800 border border-purple-300 shadow-sm">
                               <Award className="w-3.5 h-3.5 text-purple-600" />
                               {typeof alumno.reconocimiento === 'string' && alumno.reconocimiento !== 'true' ? alumno.reconocimiento : 'Reconocimiento'}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-xs">-</span>
+                          )}
+                        </td>
+                      )}
+                      {columnasVisibles.ubicacion && (
+                        <td className="py-3 px-4 text-center">
+                          {alumno.ubicacion ? (
+                            <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-bold shadow-sm whitespace-nowrap">
+                              {alumno.ubicacion}
                             </span>
                           ) : (
                             <span className="text-slate-400 text-xs">-</span>
