@@ -21,6 +21,7 @@ export const DEFAULT_CONFIG_ASISTENCIA = {
   mostrarCargo: true,
   mostrarComuna: true,
   mostrarAsiento: true,
+  mostrarUbicacion: true,
   mostrarGrupo: true,
   mostrarNumeroLista: true,
   mostrarDistincion: true,
@@ -131,6 +132,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
           mostrarCargo: alumnos.some(a => Boolean(a.cargo || a.Cargo)),
           mostrarComuna: alumnos.some(a => Boolean(a.comuna || a['Comuna del Establecimiento'])),
           mostrarAsiento: alumnos.some(a => Boolean(a.asiento || a.Asiento)),
+          mostrarUbicacion: alumnos.some(a => Boolean(a.ubicacion || a.Ubicacion || a['Ubicación en Ceremonia'])),
           mostrarGrupo: alumnos.some(a => a.grupo !== null && a.grupo !== undefined && a.grupo !== ''),
           mostrarNumeroLista: alumnos.some(a => Boolean(a.numeroLista || a.NumeroLista)),
           mostrarDistincion: alumnos.some(a => Boolean(a.distincion && a.distincion !== 'false' && a.distincion !== false)),
@@ -813,6 +815,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
                               { key: 'mostrarCargo', label: 'Cargo' },
                               { key: 'mostrarComuna', label: 'Comuna' },
                               { key: 'mostrarAsiento', label: 'Asiento' },
+                              { key: 'mostrarUbicacion', label: 'Ubicación' },
                               { key: 'mostrarGrupo', label: 'Grupo' },
                               { key: 'mostrarNumeroLista', label: 'N° de Lista' },
                               { key: 'mostrarDistincion', label: 'Distinción' },
@@ -957,6 +960,12 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
                               <div className='flex justify-between py-1'>
                                 <span className='text-slate-500'>Asiento</span>
                                 <span className='text-slate-800 font-semibold'>{sampleAlumno?.asiento || 'C7'}</span>
+                              </div>
+                            )}
+                            {formData.configuracionAsistencia?.mostrarUbicacion !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarUbicacion) && (
+                              <div className='flex justify-between py-1'>
+                                <span className='text-slate-500'>Ubicación</span>
+                                <span className='text-slate-800 font-semibold'>{sampleAlumno?.ubicacion || 'Fila 1'}</span>
                               </div>
                             )}
                             {formData.configuracionAsistencia?.mostrarGrupo !== false && (!camposDisponiblesEvento || camposDisponiblesEvento.mostrarGrupo) && (

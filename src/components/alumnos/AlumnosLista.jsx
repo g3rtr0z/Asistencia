@@ -1030,11 +1030,11 @@ const AlumnosLista = ({
                     carrera: 'Carrera',
                     institucion: 'Institución',
                     numeroLista: 'N° de Lista',
-                    grupo: 'Grupo',
                     asiento: 'Asiento',
+                    ubicacion: 'Ubicación en Ceremonia',
+                    grupo: 'Grupo',
                     distincion: 'Distinción',
-                    reconocimiento: 'Reconocimiento',
-                    ubicacion: 'Ubicación en Ceremonia'
+                    reconocimiento: 'Reconocimiento'
                   })
                   .filter(([key]) => columnasConDatos[key])
                   .map(([key, label]) => (
@@ -1132,10 +1132,10 @@ const AlumnosLista = ({
                 {columnasVisibles.institucion && !columnasVisibles.establecimiento && <th className="py-3 px-4 text-left font-semibold">Institución</th>}
                 {columnasVisibles.numeroLista && <th className="py-3 px-4 text-center font-semibold text-xs leading-tight">N° de<br />Lista</th>}
                 {columnasVisibles.asiento && <th className="py-3 px-4 text-center font-semibold">Asiento</th>}
+                {columnasVisibles.ubicacion && <th className="py-3 px-4 text-center font-semibold">Ubicación</th>}
                 {columnasVisibles.grupo && <th className="py-3 px-4 text-center font-semibold">Grupo</th>}
                 {columnasVisibles.distincion && <th className="py-3 px-4 text-center font-semibold">Distinción</th>}
                 {columnasVisibles.reconocimiento && <th className="py-3 px-4 text-center font-semibold">Reconocimiento</th>}
-                {columnasVisibles.ubicacion && <th className="py-3 px-4 text-center font-semibold">Ubicación</th>}
                 {esAdmin && <th className="py-3 px-4 text-center font-semibold">Acciones</th>}
               </tr>
             </thead>
@@ -1219,10 +1219,7 @@ const AlumnosLista = ({
                       )}
                       {columnasVisibles.carrera && (
                         <td className="py-3 px-4 text-slate-600 text-xs">
-                          <div
-                            className="truncate max-w-[120px]"
-                            title={alumno.carreraNormalizada ?? alumno.carrera ?? '-'}
-                          >
+                          <div title={alumno.carreraNormalizada ?? alumno.carrera ?? '-'}>
                             {alumno.carreraNormalizada ?? alumno.carrera ?? '-'}
                           </div>
                         </td>
@@ -1244,6 +1241,17 @@ const AlumnosLista = ({
                           <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
                             {alumno.asiento ?? '-'}
                           </span>
+                        </td>
+                      )}
+                      {columnasVisibles.ubicacion && (
+                        <td className="py-3 px-4 text-center">
+                          {alumno.ubicacion ? (
+                            <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-bold shadow-sm whitespace-nowrap">
+                              {alumno.ubicacion}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-xs">-</span>
+                          )}
                         </td>
                       )}
                       {columnasVisibles.grupo && (
@@ -1271,17 +1279,6 @@ const AlumnosLista = ({
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full bg-purple-100 text-purple-800 border border-purple-300 shadow-sm">
                               <Award className="w-3.5 h-3.5 text-purple-600" />
                               {typeof alumno.reconocimiento === 'string' && alumno.reconocimiento !== 'true' ? alumno.reconocimiento : 'Reconocimiento'}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400 text-xs">-</span>
-                          )}
-                        </td>
-                      )}
-                      {columnasVisibles.ubicacion && (
-                        <td className="py-3 px-4 text-center">
-                          {alumno.ubicacion ? (
-                            <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-bold shadow-sm whitespace-nowrap">
-                              {alumno.ubicacion}
                             </span>
                           ) : (
                             <span className="text-slate-400 text-xs">-</span>

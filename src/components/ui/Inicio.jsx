@@ -627,6 +627,12 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                         ) : null;
                       })()}
                       {(() => {
+                        const ubicacionVal = getDato(result.data, ['ubicacion', 'Ubicación', 'Ubicación en Ceremonia', 'ubicacion en ceremonia']);
+                        return (cfg.mostrarUbicacion !== false && cfg.mostrarUbicacion !== 'false' && ubicacionVal) ? (
+                          <InfoRow label="Ubicación en Ceremonia" value={ubicacionVal} />
+                        ) : null;
+                      })()}
+                      {(() => {
                         const grupoVal = getDato(result.data, ['grupo', 'Grupo', 'GRUPO']);
                         return (cfg.mostrarGrupo !== false && cfg.mostrarGrupo !== 'false' && (grupoVal !== null && grupoVal !== undefined)) ? (
                           <InfoRow label="Grupo" value={String(grupoVal).toLowerCase().startsWith('grupo') ? grupoVal : `Grupo ${grupoVal}`} />
