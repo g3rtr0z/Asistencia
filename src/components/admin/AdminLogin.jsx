@@ -3,97 +3,86 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../connection/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '../../assets/logopag.png';
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { obtenerRolUsuario } from '../../services/authService';
 
-// Manejo seguro de cookies para recordar credenciales (correo y contraseña protegida)
-const COOKIE_CORREO = 'admin_correo_recordado';
-const COOKIE_AUTH = 'admin_sesion_auth';
+// ─── Cookie helpers ────────────────────────────────────────────────────────────
+const COOKIE_CORREO  = 'admin_correo_recordado';
+const COOKIE_AUTH    = 'admin_sesion_auth';
 const CLAVE_RECORDAR = 'admin_recordarme';
 
 const guardarCookie = (nombre, valor, dias = 30) => {
   const expira = new Date(Date.now() + dias * 864e5).toUTCString();
   document.cookie = `${nombre}=${encodeURIComponent(valor)}; expires=${expira}; path=/; SameSite=Lax`;
 };
-
 const obtenerCookie = (nombre) => {
-  const coincidencia = document.cookie.match(new RegExp(`(^| )${nombre}=([^;]+)`));
-  return coincidencia ? decodeURIComponent(coincidencia[2]) : null;
+  const m = document.cookie.match(new RegExp(`(^| )${nombre}=([^;]+)`));
+  return m ? decodeURIComponent(m[2]) : null;
 };
-
 const eliminarCookie = (nombre) => {
   document.cookie = `${nombre}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
 };
-
-// Cifrado reversible simple para ofuscar la contraseña
 const ofuscarPass = (texto) => {
   if (!texto) return '';
   try {
-    return btoa(encodeURIComponent(texto).split('').map((c, i) => 
+    return btoa(encodeURIComponent(texto).split('').map((c, i) =>
       String.fromCharCode(c.charCodeAt(0) ^ (0x53 + (i % 7)))
     ).join(''));
-  } catch {
-    return btoa(texto);
-  }
+  } catch { return btoa(texto); }
 };
-
 const desofuscarPass = (hash) => {
   if (!hash) return '';
   try {
-    const decodificado = atob(hash).split('').map((c, i) => 
+    const d = atob(hash).split('').map((c, i) =>
       String.fromCharCode(c.charCodeAt(0) ^ (0x53 + (i % 7)))
     ).join('');
-    return decodeURIComponent(decodificado);
-  } catch {
-    return '';
-  }
+    return decodeURIComponent(d);
+  } catch { return ''; }
 };
 
+// ─── Componente ───────────────────────────────────────────────────────────────
 function AdminLogin({ onAuth, onSalir }) {
-  const [email, setEmail] = useState('');
-  const [pass, setPass] = useState('');
+  const [email,        setEmail]        = useState('');
+  const [pass,         setPass]         = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [recordarme, setRecordarme] = useState(false);
+  const [error,        setError]        = useState('');
+  const [loading,      setLoading]      = useState(false);
 
-  // Cargar credenciales guardadas en cookies al montar el componente
+  // Cargar credenciales guardadas
   useEffect(() => {
-    localStorage.removeItem('admin_recordado_pass'); // Limpieza de versiones anteriores
+    // Limpiar hoja de estilos anterior si existe
+    ['lgn-stylesheet', 'lgn2-stylesheet'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
 
+    localStorage.removeItem('admin_recordado_pass');
     const recordarGuardado = localStorage.getItem(CLAVE_RECORDAR) === 'true';
-    const correoCookie = obtenerCookie(COOKIE_CORREO) || localStorage.getItem(COOKIE_CORREO);
-    const authCookie = obtenerCookie(COOKIE_AUTH);
-
-    if (recordarGuardado) {
-      if (correoCookie) setEmail(correoCookie);
+    const correoCookie     = obtenerCookie(COOKIE_CORREO) || localStorage.getItem(COOKIE_CORREO);
+    const authCookie       = obtenerCookie(COOKIE_AUTH);
+    if (recordarGuardado && correoCookie) {
+      setEmail(correoCookie);
       if (authCookie) {
-        const passRestaurada = desofuscarPass(authCookie);
-        if (passRestaurada) setPass(passRestaurada);
+        const p = desofuscarPass(authCookie);
+        if (p) setPass(p);
       }
-      setRecordarme(true);
     }
   }, []);
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
     setError('');
     setLoading(true);
-
     try {
-      if (recordarme) {
+      // Siempre guardar si hay credenciales (comportamiento silencioso)
+      if (email && pass) {
         guardarCookie(COOKIE_CORREO, email, 30);
         guardarCookie(COOKIE_AUTH, ofuscarPass(pass), 30);
         localStorage.setItem(COOKIE_CORREO, email);
         localStorage.setItem(CLAVE_RECORDAR, 'true');
-      } else {
-        eliminarCookie(COOKIE_CORREO);
-        eliminarCookie(COOKIE_AUTH);
-        localStorage.removeItem(COOKIE_CORREO);
-        localStorage.removeItem(CLAVE_RECORDAR);
       }
-      localStorage.removeItem('admin_recordado_pass'); // Limpieza
+      localStorage.removeItem('admin_recordado_pass');
 
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
       const rol = await obtenerRolUsuario(userCredential.user);
@@ -102,231 +91,195 @@ function AdminLogin({ onAuth, onSalir }) {
         await auth.signOut();
         throw new Error('Usuario revocado o no autorizado');
       }
-
       onAuth(rol, userCredential.user);
     } catch (err) {
-      setError(err.message === 'Usuario revocado o no autorizado'
-        ? 'Este usuario no tiene permisos o ha sido eliminado.'
-        : 'Credenciales incorrectas o usuario no autorizado');
+      setError(
+        err.message === 'Usuario revocado o no autorizado'
+          ? 'Este usuario no tiene permisos o ha sido eliminado.'
+          : 'Credenciales incorrectas. Verifica tu correo y contraseña.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  const isDisabled = !email.trim() || !pass.trim();
+
   return (
-    <div className='min-h-screen w-full flex flex-col lg:flex-row relative overflow-x-hidden bg-slate-900'>
+    <div className='min-h-screen w-full flex items-center justify-center p-4 md:p-6 bg-slate-50'>
+      <div className='w-full max-w-xl xl:max-w-5xl bg-white rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden flex flex-col xl:flex-row'>
 
-      {/* Lado Izquierdo - Fondo Panorámico institucional (Oculto en móvil para enfocar el formulario, visible en escritorio) */}
-      <div className='hidden lg:flex w-full lg:w-3/5 min-h-screen relative flex-col justify-between p-8 lg:p-16 text-white shrink-0 overflow-hidden'>
-        {/* Imagen de Fondo ST Manuel Rodriguez */}
-        <div
-          className='absolute inset-0 bg-cover bg-center pointer-events-none transform scale-105'
-          style={{
-            backgroundImage: `url('/ST Manuel Rodriguez.webp')`,
-            filter: 'grayscale(100%) blur(1.5px)'
-          }}
-        />
-        {/* Capa de degradado institucional verde oscuro */}
-        <div className='absolute inset-0 bg-gradient-to-t from-slate-950/90 via-[#003822]/85 to-[#004b30]/75 pointer-events-none backdrop-blur-[1px]'></div>
+        {/* ── Panel Izquierdo (institucional) ── */}
+        <div className='bg-st-verde p-6 md:p-8 xl:p-12 text-white flex flex-row xl:flex-col justify-between items-center xl:items-start relative overflow-hidden shrink-0 xl:w-5/12'>
 
-        {/* Elementos decorativos */}
-        <div className='absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3 pointer-events-none'></div>
-        <div className='absolute bottom-0 left-0 w-96 h-96 bg-black/40 rounded-full blur-3xl pointer-events-none'></div>
+          {/* Imagen de fondo con desenfoque */}
+          <div
+            className='absolute inset-0 bg-cover bg-center pointer-events-none transform scale-105'
+            style={{
+              backgroundImage: `url('/ST Manuel Rodriguez.webp')`,
+              filter: 'grayscale(100%) blur(2px)'
+            }}
+          />
+          {/* Overlay verde institucional */}
+          <div className='absolute inset-0 bg-gradient-to-tr from-[#003822]/90 via-st-verde/85 to-[#005a38]/80 pointer-events-none backdrop-blur-[1px]' />
+          {/* Destellos decorativos */}
+          <div className='absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 pointer-events-none' />
+          <div className='absolute bottom-0 left-0 w-48 h-48 bg-black/30 rounded-full blur-2xl transform -translate-x-1/2 translate-y-1/2 pointer-events-none' />
 
-        {/* Header superior izquierdo */}
-        <div className='relative z-10 flex items-center gap-3'>
-          <div className='w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-lg'>
-            <span className='font-bold text-xl tracking-wider'>ST</span>
-          </div>
-        </div>
-
-        {/* Contenido central informativo */}
-        <div className='relative z-10 max-w-lg my-auto pt-6'>
-          <motion.h1
-            initial={{ opacity: 0, filter: 'blur(8px)' }}
-            animate={{ opacity: 1, filter: 'blur(0px)' }}
-            transition={{ duration: 0.45 }}
-            className='text-3xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-tight mb-4 drop-shadow-sm'
-          >
-            Mi Asistencia - ST
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, filter: 'blur(6px)' }}
-            animate={{ opacity: 0.9, filter: 'blur(0px)' }}
-            transition={{ duration: 0.45, delay: 0.1 }}
-            className='text-white/85 text-sm sm:text-base lg:text-lg font-light leading-relaxed'
-          >
-            Plataforma institucional para el monitoreo de asistencia, gestión de eventos y análisis de registros en tiempo real.
-          </motion.p>
-        </div>
-
-        {/* Footer inferior izquierdo */}
-        <div className='relative z-10 flex items-center justify-between text-xs text-white/60 pt-6 border-t border-white/15'>
-          <span>© {new Date().getFullYear()} Santo Tomás</span>
-          <span>Acceso Restringido</span>
-        </div>
-      </div>
-
-      {/* Lado Derecho - Formulario de Login a Pantalla Completa */}
-      <div className='w-full lg:w-2/5 min-h-screen bg-gradient-to-t from-slate-900 via-[#003822] to-[#004b30] lg:bg-none lg:bg-slate-50 flex flex-col justify-center items-center px-4 py-8 sm:p-12 lg:p-14 relative z-10 shadow-2xl overflow-y-auto'>
-
-        {/* Fondo sutil en móvil con imagen difuminada */}
-        <div
-          className='lg:hidden absolute inset-0 bg-cover bg-center pointer-events-none opacity-20'
-          style={{
-            backgroundImage: `url('/ST Manuel Rodriguez.webp')`,
-            filter: 'grayscale(100%) blur(1px)'
-          }}
-        />
-
-        {/* Botón Volver - Fijo en la esquina superior izquierda */}
-        {onSalir && (
-          <div className='absolute left-4 top-6 lg:left-8 lg:top-8 z-50'>
-            <button
-              onClick={onSalir}
-              className='px-3.5 py-2 rounded-xl bg-white/10 lg:bg-white text-white lg:text-slate-700 border border-white/20 lg:border-slate-200 shadow-sm hover:bg-white/20 hover:shadow-md flex items-center gap-2 transition-all duration-200 active:scale-95 group backdrop-blur-sm'
-              title='Volver al inicio'
-            >
-              <ArrowLeft className='w-4 h-4 transform group-hover:-translate-x-1 transition-transform' />
-              <span className='text-xs font-bold uppercase tracking-wider'>Volver</span>
-            </button>
-          </div>
-        )}
-
-        {/* Wrapper central para Logo + Formulario */}
-        <div className='w-full max-w-md my-auto flex flex-col items-center relative z-10 -translate-y-[20px] lg:translate-y-0'>
-
-          {/* Logo institucional solo visible en móviles */}
-          <div className='w-full lg:hidden flex flex-col items-center mb-4'>
-            <img src={Logo} alt="Santo Tomás Logo" className='w-32 h-32 sm:w-36 sm:h-36 object-contain drop-shadow-xl filter brightness-0 invert' />
-          </div>
-
-          {/* Contenedor principal del formulario */}
-          <div className='w-full flex flex-col items-center relative bg-white lg:bg-transparent p-6 sm:p-8 lg:p-0 rounded-3xl shadow-2xl lg:shadow-none'>
-
-            <motion.div
-              initial={{ opacity: 0, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, filter: 'blur(0px)' }}
-              transition={{ duration: 0.4 }}
-              className='w-full mb-6 text-center'
-            >
-              <h2 className='text-2xl sm:text-3xl font-black text-slate-800 tracking-tight mb-2'>
-                Iniciar Sesión
-              </h2>
-              <p className='text-slate-500 text-xs sm:text-sm font-medium'>
-                Ingresa tus credenciales institucionales para continuar.
+          {/* Logo y título */}
+          <div className='relative z-10 flex items-center gap-4 xl:block'>
+            <div className='w-10 h-10 md:w-16 md:h-16 xl:mb-8'>
+              <img
+                src={Logo}
+                alt='Santo Tomás'
+                className='w-full h-full object-contain filter brightness-0 invert opacity-90'
+              />
+            </div>
+            <div className='hidden xl:block'>
+              <p className='text-white/60 text-xs font-semibold tracking-widest uppercase mb-2'>
+                Sistema Institucional
               </p>
-            </motion.div>
+              <h1 className='text-3xl md:text-4xl font-bold leading-tight mb-3'>
+                Acceso al Panel
+              </h1>
+              <p className='text-white/75 text-base font-light max-w-xs leading-relaxed'>
+                Plataforma de gestión y monitoreo de asistencia para eventos institucionales.
+              </p>
+            </div>
+          </div>
 
-            <motion.form
-              initial={{ opacity: 0, filter: 'blur(6px)' }}
-              animate={{ opacity: 1, filter: 'blur(0px)' }}
-              transition={{ duration: 0.45, delay: 0.1 }}
-              onSubmit={handleSubmit}
-              autoComplete='off'
-              className='w-full flex flex-col gap-4 sm:gap-5'
-            >
+          {/* Badge de acceso restringido */}
+          <div className='relative z-10 mt-0 xl:mt-12'>
+            <div className='flex items-center gap-3 bg-white/10 backdrop-blur-md p-3 md:p-4 rounded-xl border border-white/20'>
+              <div className='w-8 h-8 md:w-10 md:h-10 bg-white/20 rounded-lg flex items-center justify-center shrink-0'>
+                <svg xmlns='http://www.w3.org/2000/svg' className='h-4 w-4 md:h-5 md:w-5' viewBox='0 0 20 20' fill='currentColor'>
+                  <path fillRule='evenodd' d='M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z' clipRule='evenodd' />
+                </svg>
+              </div>
+              <div>
+                <div className='text-[10px] md:text-xs text-white/60 uppercase tracking-wider font-semibold'>Área</div>
+                <div className='font-bold text-xs md:text-sm'>Acceso Restringido</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Panel Derecho (formulario) ── */}
+        <div className='xl:w-7/12 p-6 md:p-10 xl:p-16 flex flex-col justify-center bg-gradient-to-b from-white via-white to-slate-50/50 relative'>
+
+          {/* Botón Volver */}
+          {onSalir && (
+            <div className='absolute top-4 left-4 md:top-6 md:left-6'>
+              <button
+                onClick={onSalir}
+                className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 border border-slate-200 text-xs font-semibold uppercase tracking-wider transition-all duration-200 active:scale-95'
+                title='Volver al inicio'
+              >
+                <ArrowLeft className='w-3.5 h-3.5' />
+                Volver
+              </button>
+            </div>
+          )}
+
+          {/* Logo en esquina superior derecha (solo desktop) */}
+          <div className='absolute top-6 right-8 hidden xl:block'>
+            <img src={Logo} alt='Santo Tomás' className='w-20 h-20 object-contain opacity-90' />
+          </div>
+
+          {/* Formulario */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+            className='max-w-md mx-auto w-full mt-8 xl:mt-0'
+          >
+            <h2 className='text-2xl md:text-3xl font-bold text-slate-800 mb-1 tracking-tight'>
+              Iniciar Sesión
+            </h2>
+            <p className='text-slate-500 mb-6 md:mb-8 text-sm font-medium opacity-80'>
+              Ingresa tus credenciales institucionales para continuar.
+            </p>
+
+            <form onSubmit={handleSubmit} autoComplete='off' className='flex flex-col gap-5'>
+
               {/* Correo */}
               <div className='group'>
-                <label htmlFor='admin-email' className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1'>
+                <label htmlFor='admin-email' className='block text-xs font-semibold text-slate-700 mb-2 ml-1 uppercase tracking-wider'>
                   Correo institucional
                 </label>
-                <div className='relative flex items-center'>
-                  <div className='absolute left-3.5 sm:left-4 text-slate-400'>
-                    <Mail className='w-5 h-5' />
-                  </div>
-                  <input
-                    id='admin-email'
-                    name='username'
-                    type='email'
-                    value={email}
-                    required
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder='correo@santotomas.cl'
-                    className='w-full h-12 sm:h-14 pl-11 sm:pl-12 pr-4 bg-white border-2 border-slate-200 rounded-xl sm:rounded-2xl text-sm font-semibold text-slate-800 outline-none transition-all duration-300 focus:border-st-verde focus:ring-4 focus:ring-st-verde/10 focus:shadow-xl focus:shadow-st-verde/5'
-                    autoComplete='off'
-                  />
-                </div>
+                <input
+                  id='admin-email'
+                  name='username'
+                  type='email'
+                  value={email}
+                  required
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder='correo@santotomas.cl'
+                  className='w-full h-12 md:h-14 px-4 bg-slate-50 border-2 border-slate-200 rounded-xl md:rounded-2xl text-sm font-semibold text-slate-800 outline-none transition-all duration-300 focus:border-st-verde focus:bg-white focus:shadow-lg focus:shadow-st-verde/5 placeholder:font-normal placeholder:text-slate-400'
+                  autoComplete='off'
+                />
               </div>
 
               {/* Contraseña */}
               <div className='group'>
-                <label htmlFor='admin-password' className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1'>
+                <label htmlFor='admin-password' className='block text-xs font-semibold text-slate-700 mb-2 ml-1 uppercase tracking-wider'>
                   Contraseña
                 </label>
-                <div className='relative flex items-center'>
-                  <div className='absolute left-3.5 sm:left-4 text-slate-400'>
-                    <Lock className='w-5 h-5' />
-                  </div>
+                <div className='relative'>
                   <input
                     id='admin-password'
                     name='password'
                     type={showPassword ? 'text' : 'password'}
                     value={pass}
                     required
-                    onChange={e => setPass(e.target.value)}
-                    placeholder='••••••••'
-                    className='w-full h-12 sm:h-14 pl-11 sm:pl-12 pr-11 sm:pr-12 bg-white border-2 border-slate-200 rounded-xl sm:rounded-2xl text-sm font-semibold text-slate-800 outline-none transition-all duration-300 focus:border-st-verde focus:ring-4 focus:ring-st-verde/10 focus:shadow-xl focus:shadow-st-verde/5'
+                    onChange={(e) => setPass(e.target.value)}
+                    placeholder='••••••••••'
+                    className='w-full h-12 md:h-14 px-4 pr-12 bg-slate-50 border-2 border-slate-200 rounded-xl md:rounded-2xl text-sm font-semibold text-slate-800 outline-none transition-all duration-300 focus:border-st-verde focus:bg-white focus:shadow-lg focus:shadow-st-verde/5 placeholder:font-normal placeholder:text-slate-400'
                     autoComplete='off'
                   />
                   <button
                     type='button'
                     onClick={() => setShowPassword(!showPassword)}
-                    className='absolute right-3.5 sm:right-4 text-slate-400 hover:text-slate-600 transition-colors p-1.5'
                     tabIndex={-1}
+                    className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-lg hover:bg-slate-100'
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   >
-                    {showPassword ? (
-                      <EyeOff className='w-5 h-5' />
-                    ) : (
-                      <Eye className='w-5 h-5' />
-                    )}
+                    {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
                   </button>
                 </div>
               </div>
 
-              {/* Recordarme */}
-              <div className='flex items-center justify-between px-1'>
-                <label className='flex items-center gap-2.5 cursor-pointer select-none'>
-                  <input
-                    type='checkbox'
-                    id='recordarme'
-                    name='recordarme'
-                    checked={recordarme}
-                    onChange={e => setRecordarme(e.target.checked)}
-                    className='w-4 h-4 rounded border-slate-300 text-st-verde focus:ring-st-verde cursor-pointer accent-st-verde'
-                  />
-                  <span className='text-xs font-medium text-slate-600 hover:text-slate-800 transition-colors'>
-                    Recordar con cookies para rellenar
-                  </span>
-                </label>
-              </div>
-
-              {/* Mensaje de Error */}
+              {/* Error */}
               <AnimatePresence>
                 {error && (
                   <motion.div
                     initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
-                    className='p-3 sm:p-3.5 bg-red-50 border-l-4 border-red-500 rounded-xl flex items-center gap-2.5 text-red-700 text-xs font-semibold'
+                    transition={{ duration: 0.2 }}
+                    className='flex items-start gap-2.5 p-3 bg-red-50 border-l-4 border-red-500 rounded-xl text-red-700 text-xs font-medium'
                   >
+                    <AlertCircle className='w-4 h-4 mt-0.5 shrink-0' />
                     <span>{error}</span>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Botón de Enviar */}
+              {/* Botón Submit */}
               <button
+                id='login-submit-btn'
                 type='submit'
-                disabled={!email.trim() || !pass.trim()}
+                disabled={isDisabled}
                 aria-busy={loading}
-                className={`w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl font-bold text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 shadow-lg mt-1 sm:mt-2
-                ${loading ? 'pointer-events-none opacity-85 ' : ''}
-                ${!email.trim() || !pass.trim()
-                    ? 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed border border-slate-300'
-                    : 'bg-st-verde text-white shadow-st-verde/25 hover:bg-[#004b30] hover:shadow-xl hover:shadow-st-verde/30 transform hover:-translate-y-0.5 active:translate-y-0'
-                  }`}
+                className={`
+                  w-full h-12 md:h-14 rounded-xl md:rounded-2xl font-bold text-sm md:text-base
+                  transition-all duration-300 flex items-center justify-center gap-3 shadow-lg
+                  ${loading ? 'pointer-events-none opacity-80' : ''}
+                  ${isDisabled
+                    ? 'bg-slate-100 text-slate-400 shadow-none cursor-not-allowed'
+                    : 'bg-st-verde text-white shadow-st-verde/20 hover:bg-[#004b30] hover:shadow-xl hover:shadow-st-verde/30 hover:-translate-y-0.5 active:translate-y-0'
+                  }
+                `}
               >
                 {loading ? (
                   <>
@@ -334,12 +287,26 @@ function AdminLogin({ onAuth, onSalir }) {
                     <span>Verificando credenciales...</span>
                   </>
                 ) : (
-                  <span>Ingresar al Panel</span>
+                  <>
+                    <span>Ingresar al Panel</span>
+                    {!isDisabled && (
+                      <svg xmlns='http://www.w3.org/2000/svg' className='h-5 w-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 8l4 4m0 0l-4 4m4-4H3' />
+                      </svg>
+                    )}
+                  </>
                 )}
               </button>
-            </motion.form>
-          </div>
+
+            </form>
+
+            {/* Footer */}
+            <p className='text-center text-xs text-slate-400 mt-8'>
+              © {new Date().getFullYear()} Instituto Profesional Santo Tomás &mdash; Acceso Restringido
+            </p>
+          </motion.div>
         </div>
+
       </div>
     </div>
   );
