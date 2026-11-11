@@ -70,8 +70,8 @@ function ImportExcel({
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
       >
-        {/* Header del Modal */}
-        <div className='bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 text-white'>
+        {/* Header del Modal con Color Institucional */}
+        <div className='bg-st-verde px-6 py-4 text-white shadow-xs'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
               <div className='w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center'>
@@ -91,11 +91,11 @@ function ImportExcel({
               </div>
               <div>
                 <h3 className='text-xl font-bold'>Importar Datos Excel</h3>
-                <p className='text-blue-100 text-sm'>
+                <p className='text-emerald-100 text-sm'>
                   Sube tu archivo Excel con los datos de asistentes
                 </p>
-                <p className='text-blue-50 text-xs mt-1'>
-                  Formato esperado: Nombre Completo (o Nombres y Apellidos), RUT, Teléfono, Correo Electrónico, Cargo, Establecimiento, Comuna del Establecimiento, Distinción, Reconocimiento, Ubicación
+                <p className='text-emerald-200/90 text-xs mt-1'>
+                  Campos aceptados: RUT, Nombre, Apellido, Carrera, Asiento, Ubicación, Grupo y Reconocimiento
                 </p>
               </div>
             </div>
@@ -126,7 +126,7 @@ function ImportExcel({
         <div className='p-6'>
           <form onSubmit={handleSubmit} className='space-y-6'>
             {/* Área de subida de archivo */}
-            <div className='border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors'>
+            <div className='border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-st-verde transition-colors'>
               <div className='space-y-4'>
                 <svg
                   className='w-12 h-12 mx-auto text-slate-400'
@@ -143,7 +143,7 @@ function ImportExcel({
                 </svg>
                 <div>
                   <p className='text-sm text-slate-600 mb-2'>
-                    <span className='font-medium text-blue-600'>
+                    <span className='font-medium text-st-verde'>
                       Haz clic para subir
                     </span>{' '}
                     o arrastra tu archivo aquí
@@ -161,7 +161,7 @@ function ImportExcel({
                 />
                 <label
                   htmlFor='file-upload'
-                  className='bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors cursor-pointer inline-block'
+                  className='bg-st-verde text-white px-4 py-2 rounded-lg text-sm hover:bg-[#004b30] transition-colors cursor-pointer inline-block font-semibold shadow-xs'
                 >
                   Seleccionar Archivo
                 </label>
@@ -262,7 +262,7 @@ function ImportExcel({
               <motion.button
                 type='submit'
                 disabled={!file || loading}
-                className='flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed'
+                className='flex-1 bg-st-verde text-white px-4 py-2 rounded-lg text-sm hover:bg-[#004b30] transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed font-semibold shadow-xs'
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >

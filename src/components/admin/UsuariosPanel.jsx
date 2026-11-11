@@ -299,7 +299,6 @@ export default function UsuariosPanel() {
                   <th className='py-3.5 px-4 sm:px-6'>Usuario</th>
                   <th className='py-3.5 px-4'>Correo</th>
                   <th className='py-3.5 px-4'>Rol Principal</th>
-                  <th className='py-3.5 px-4'>Módulos Permitidos</th>
                   <th className='py-3.5 px-4'>Cargo</th>
                   <th className='py-3.5 px-4 sm:px-6 text-right'>Acciones</th>
                 </tr>
@@ -309,23 +308,19 @@ export default function UsuariosPanel() {
                   const rol = (u.rol || 'admin').toLowerCase();
                   const esAdmin = rol === 'admin';
                   const esCoord = rol === 'coordinador';
-                  const permisos = u.permisos || (esAdmin ? PERMISOS_DEFAULT_ADMIN : esCoord ? PERMISOS_DEFAULT_COORDINADOR : PERMISOS_DEFAULT_OPERADOR);
 
                   return (
                     <tr key={u.id} className='hover:bg-slate-50/60 transition-colors'>
                       <td className='py-4 px-4 sm:px-6'>
                         <div className='flex items-center gap-3'>
                           <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm ${
-                            esAdmin ? 'bg-emerald-100 text-st-verde' : esCoord ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
+                            esAdmin ? 'bg-st-verde text-white' : esCoord ? 'bg-st-verde/15 text-st-verde' : 'bg-slate-100 text-slate-600'
                           }`}>
                             {(u.nombre || u.email || 'U').charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <div className='font-bold text-slate-800 text-sm'>
                               {u.nombre || 'Sin nombre asignado'}
-                            </div>
-                            <div className='text-[11px] text-slate-400'>
-                              ID: {u.id.slice(0, 8)}...
                             </div>
                           </div>
                         </div>
@@ -341,10 +336,10 @@ export default function UsuariosPanel() {
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
                             esAdmin
-                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200/70'
+                              ? 'bg-st-verde/10 text-st-verde border border-st-verde/20'
                               : esCoord
-                              ? 'bg-amber-100 text-amber-800 border border-amber-200/70'
-                              : 'bg-blue-50 text-blue-800 border border-blue-200/70'
+                              ? 'bg-emerald-50 text-st-verde border border-emerald-200'
+                              : 'bg-slate-100 text-slate-700 border border-slate-200'
                           }`}
                         >
                           {esAdmin ? (
@@ -362,32 +357,6 @@ export default function UsuariosPanel() {
                               : 'Operador Asistencia'}
                           </span>
                         </span>
-                      </td>
-
-                      {/* Módulos Permitidos (Badges) */}
-                      <td className='py-4 px-4'>
-                        <div className='flex flex-wrap gap-1.5'>
-                          {permisos.eventos && (
-                            <span className='text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold'>
-                              Eventos
-                            </span>
-                          )}
-                          {permisos.participantes && (
-                            <span className='text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold'>
-                              Participantes
-                            </span>
-                          )}
-                          {permisos.asistencia && (
-                            <span className='text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-2 py-0.5 rounded-md font-semibold'>
-                              Ingreso RUT
-                            </span>
-                          )}
-                          {permisos.usuarios && (
-                            <span className='text-[10px] bg-purple-50 text-purple-700 border border-purple-200/60 px-2 py-0.5 rounded-md font-semibold'>
-                              Usuarios
-                            </span>
-                          )}
-                        </div>
                       </td>
 
                       <td className='py-4 px-4 text-xs text-slate-500'>
@@ -542,11 +511,11 @@ export default function UsuariosPanel() {
                       onClick={() => cambiarRol('admin')}
                       className={`p-3 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
                         formData.rol === 'admin'
-                          ? 'border-st-verde bg-emerald-50/50 text-st-verde shadow-sm'
+                          ? 'border-st-verde bg-st-verde/10 text-st-verde shadow-sm'
                           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                       }`}
                     >
-                      <Shield className='w-5 h-5' />
+                      <Shield className={`w-5 h-5 ${formData.rol === 'admin' ? 'text-st-verde' : 'text-slate-500'}`} />
                       <span className='text-xs font-bold'>Administrador</span>
                       <span className='text-[10px] text-slate-400 text-center leading-tight'>
                         Acceso Total
@@ -557,11 +526,11 @@ export default function UsuariosPanel() {
                       onClick={() => cambiarRol('coordinador')}
                       className={`p-3 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
                         formData.rol === 'coordinador'
-                          ? 'border-amber-500 bg-amber-50/60 text-amber-800 shadow-sm'
+                          ? 'border-st-verde bg-st-verde/10 text-st-verde shadow-sm'
                           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                       }`}
                     >
-                      <UserCheck className='w-5 h-5 text-amber-600' />
+                      <UserCheck className={`w-5 h-5 ${formData.rol === 'coordinador' ? 'text-st-verde' : 'text-slate-500'}`} />
                       <span className='text-xs font-bold'>Coordinador</span>
                       <span className='text-[10px] text-slate-400 text-center leading-tight'>
                         Nivel Intermedio
@@ -572,11 +541,11 @@ export default function UsuariosPanel() {
                       onClick={() => cambiarRol('usuario')}
                       className={`p-3 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
                         formData.rol === 'usuario'
-                          ? 'border-blue-500 bg-blue-50/50 text-blue-800 shadow-sm'
+                          ? 'border-st-verde bg-st-verde/10 text-st-verde shadow-sm'
                           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                       }`}
                     >
-                      <User className='w-5 h-5 text-blue-600' />
+                      <User className={`w-5 h-5 ${formData.rol === 'usuario' ? 'text-st-verde' : 'text-slate-500'}`} />
                       <span className='text-xs font-bold'>Operador</span>
                       <span className='text-[10px] text-slate-400 text-center leading-tight'>
                         Solo Asistencia
@@ -592,7 +561,7 @@ export default function UsuariosPanel() {
                       Secciones y Permisos Asignados
                     </label>
                     {formData.rol === 'admin' && (
-                      <span className='text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold'>
+                      <span className='text-[10px] text-st-verde bg-st-verde/10 px-2 py-0.5 rounded-full font-bold'>
                         Todas habilitadas por rol
                       </span>
                     )}
@@ -650,19 +619,19 @@ export default function UsuariosPanel() {
                       onClick={() => togglePermiso('asistencia')}
                       className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
                         formData.permisos?.asistencia
-                          ? 'bg-white border-emerald-600 text-slate-800 shadow-xs'
+                          ? 'bg-white border-st-verde text-slate-800 shadow-xs'
                           : 'bg-slate-100/70 border-slate-200 text-slate-400 opacity-70'
                       }`}
                     >
                       <div className='flex items-center gap-2.5'>
-                        <CheckSquare className='w-4 h-4 text-emerald-600' />
+                        <CheckSquare className='w-4 h-4 text-st-verde' />
                         <div>
                           <div className='text-xs font-bold'>Ingreso de RUT</div>
                           <div className='text-[10px] text-slate-400'>Toma de asistencia</div>
                         </div>
                       </div>
                       <div className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all ${
-                        formData.permisos?.asistencia ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'
+                        formData.permisos?.asistencia ? 'bg-st-verde border-st-verde text-white' : 'border-slate-300 bg-white'
                       }`}>
                         {formData.permisos?.asistencia && <Check className='w-3.5 h-3.5' />}
                       </div>
@@ -673,19 +642,19 @@ export default function UsuariosPanel() {
                       onClick={() => togglePermiso('usuarios')}
                       className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
                         formData.permisos?.usuarios
-                          ? 'bg-white border-purple-600 text-slate-800 shadow-xs'
+                          ? 'bg-white border-st-verde text-slate-800 shadow-xs'
                           : 'bg-slate-100/70 border-slate-200 text-slate-400 opacity-70'
                       }`}
                     >
                       <div className='flex items-center gap-2.5'>
-                        <Shield className='w-4 h-4 text-purple-600' />
+                        <Shield className='w-4 h-4 text-st-verde' />
                         <div>
                           <div className='text-xs font-bold'>Gestión Usuarios</div>
                           <div className='text-[10px] text-slate-400'>Administrar accesos</div>
                         </div>
                       </div>
                       <div className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all ${
-                        formData.permisos?.usuarios ? 'bg-purple-600 border-purple-600 text-white' : 'border-slate-300 bg-white'
+                        formData.permisos?.usuarios ? 'bg-st-verde border-st-verde text-white' : 'border-slate-300 bg-white'
                       }`}>
                         {formData.permisos?.usuarios && <Check className='w-3.5 h-3.5' />}
                       </div>

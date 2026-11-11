@@ -210,7 +210,7 @@ function App() {
   if (loading) return <Loader />;
   if (error) return <ErrorMessage error={error} />;
 
-  const esEventoTrabajadores = eventoActivo?.tipo === 'trabajadores';
+  // const esEventoTrabajadores = eventoActivo?.tipo === 'trabajadores';
 
   // Determinar clases del contenedor según la ruta
   const getContainerClasses = () => {
@@ -250,39 +250,24 @@ function App() {
                 ✕
               </button>
               <h2 className='text-xl font-bold mb-4 text-green-800'>
-                {esEventoTrabajadores
-                  ? 'Lista de Funcionarios'
-                  : 'Lista de Alumnos'}
+                Lista de Alumnos
               </h2>
-              {esEventoTrabajadores ? (
-                <TrabajadoresLista
-                  trabajadores={alumnos}
-                  trabajadoresCompletos={alumnos}
-                  soloPresentes={soloPresentes}
-                  setSoloPresentes={setSoloPresentes}
-                  filtroRUT={filtroRUT}
-                  setFiltroRUT={setFiltroRUT}
-                  eventoNombre={eventoActivo?.nombre || 'Evento'}
-                  tipoEvento='trabajadores'
-                />
-              ) : (
-                <AlumnosLista
-                  alumnos={alumnos}
-                  alumnosCompletos={alumnos}
-                  soloPresentes={soloPresentes}
-                  setSoloPresentes={setSoloPresentes}
-                  filtroCarrera={filtroCarrera}
-                  setFiltroCarrera={setFiltroCarrera}
-                  filtroInstitucion={filtroInstitucion}
-                  setFiltroInstitucion={setFiltroInstitucion}
-                  filtroRUT={filtroRUT}
-                  setFiltroRUT={setFiltroRUT}
-                  filtroGrupo={filtroGrupo}
-                  setFiltroGrupo={setFiltroGrupo}
-                  eventoNombre={eventoActivo?.nombre || 'Evento'}
-                  tipoEvento={eventoActivo?.tipo || 'alumnos'}
-                />
-              )}
+              <AlumnosLista
+                alumnos={alumnos}
+                alumnosCompletos={alumnos}
+                soloPresentes={soloPresentes}
+                setSoloPresentes={setSoloPresentes}
+                filtroCarrera={filtroCarrera}
+                setFiltroCarrera={setFiltroCarrera}
+                filtroInstitucion={filtroInstitucion}
+                setFiltroInstitucion={setFiltroInstitucion}
+                filtroRUT={filtroRUT}
+                setFiltroRUT={setFiltroRUT}
+                filtroGrupo={filtroGrupo}
+                setFiltroGrupo={setFiltroGrupo}
+                eventoNombre={eventoActivo?.nombre || 'Evento'}
+                tipoEvento='alumnos'
+              />
             </motion.div>
           </motion.div>
         )}

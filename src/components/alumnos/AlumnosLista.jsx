@@ -60,13 +60,32 @@ const AlumnosLista = ({
   // Normaliza solo para vista (no altera exportación)
   const alumnosNormalizados = useMemo(() => (
     alumnos.map(a => {
-      const nombreFinal = (a.nombres && a.apellidos)
-        ? `${a.nombres} ${a.apellidos}`.trim()
-        : (a.nombre && a.apellidos && !a.nombre.toLowerCase().includes(a.apellidos.toLowerCase().trim())
-          ? `${a.nombre} ${a.apellidos}`.trim()
-          : (a.nombre || `${a.nombres || ''} ${a.apellidos || ''}`.trim()));
+      let nom = a.nombres ? String(a.nombres).trim() : '';
+      let ape = a.apellidos ? String(a.apellidos).trim() : '';
+      if (!nom && !ape && a.nombre) {
+        const partes = String(a.nombre).trim().split(/\s+/);
+        if (partes.length === 1) {
+          nom = partes[0];
+          ape = '-';
+        } else if (partes.length === 2) {
+          nom = partes[0];
+          ape = partes[1];
+        } else if (partes.length === 3) {
+          nom = partes[0];
+          ape = partes.slice(1).join(' ');
+        } else {
+          const mid = Math.ceil(partes.length / 2);
+          nom = partes.slice(0, mid).join(' ');
+          ape = partes.slice(mid).join(' ');
+        }
+      }
+      const nombreFinal = (nom && ape && ape !== '-')
+        ? `${nom} ${ape}`.trim()
+        : (a.nombre || nom || '');
       return {
         ...a,
+        nombres: nom,
+        apellidos: ape,
         nombre: nombreFinal,
         carreraNormalizada: normalizarCarreraLabel(a.carrera),
       };
@@ -178,7 +197,7 @@ const AlumnosLista = ({
       asiento: alumno.asiento || '',
       presente: Boolean(alumno.presente),
       distincion: alumno.distincion ?? false,
-      reconocimiento: alumno.reconocimiento ?? false,
+      reconocimiento: alumno.reconocimiento === true ? 'Reconocimiento' : (alumno.reconocimiento || ''),
       ubicacion: alumno.ubicacion || '',
       // Guardar datos originales para sincronización en alumnosService
       originalData: {
@@ -233,14 +252,14 @@ const AlumnosLista = ({
       return {
         estado: true,
         rut: true,
-        nombreCompleto: true,
+        nombreCompleto: false,
+        nombres: true,
+        apellidos: true,
         telefono: true,
         correo: true,
         establecimiento: !soloInstitucion,
         cargo: true,
         comuna: true,
-        nombres: false,
-        apellidos: false,
         carrera: false,
         institucion: soloInstitucion,
         numeroLista: false,
@@ -264,10 +283,10 @@ const AlumnosLista = ({
     return {
       estado: true, // Siempre visible
       rut: alumnosNormalizados.some(a => a.rut != null && String(a.rut).trim() !== ''),
-      nombreCompleto: true,
+      nombreCompleto: false,
       carrera: alumnosNormalizados.some(a => a.carreraNormalizada != null && String(a.carreraNormalizada).trim() !== '' && a.carreraNormalizada !== 'General'),
-      nombres: !tieneCamposNuevos && alumnosNormalizados.some(a => a.nombres != null && String(a.nombres).trim() !== ''),
-      apellidos: !tieneCamposNuevos && alumnosNormalizados.some(a => a.apellidos != null && String(a.apellidos).trim() !== ''),
+      nombres: true,
+      apellidos: true,
       telefono: alumnosNormalizados.some(a => a.telefono != null && String(a.telefono).trim() !== ''),
       correo: alumnosNormalizados.some(a => a.correo != null && String(a.correo).trim() !== ''),
       establecimiento: !soloInstitucion && alumnosNormalizados.some(a => a.establecimiento != null && String(a.establecimiento).trim() !== ''),
@@ -289,14 +308,14 @@ const AlumnosLista = ({
   const [columnasVisibles, setColumnasVisibles] = useState({
     estado: true,
     rut: true,
-    nombreCompleto: true,
-    telefono: true,
-    correo: true,
-    establecimiento: !soloInstitucion,
-    cargo: true,
-    comuna: true,
-    nombres: false,
-    apellidos: false,
+    nombreCompleto: false,
+        nombres: true,
+        apellidos: true,
+        telefono: true,
+        correo: true,
+        establecimiento: !soloInstitucion,
+        cargo: true,
+        comuna: true,
     carrera: false,
     institucion: soloInstitucion,
     numeroLista: false,
@@ -334,7 +353,7 @@ const AlumnosLista = ({
 
   function mostrarTodasLasColumnas() {
     setColumnasVisibles({
-      estado: true, rut: true, nombreCompleto: true, nombres: true, apellidos: true,
+      estado: true, rut: true, nombreCompleto: false, nombres: true, apellidos: true,
       telefono: true, correo: true,
       establecimiento: !soloInstitucion,
       cargo: true,
@@ -618,6 +637,23 @@ const AlumnosLista = ({
       </div>
     </div>
   );
+
+  // Si no hay registros en el evento, mostrar mensaje indicando que primero se deben importar los datos
+  if (!alumnosParaStats || alumnosParaStats.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-dashed border-st-verde/30 min-h-[350px] shadow-sm">
+        <div className="w-20 h-20 bg-st-pastel rounded-full flex items-center justify-center mb-4">
+          <svg className="w-10 h-10 text-st-verde" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-bold text-slate-800 mb-2">Sin datos importados</h3>
+        <p className="text-slate-500 max-w-md mx-auto text-sm font-medium">
+          Primero se tienen que importar los datos para utilizar esta sección.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -1021,7 +1057,8 @@ const AlumnosLista = ({
                   {Object.entries({
                     estado: 'Estado',
                     rut: 'RUT',
-                    nombreCompleto: 'Nombre Completo',
+                    apellidos: 'Apellidos',
+                    nombres: 'Nombres',
                     telefono: 'Teléfono',
                     correo: 'Correo electrónico',
                     establecimiento: 'Establecimiento',
@@ -1075,39 +1112,7 @@ const AlumnosLista = ({
               <tr>
                 {columnasVisibles.estado && <th className="py-3 px-4 text-center font-semibold">Estado</th>}
                 {columnasVisibles.rut && <th className="py-3 px-4 text-left font-semibold">RUT</th>}
-                {columnasVisibles.nombreCompleto && (
-                  <th
-                    className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors select-none"
-                    onClick={() => handleOrdenarPor('apellidos')}
-                    title="Ordenar por apellido"
-                  >
-                    <div className="flex items-center gap-2">
-                      Nombre Completo
-                      {ordenCampo === 'apellidos' && (
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d={ordenAlfabetico === 'asc' ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z'} />
-                        </svg>
-                      )}
-                    </div>
-                  </th>
-                )}
-                {columnasVisibles.nombres && !columnasVisibles.nombreCompleto && (
-                  <th
-                    className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors select-none"
-                    onClick={() => handleOrdenarPor('nombre')}
-                    title="Ordenar por nombres"
-                  >
-                    <div className="flex items-center gap-2">
-                      Nombres
-                      {ordenCampo === 'nombre' && (
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d={ordenAlfabetico === 'asc' ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z'} />
-                        </svg>
-                      )}
-                    </div>
-                  </th>
-                )}
-                {columnasVisibles.apellidos && !columnasVisibles.nombreCompleto && (
+                {columnasVisibles.apellidos && (
                   <th
                     className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors select-none"
                     onClick={() => handleOrdenarPor('apellidos')}
@@ -1116,6 +1121,22 @@ const AlumnosLista = ({
                     <div className="flex items-center gap-2">
                       Apellidos
                       {ordenCampo === 'apellidos' && (
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d={ordenAlfabetico === 'asc' ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z'} />
+                        </svg>
+                      )}
+                    </div>
+                  </th>
+                )}
+                {columnasVisibles.nombres && (
+                  <th
+                    className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors select-none"
+                    onClick={() => handleOrdenarPor('nombre')}
+                    title="Ordenar por nombres"
+                  >
+                    <div className="flex items-center gap-2">
+                      Nombres
+                      {ordenCampo === 'nombre' && (
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                           <path d={ordenAlfabetico === 'asc' ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z'} />
                         </svg>
@@ -1173,24 +1194,17 @@ const AlumnosLista = ({
                         </td>
                       )}
                       {columnasVisibles.rut && <td className="py-3 px-4 font-mono text-slate-700">{alumno.rut}</td>}
-                      {columnasVisibles.nombreCompleto && (
+                      {columnasVisibles.apellidos && (
                         <td className="py-3 px-4 text-slate-800 font-medium">
-                          <div title={alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim()}>
-                            {(alumno.nombre || `${alumno.nombres || ''} ${alumno.apellidos || ''}`.trim()) || '-'}
+                          <div title={alumno.apellidos || '-'}>
+                            {alumno.apellidos || '-'}
                           </div>
                         </td>
                       )}
-                      {columnasVisibles.nombres && !columnasVisibles.nombreCompleto && (
+                      {columnasVisibles.nombres && (
                         <td className="py-3 px-4 text-slate-800 font-medium">
-                          <div title={alumno.nombres ?? alumno.nombre ?? '-'}>
-                            {alumno.nombres ?? alumno.nombre ?? '-'}
-                          </div>
-                        </td>
-                      )}
-                      {columnasVisibles.apellidos && !columnasVisibles.nombreCompleto && (
-                        <td className="py-3 px-4 text-slate-800 font-medium">
-                          <div title={alumno.apellidos ?? '-'}>
-                            {alumno.apellidos ?? '-'}
+                          <div title={alumno.nombres || alumno.nombre || '-'}>
+                            {alumno.nombres || alumno.nombre || '-'}
                           </div>
                         </td>
                       )}
@@ -1238,15 +1252,19 @@ const AlumnosLista = ({
                       )}
                       {columnasVisibles.asiento && (
                         <td className="py-3 px-4 text-center">
-                          <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
-                            {alumno.asiento ?? '-'}
-                          </span>
+                          {alumno.asiento ? (
+                            <span className="bg-st-verde text-white px-2.5 py-0.5 rounded-full text-xs font-bold font-mono shadow-xs">
+                              {alumno.asiento}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-xs">-</span>
+                          )}
                         </td>
                       )}
                       {columnasVisibles.ubicacion && (
                         <td className="py-3 px-4 text-center">
                           {alumno.ubicacion ? (
-                            <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-bold shadow-sm whitespace-nowrap">
+                            <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-xs whitespace-nowrap">
                               {alumno.ubicacion}
                             </span>
                           ) : (
@@ -1256,7 +1274,7 @@ const AlumnosLista = ({
                       )}
                       {columnasVisibles.grupo && (
                         <td className="py-3 px-4 text-center">
-                          <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                          <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 rounded-full text-xs font-bold">
                             {alumno.grupo ?? '-'}
                           </span>
                         </td>
@@ -1264,8 +1282,8 @@ const AlumnosLista = ({
                       {columnasVisibles.distincion && (
                         <td className="py-3 px-4 text-center">
                           {alumno.distincion ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-300 shadow-sm">
-                              <Star className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-st-verde border border-emerald-200 shadow-xs">
+                              <Star className="w-3.5 h-3.5 text-st-verde fill-st-verde" />
                               {typeof alumno.distincion === 'string' && alumno.distincion !== 'true' ? alumno.distincion : 'Distinción Máxima'}
                             </span>
                           ) : (
@@ -1276,8 +1294,8 @@ const AlumnosLista = ({
                       {columnasVisibles.reconocimiento && (
                         <td className="py-3 px-4 text-center">
                           {alumno.reconocimiento ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full bg-purple-100 text-purple-800 border border-purple-300 shadow-sm">
-                              <Award className="w-3.5 h-3.5 text-purple-600" />
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full bg-st-verde/10 text-st-verde border border-st-verde/30 shadow-xs">
+                              <Award className="w-3.5 h-3.5 text-st-verde" />
                               {typeof alumno.reconocimiento === 'string' && alumno.reconocimiento !== 'true' ? alumno.reconocimiento : 'Reconocimiento'}
                             </span>
                           ) : (
@@ -1823,49 +1841,19 @@ const AlumnosLista = ({
                           </div>
                         )}
 
-                        {/* Reconocimiento (Dropdown select) */}
+                        {/* Reconocimiento (Input box editable) */}
                         {(columnasConDatos.reconocimiento || Boolean(editFormData.reconocimiento)) && (
                           <div>
                             <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
                               Reconocimiento
                             </label>
-                            <select
-                              value={
-                                !editFormData.reconocimiento || editFormData.reconocimiento === false
-                                  ? ''
-                                  : ['Sí', 'Reconocimiento', 'Reconocimiento Especial', 'Mejor Compañero', ...reconocimientosUnicos].includes(editFormData.reconocimiento)
-                                    ? editFormData.reconocimiento
-                                    : '__custom__'
-                              }
-                              onChange={e => {
-                                const val = e.target.value;
-                                if (val === '__custom__') {
-                                  setEditFormData({ ...editFormData, reconocimiento: 'Reconocimiento Especial' });
-                                } else {
-                                  setEditFormData({ ...editFormData, reconocimiento: val });
-                                }
-                              }}
+                            <input
+                              type="text"
+                              value={typeof editFormData.reconocimiento === 'string' ? editFormData.reconocimiento : (editFormData.reconocimiento ? 'Reconocimiento' : '')}
+                              onChange={e => setEditFormData({ ...editFormData, reconocimiento: e.target.value })}
+                              placeholder="Ej: Reconocimiento Especial, Mejor Compañero, etc."
                               className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
-                            >
-                              <option value="">Sin reconocimiento</option>
-                              <option value="Sí">Sí (Reconocimiento estándar)</option>
-                              <option value="Reconocimiento Especial">Reconocimiento Especial</option>
-                              <option value="Mejor Compañero">Mejor Compañero</option>
-                              {reconocimientosUnicos
-                                .filter(r => !['Sí', 'Reconocimiento', 'Reconocimiento Especial', 'Mejor Compañero'].includes(r))
-                                .map(r => <option key={r} value={r}>{r}</option>)
-                              }
-                              <option value="__custom__">Personalizado...</option>
-                            </select>
-                            {Boolean(editFormData.reconocimiento) && !['Sí', 'Reconocimiento', 'Reconocimiento Especial', 'Mejor Compañero', ...reconocimientosUnicos].includes(editFormData.reconocimiento) && (
-                              <input
-                                type="text"
-                                placeholder="Escriba el reconocimiento..."
-                                value={typeof editFormData.reconocimiento === 'string' ? editFormData.reconocimiento : ''}
-                                onChange={e => setEditFormData({ ...editFormData, reconocimiento: e.target.value })}
-                                className="mt-2 w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
-                              />
-                            )}
+                            />
                           </div>
                         )}
                       </div>

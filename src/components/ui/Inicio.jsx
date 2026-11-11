@@ -223,7 +223,6 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
   };
 
   const currentEvento = result?.evento || eventoLocal || eventoActivo;
-  const esEventoFuncionarios = currentEvento?.tipo === 'trabajadores';
   const cfg = result?.config || currentEvento?.configuracionAsistencia || {};
   const modoNombre = cfg.modoNombre || 'completo';
 
@@ -393,7 +392,7 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                   onInfoClick();
                 }}
                 className='w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white/90 md:bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 hover:border-slate-300 border border-slate-200 shadow-lg md:shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center active:scale-95 pointer-events-auto'
-                title={eventoActivo?.tipo === 'trabajadores' ? 'Ver lista de funcionarios' : 'Ver lista de alumnos'}
+                title='Ver lista de alumnos'
               >
                 <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-5 h-5 md:w-6 md:h-6'>
                   <path strokeLinecap='round' strokeLinejoin='round' d='M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z' />
@@ -542,36 +541,9 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                 </div>
 
                 <div className='bg-slate-50 rounded-2xl p-5 md:p-6 border border-slate-100 space-y-1 mb-6'>
-                  {esEventoFuncionarios ? (
-                    <>
-                      {(() => {
-                        const { nombreCompleto, soloNombres, primerNombre, apellidos } = formatNombresData(result.data);
-                        if (modoNombre === 'soloNombre') {
-                          return <InfoRow label="Funcionario" value={soloNombres || nombreCompleto} highlight />;
-                        }
-                        if (modoNombre === 'primerNombre') {
-                          return <InfoRow label="Funcionario" value={primerNombre || soloNombres || nombreCompleto} highlight />;
-                        }
-                        if (modoNombre === 'separado') {
-                          return (
-                            <>
-                              <InfoRow label="Nombres" value={soloNombres || nombreCompleto} highlight />
-                              <InfoRow label="Apellidos" value={apellidos} />
-                            </>
-                          );
-                        }
-                        return <InfoRow label="Funcionario" value={nombreCompleto || `${result.data.nombres || ''} ${result.data.apellidos || ''}`.trim()} highlight />;
-                      })()}
-                      {cfg.mostrarRut !== false && cfg.mostrarRut !== 'false' && <InfoRow label="RUT" value={result.rut} />}
-                      {cfg.mostrarInstitucion !== false && cfg.mostrarInstitucion !== 'false' && result.data.departamento && <InfoRow label="Departamento" value={result.data.departamento} />}
-                      <div className='pt-2 mt-2 border-t border-slate-200'>
-                        <InfoRow label="Confirmación" value={result.data.asiste ? 'Pre-Confirmada' : 'En Puerta'} border={false} />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {(() => {
-                        const { nombreCompleto, soloNombres, primerNombre, apellidos } = formatNombresData(result.data);
+                  <>
+                    {(() => {
+                      const { nombreCompleto, soloNombres, primerNombre, apellidos } = formatNombresData(result.data);
                         if (modoNombre === 'soloNombre') {
                           return <InfoRow label="Nombre" value={soloNombres || nombreCompleto} highlight />;
                         }
@@ -659,7 +631,6 @@ const Inicio = ({ onLogin, setErrorVisual, eventoActivo, onInfoClick, onAdminCli
                         return <InfoRow label="Reconocimiento" value={recText} />;
                       })()}
                     </>
-                  )}
                 </div>
 
 

@@ -311,6 +311,23 @@ const TrabajadoresLista = ({
     </div>
   );
 
+  // Si no hay registros en el evento, mostrar mensaje indicando que primero se deben importar los datos
+  if (!trabajadoresParaStats || trabajadoresParaStats.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-dashed border-st-verde/30 min-h-[350px] shadow-sm">
+        <div className="w-20 h-20 bg-st-pastel rounded-full flex items-center justify-center mb-4">
+          <svg className="w-10 h-10 text-st-verde" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-bold text-slate-800 mb-2">Sin datos importados</h3>
+        <p className="text-slate-500 max-w-md mx-auto text-sm font-medium">
+          Primero se tienen que importar los datos para utilizar esta sección.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       {/* Statistics Cards */}
@@ -487,8 +504,8 @@ const TrabajadoresLista = ({
                 {Object.entries({
                   estado: 'Estado',
                   rut: 'RUT',
-                  nombres: 'Nombres',
                   apellidos: 'Apellidos',
+                  nombres: 'Nombres',
                   asiste: 'Confirmación',
                   observacion: 'Observación',
                 }).map(([key, label]) => (
@@ -559,21 +576,6 @@ const TrabajadoresLista = ({
                     </div>
                   </th>
                 )}
-                {columnasVisibles.nombres && !columnasVisibles.nombreCompleto && (
-                  <th
-                    className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors min-w-36 flex-1"
-                    onClick={() => handleOrdenarPor('nombre')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Nombres</span>
-                      {ordenCampo === 'nombre' && (
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d={ordenAlfabetico === 'asc' ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z'} />
-                        </svg>
-                      )}
-                    </div>
-                  </th>
-                )}
                 {columnasVisibles.apellidos && !columnasVisibles.nombreCompleto && (
                   <th
                     className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors min-w-36 flex-1"
@@ -582,6 +584,21 @@ const TrabajadoresLista = ({
                     <div className="flex items-center gap-2">
                       <span>Apellidos</span>
                       {ordenCampo === 'apellidos' && (
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d={ordenAlfabetico === 'asc' ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z'} />
+                        </svg>
+                      )}
+                    </div>
+                  </th>
+                )}
+                {columnasVisibles.nombres && !columnasVisibles.nombreCompleto && (
+                  <th
+                    className="py-4 px-4 text-left font-semibold cursor-pointer hover:bg-[#004b30] transition-colors min-w-36 flex-1"
+                    onClick={() => handleOrdenarPor('nombre')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Nombres</span>
+                      {ordenCampo === 'nombre' && (
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                           <path d={ordenAlfabetico === 'asc' ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z'} />
                         </svg>
@@ -665,17 +682,17 @@ const TrabajadoresLista = ({
                         </div>
                       </td>
                     )}
-                    {columnasVisibles.nombres && !columnasVisibles.nombreCompleto && (
-                      <td className="py-4 px-4 text-slate-800 font-medium">
-                        <div className="truncate" title={trabajador.nombres ?? trabajador.nombre ?? '-'}>
-                          {trabajador.nombres ?? trabajador.nombre ?? '-'}
-                        </div>
-                      </td>
-                    )}
                     {columnasVisibles.apellidos && !columnasVisibles.nombreCompleto && (
                       <td className="py-4 px-4 text-slate-800 font-medium">
                         <div className="truncate" title={trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}>
                           {trabajador.apellidos ?? (trabajador.nombre ? trabajador.nombre.split(' ').slice(1).join(' ') : '-')}
+                        </div>
+                      </td>
+                    )}
+                    {columnasVisibles.nombres && !columnasVisibles.nombreCompleto && (
+                      <td className="py-4 px-4 text-slate-800 font-medium">
+                        <div className="truncate" title={trabajador.nombres ?? trabajador.nombre ?? '-'}>
+                          {trabajador.nombres ?? trabajador.nombre ?? '-'}
                         </div>
                       </td>
                     )}

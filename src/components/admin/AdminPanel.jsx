@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import AlumnosLista from '../alumnos/AlumnosLista';
 import EventosPanel from '../eventos/EventosPanel';
 import EventoActivoInfo from '../eventos/EventoActivoInfo';
@@ -12,6 +14,12 @@ import useAlumnosEvento from '../../hooks/useAlumnosEvento';
 import TrabajadoresLista from '../trabajadores/TrabajadoresLista';
 import TrabajadoresResumen from '../trabajadores/TrabajadoresResumen';
 import UsuariosPanel from './UsuariosPanel';
+
+const INSTITUCIONES = [
+  { value: 'CFT', label: 'Centro de Formación Técnica' },
+  { value: 'IP', label: 'Instituto Profesional' },
+  { value: 'Universidad', label: 'Universidad' },
+];
 
 function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissions = null }) {
   const esSuperAdmin = userRole === 'admin';
@@ -61,20 +69,12 @@ function AdminPanel({ onSalir, onIrAsistencia, userRole = 'admin', userPermissio
     nombres: '',
     apellidos: '',
     rut: '',
-    telefono: '',
-    correo: '',
-    cargo: '',
-    comuna: '',
-    establecimiento: '',
     carrera: '',
-    institucion: '',
-    numeroLista: '',
     asiento: '',
     grupo: '',
     distincion: '',
     reconocimiento: '',
-    departamento: '',
-    observacion: '',
+    presente: false,
   });
   const [rutEliminar, setRutEliminar] = useState('');
   const [mensajeAdmin, setMensajeAdmin] = useState('');
@@ -110,9 +110,9 @@ function esEventoTitulacion(nombre) {
     if (!alumnos || alumnos.length === 0) {
       return {
         rut: true,
-        nombreCompleto: true,
-        nombres: false,
-        apellidos: false,
+        nombreCompleto: false,
+        nombres: true,
+        apellidos: true,
         telefono: true,
         correo: true,
         establecimiento: !soloInstitucion,
@@ -141,9 +141,9 @@ function esEventoTitulacion(nombre) {
 
     return {
       rut: true,
-      nombreCompleto: true,
-      nombres: !tieneCamposNuevos && alumnos.some(a => a.nombres != null && String(a.nombres).trim() !== ''),
-      apellidos: !tieneCamposNuevos && alumnos.some(a => a.apellidos != null && String(a.apellidos).trim() !== ''),
+      nombreCompleto: false,
+      nombres: true,
+      apellidos: true,
       telefono: alumnos.some(a => a.telefono != null && String(a.telefono).trim() !== ''),
       correo: alumnos.some(a => a.correo != null && String(a.correo).trim() !== ''),
       establecimiento: !soloInstitucion && alumnos.some(a => a.establecimiento != null && String(a.establecimiento).trim() !== ''),
@@ -180,59 +180,65 @@ function esEventoTitulacion(nombre) {
     };
   }, [alumnos]);
 
+  const distincionesUnicas = useMemo(() => {
+    if (!alumnos || alumnos.length === 0) return [];
+    const set = new Set();
+    alumnos.forEach(a => {
+      if (a.distincion) {
+        if (typeof a.distincion === 'string' && a.distincion !== 'true') {
+          set.add(a.distincion.trim());
+        } else {
+          set.add('Distinción Máxima');
+        }
+      }
+    });
+    return Array.from(set).sort();
+  }, [alumnos]);
+
+  const [isGuardandoNuevo, setIsGuardandoNuevo] = useState(false);
+
   async function handleAgregarAlumno(e) {
     e.preventDefault();
+    if (!eventoActivo?.id) {
+      setMensajeAdmin('Error: No hay evento activo seleccionado');
+      return;
+    }
+    setIsGuardandoNuevo(true);
     try {
+      const nomLimpio = `${nuevoAlumno.nombres || ''} ${nuevoAlumno.apellidos || ''}`.trim() || nuevoAlumno.nombre || '';
       const payload = {
-        nombres: nuevoAlumno.nombre || nuevoAlumno.nombres,
-        apellidos: nuevoAlumno.apellidos,
-        nombre: nuevoAlumno.nombre || `${nuevoAlumno.nombres} ${nuevoAlumno.apellidos}`.trim(),
+        nombres: nuevoAlumno.nombres || (nomLimpio ? nomLimpio.split(' ')[0] : ''),
+        apellidos: nuevoAlumno.apellidos || (nomLimpio ? nomLimpio.split(' ').slice(1).join(' ') : ''),
+        nombre: nomLimpio,
         rut: nuevoAlumno.rut,
-        telefono: nuevoAlumno.telefono,
-        correo: nuevoAlumno.correo,
-        cargo: nuevoAlumno.cargo,
-        comuna: nuevoAlumno.comuna,
-        establecimiento: nuevoAlumno.establecimiento,
+        carrera: nuevoAlumno.carrera || null,
+        grupo: nuevoAlumno.grupo || null,
+        asiento: nuevoAlumno.asiento || null,
+        distincion: nuevoAlumno.distincion || null,
+        reconocimiento: nuevoAlumno.reconocimiento || null,
+        presente: Boolean(nuevoAlumno.presente),
       };
 
-      if (esEventoTrabajadores) {
-        payload.departamento = nuevoAlumno.departamento;
-        payload.observacion = nuevoAlumno.observacion;
-      } else {
-        payload.carrera = nuevoAlumno.carrera;
-        payload.institucion = nuevoAlumno.institucion;
-        payload.numeroLista = nuevoAlumno.numeroLista;
-        payload.asiento = nuevoAlumno.asiento;
-        payload.grupo = nuevoAlumno.grupo;
-        payload.distincion = nuevoAlumno.distincion;
-        payload.reconocimiento = nuevoAlumno.reconocimiento;
-      }
-
-      await agregarAlumno(payload, eventoActivo?.id); // Pasar el eventoId
-      setMensajeAdmin('Alumno agregado correctamente');
+      await agregarAlumno(payload, eventoActivo.id);
+      setMensajeAdmin('Participante agregado correctamente');
       setNuevoAlumno({
         nombre: '',
         nombres: '',
         apellidos: '',
         rut: '',
-        telefono: '',
-        correo: '',
-        cargo: '',
-        comuna: '',
-        establecimiento: '',
         carrera: '',
-        institucion: '',
-        numeroLista: '',
         asiento: '',
         grupo: '',
         distincion: '',
         reconocimiento: '',
-        departamento: '',
-        observacion: '',
+        presente: false,
       });
+      setShowAdminModal(false);
     } catch (err) {
       console.error(err);
       setMensajeAdmin(`Error al agregar: ${err.message}`);
+    } finally {
+      setIsGuardandoNuevo(false);
     }
   }
 
@@ -288,6 +294,7 @@ function esEventoTitulacion(nombre) {
   }, [showAdminModal, adminModalMode]);
 
   const abrirModalAgregar = () => {
+    setMensajeAdmin('');
     setAdminModalMode('add');
     setShowAdminModal(true);
   };
@@ -313,135 +320,84 @@ function esEventoTitulacion(nombre) {
     }
 
     if (tab === 'alumnos') {
-      const esEventoTrabajadores = eventoActivo?.tipo === 'trabajadores';
       return (
         <div className='space-y-8'>
           {eventoActivo ? (
-            esEventoTrabajadores ? (
-              <>
-                <EventoActivoInfo
-                  eventoActivo={eventoActivo}
-                />
+            <>
+              <EventoActivoInfo
+                eventoActivo={eventoActivo}
+              />
 
-                {/* Toolbar Minimalista */}
-                <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between pb-4 border-b border-slate-200'>
-                  <div>
-                    <h3 className='text-xl font-bold text-slate-800'>Funcionarios</h3>
-                    <p className='text-sm text-slate-500 mt-1'>Gestión de nómina y asistencia</p>
+              {/* Si no hay datos importados en el evento activo */}
+              {(!alumnos || alumnos.length === 0) ? (
+                <div className='flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-dashed border-st-verde/30 min-h-[350px] shadow-sm'>
+                  <div className='w-20 h-20 bg-st-pastel rounded-full flex items-center justify-center mb-4'>
+                    <svg className="w-10 h-10 text-st-verde" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
                   </div>
-                  <div className='flex items-center gap-3 w-full sm:w-auto'>
-                    <button
-                      onClick={abrirModalAgregar}
-                      className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-st-verde text-white rounded-lg hover:bg-st-verde/90 transition text-sm font-medium'
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
-                      Nuevo
-                    </button>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition text-sm font-medium'
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                      </svg>
-                      Importar
-                    </button>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileUpload}
-                      accept=".xlsx, .xls"
-                      className="hidden"
+                  <h3 className='text-xl font-bold text-slate-800 mb-2'>Sin datos importados</h3>
+                  <p className='text-slate-500 max-w-md mx-auto mb-6 text-sm font-medium'>
+                    Primero se tienen que importar los datos para utilizar esta sección.
+                  </p>
+                  <button
+                    onClick={() => setTab('eventos')}
+                    className='px-6 py-2.5 bg-st-verde text-white rounded-xl hover:bg-[#004b30] transition shadow-md shadow-st-verde/20 font-bold text-sm flex items-center gap-2'
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Ir a Eventos para importar
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Header Integrado de Sección */}
+                  <div className='bg-white border border-slate-200 rounded-2xl p-5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm'>
+                    <div>
+                      <h2 className='text-xl font-bold text-slate-800 flex items-center gap-2'>
+                        <div className='w-1.5 h-6 bg-st-verde rounded-full'></div>
+                        Gestión de Asistencia y Alumnos
+                      </h2>
+                      <p className='text-xs text-slate-500 mt-1 font-medium'>Control centralizado de registros y validación en tiempo real</p>
+                    </div>
+
+                    <div className='flex items-center gap-1.5 md:gap-2'>
+                      <button
+                        onClick={abrirModalAgregar}
+                        className='flex items-center justify-center gap-1.5 px-2.5 md:px-4 py-2 bg-st-verde text-white rounded-xl hover:bg-[#004b30] transition-all text-xs md:text-sm font-bold shadow-sm'
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Nuevo
+                      </button>
+
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <AlumnosLista
+                      alumnos={alumnos}
+                      alumnosCompletos={alumnos}
+                      filtroCarrera={filtroCarrera}
+                      setFiltroCarrera={setFiltroCarrera}
+                      filtroInstitucion={filtroInstitucion}
+                      setFiltroInstitucion={setFiltroInstitucion}
+                      filtroGrupo={filtroGrupo}
+                      setFiltroGrupo={setFiltroGrupo}
+                      soloPresentes={soloPresentes}
+                      setSoloPresentes={setSoloPresentes}
+                      onAgregarAlumnos={abrirModalAgregar}
+                      onEliminarAlumnos={abrirModalEliminar}
+                      esAdmin={true}
+                      eventoNombre={eventoActivo?.nombre || 'Evento'}
+                      tipoEvento={eventoActivo?.tipo || 'alumnos'}
                     />
                   </div>
-                </div>
-
-                <div className="space-y-6">
-                  <TrabajadoresLista
-                    trabajadores={alumnos}
-                    trabajadoresCompletos={alumnos}
-                    soloPresentes={soloPresentes}
-                    setSoloPresentes={setSoloPresentes}
-                    esAdmin={true}
-                    eventoNombre={eventoActivo?.nombre || 'Evento'}
-                    tipoEvento={eventoActivo?.tipo || 'trabajadores'}
-                    updateTrabajador={async (eventoId, trabajadorId, data) => {
-                      const { updateAlumno } = await import('../../services/alumnosService');
-                      return updateAlumno(eventoId, trabajadorId, data);
-                    }}
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <EventoActivoInfo
-                  eventoActivo={eventoActivo}
-                />
-
-                {/* Header Integrado de Sección */}
-                <div className='bg-white border border-slate-200 rounded-2xl p-5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm'>
-                  <div>
-                    <h2 className='text-xl font-bold text-slate-800 flex items-center gap-2'>
-                      <div className='w-1.5 h-6 bg-st-verde rounded-full'></div>
-                      Gestión de Asistencia y Participantes
-                    </h2>
-                    <p className='text-xs text-slate-500 mt-1 font-medium'>Control centralizado de registros y validación en tiempo real</p>
-                  </div>
-
-                  <div className='flex items-center gap-1.5 md:gap-2'>
-                    <button
-                      onClick={abrirModalAgregar}
-                      className='flex items-center justify-center gap-1.5 px-2.5 md:px-4 py-2 bg-st-verde text-white rounded-xl hover:bg-[#004b30] transition-all text-xs md:text-sm font-bold shadow-sm'
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
-                      Nuevo
-                    </button>
-
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className='flex items-center justify-center gap-1.5 px-2.5 md:px-4 py-2 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition-all text-xs md:text-sm font-semibold'
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-slate-500">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                      </svg>
-                      Importar
-                    </button>
-
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileUpload}
-                      accept=".xlsx, .xls"
-                      className="hidden"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <AlumnosLista
-                    alumnos={alumnos}
-                    alumnosCompletos={alumnos}
-                    filtroCarrera={filtroCarrera}
-                    setFiltroCarrera={setFiltroCarrera}
-                    filtroInstitucion={filtroInstitucion}
-                    setFiltroInstitucion={setFiltroInstitucion}
-                    filtroGrupo={filtroGrupo}
-                    setFiltroGrupo={setFiltroGrupo}
-                    soloPresentes={soloPresentes}
-                    setSoloPresentes={setSoloPresentes}
-                    onAgregarAlumnos={abrirModalAgregar}
-                    onEliminarAlumnos={abrirModalEliminar}
-                    esAdmin={true}
-                    eventoNombre={eventoActivo?.nombre || 'Evento'}
-                    tipoEvento={eventoActivo?.tipo || 'alumnos'}
-                  />
-                </div>
-              </>
-            )
+                </>
+              )}
+            </>
           ) : (
             <div className='flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-dashed border-st-verde/30 min-h-[400px]'>
               <div className='w-20 h-20 bg-st-pastel rounded-full flex items-center justify-center mb-4'>
@@ -686,363 +642,342 @@ function esEventoTitulacion(nombre) {
       </nav>
 
       {/* Modal para agregar y eliminar alumnos */}
-      {showAdminModal && (
-        <div
-          className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm p-4'
-        >
-          <div
-            className='bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg flex flex-col relative overflow-y-auto max-h-[90vh]'
-          >
-            <button
-              onClick={() => setShowAdminModal(false)}
-              className='absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition'
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+      {showAdminModal && adminModalMode === 'add' && createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl my-8 max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+              
+              {/* Encabezado Institucional */}
+              <div className="bg-st-verde px-6 py-4.5 flex justify-between items-center flex-shrink-0 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-emerald-300"></div>
+                  <div>
+                    <h3 className="text-base font-bold text-white tracking-tight">Nuevo Registro</h3>
+                    <p className="text-xs text-emerald-100/90 font-medium">
+                      {nuevoAlumno.rut ? `RUT: ${nuevoAlumno.rut}` : 'Nuevo Asistente'}
+                      {nuevoAlumno.nombre || nuevoAlumno.nombres ? ` • ${nuevoAlumno.nombre || `${nuevoAlumno.nombres || ''} ${nuevoAlumno.apellidos || ''}`.trim()}` : (eventoActivo?.nombre ? ` • ${eventoActivo.nombre}` : '')}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAdminModal(false)}
+                  className="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                  title="Cerrar"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-            <div className='mb-6'>
-              <h3 className='text-lg font-bold text-slate-800'>
-                {adminModalMode === 'delete' ? 'Eliminar Registro' : 'Nuevo Registro'}
-              </h3>
-              <p className='text-slate-500 text-sm mt-1'>
-                {adminModalMode === 'delete'
-                  ? 'Esta acción eliminará el participante del evento actual.'
-                  : 'Ingresa los datos para añadir un participante manualmente.'}
-              </p>
-            </div>
+              {/* Formulario con Secciones Desplegables (Dropdowns) */}
+              <form onSubmit={handleAgregarAlumno} className="p-6 space-y-4 overflow-y-auto flex-1 text-slate-800">
+                {mensajeAdmin && (
+                  <div className={`p-3 rounded-lg text-sm flex items-center gap-2 ${mensajeAdmin.includes('Error') ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+                    <span className={`w-2 h-2 rounded-full ${mensajeAdmin.includes('Error') ? 'bg-red-500' : 'bg-st-verde'}`}></span>
+                    {mensajeAdmin}
+                  </div>
+                )}
 
-            {adminModalMode === 'add' ? (
-              <form
-                className='flex flex-col gap-4'
-                onSubmit={handleAgregarAlumno}
-              >
-                {columnasConDatos.nombreCompleto && !columnasConDatos.nombres && (
-                  <div className='space-y-1.5'>
-                    <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Nombre Completo</label>
+                {/* Estado de Asistencia */}
+                <div className="bg-emerald-50/40 border border-emerald-200/80 rounded-xl p-4 border-l-4 border-l-st-verde shadow-xs">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-st-verde uppercase tracking-wider">
+                      Estado de Asistencia
+                    </label>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
+                      nuevoAlumno.presente
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-slate-200/70 text-slate-600 border border-slate-300'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${nuevoAlumno.presente ? 'bg-emerald-600' : 'bg-slate-500'}`}></span>
+                      {nuevoAlumno.presente ? 'Presente' : 'Ausente'}
+                    </span>
+                  </div>
+                  <select
+                    value={nuevoAlumno.presente ? 'presente' : 'ausente'}
+                    onChange={e => setNuevoAlumno(prev => ({ ...prev, presente: e.target.value === 'presente' }))}
+                    className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                  >
+                    <option value="ausente">Ausente</option>
+                    <option value="presente">Presente</option>
+                  </select>
+                </div>
+
+                {/* Campos requeridos del registro */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* RUT */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                      RUT <span className="text-red-500">*</span>
+                    </label>
                     <input
-                      className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                      placeholder='Ej: Juan Andrés Pérez Gonzalez'
-                      value={nuevoAlumno.nombre || ''}
-                      onChange={e => setNuevoAlumno(a => ({ ...a, nombre: e.target.value }))}
+                      type="text"
                       required
+                      placeholder="Ej: 12.345.678-9"
+                      value={nuevoAlumno.rut || ''}
+                      onChange={e => setNuevoAlumno(prev => ({ ...prev, rut: e.target.value }))}
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 font-mono focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
                     />
                   </div>
-                )}
-                
-                {(columnasConDatos.nombres || columnasConDatos.apellidos) && (
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                    {columnasConDatos.nombres && (
-                      <div className='space-y-1.5'>
-                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Nombres</label>
-                        <input
-                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Ej: Juan Andrés'
-                          value={nuevoAlumno.nombres || ''}
-                          onChange={e => setNuevoAlumno(a => ({ ...a, nombres: e.target.value }))}
-                          required
-                        />
-                      </div>
-                    )}
-                    {columnasConDatos.apellidos && (
-                      <div className='space-y-1.5'>
-                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Apellidos</label>
-                        <input
-                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Ej: Pérez Gonzalez'
-                          value={nuevoAlumno.apellidos || ''}
-                          onChange={e => setNuevoAlumno(a => ({ ...a, apellidos: e.target.value }))}
-                          required
-                        />
-                      </div>
+
+                  {/* Carrera */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                      Carrera
+                    </label>
+                    {opcionesUnicas.carrera?.length > 0 ? (
+                      <select
+                        value={nuevoAlumno.carrera || ''}
+                        onChange={e => setNuevoAlumno(prev => ({ ...prev, carrera: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all font-medium"
+                      >
+                        <option value="">Seleccionar Carrera...</option>
+                        {opcionesUnicas.carrera.map(c => <option key={c} value={c}>{c}</option>)}
+                        {nuevoAlumno.carrera && !opcionesUnicas.carrera.includes(nuevoAlumno.carrera) && (
+                          <option value={nuevoAlumno.carrera}>{nuevoAlumno.carrera}</option>
+                        )}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="Ej: Ingeniería en Informática"
+                        value={nuevoAlumno.carrera || ''}
+                        onChange={e => setNuevoAlumno(prev => ({ ...prev, carrera: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                      />
                     )}
                   </div>
-                )}
 
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                  {columnasConDatos.rut && (
-                    <div className='space-y-1.5'>
-                      <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>RUT</label>
+                  {/* Nombres */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                      Nombres <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej: Juan Andrés"
+                      value={nuevoAlumno.nombres || ''}
+                      onChange={e => {
+                        const n = e.target.value;
+                        setNuevoAlumno(prev => ({
+                          ...prev,
+                          nombres: n,
+                          nombre: `${n} ${prev.apellidos || ''}`.trim()
+                        }));
+                      }}
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                    />
+                  </div>
+
+                  {/* Apellidos */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                      Apellidos <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej: Pérez González"
+                      value={nuevoAlumno.apellidos || ''}
+                      onChange={e => {
+                        const a = e.target.value;
+                        setNuevoAlumno(prev => ({
+                          ...prev,
+                          apellidos: a,
+                          nombre: `${prev.nombres || ''} ${a}`.trim()
+                        }));
+                      }}
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                    />
+                  </div>
+
+                  {/* Grupo */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                      Grupo
+                    </label>
+                    {opcionesUnicas.grupo?.length > 0 ? (
+                      <select
+                        value={nuevoAlumno.grupo || ''}
+                        onChange={e => setNuevoAlumno(prev => ({ ...prev, grupo: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                      >
+                        <option value="">Sin grupo</option>
+                        {opcionesUnicas.grupo.map(g => <option key={g} value={g}>Grupo {g}</option>)}
+                        {nuevoAlumno.grupo && !opcionesUnicas.grupo.includes(nuevoAlumno.grupo) && (
+                          <option value={nuevoAlumno.grupo}>{nuevoAlumno.grupo}</option>
+                        )}
+                      </select>
+                    ) : (
                       <input
-                        className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                        placeholder='Ej: 12345678k'
-                        value={nuevoAlumno.rut}
-                        onChange={e => setNuevoAlumno(a => ({ ...a, rut: e.target.value }))}
-                        required
+                        type="text"
+                        placeholder="Ej: 1"
+                        value={nuevoAlumno.grupo || ''}
+                        onChange={e => setNuevoAlumno(prev => ({ ...prev, grupo: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
                       />
-                    </div>
-                  )}
-                  {columnasConDatos.establecimiento && !soloInstitucion && (
-                    <div className='space-y-1.5'>
-                      <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Establecimiento</label>
+                    )}
+                  </div>
+
+                  {/* Asiento */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                      Asiento
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: A-12"
+                      value={nuevoAlumno.asiento || ''}
+                      onChange={e => setNuevoAlumno(prev => ({ ...prev, asiento: e.target.value }))}
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                    />
+                  </div>
+
+                  {/* Distinción */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                      Distinción
+                    </label>
+                    <select
+                      value={
+                        !nuevoAlumno.distincion || nuevoAlumno.distincion === false
+                          ? ''
+                          : ['Distinción Máxima', 'Distinción Unánime', ...distincionesUnicas].includes(nuevoAlumno.distincion)
+                            ? nuevoAlumno.distincion
+                            : '__custom__'
+                      }
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '__custom__') {
+                          setNuevoAlumno(prev => ({ ...prev, distincion: 'Distinción Especial' }));
+                        } else {
+                          setNuevoAlumno(prev => ({ ...prev, distincion: val }));
+                        }
+                      }}
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                    >
+                      <option value="">Sin distinción</option>
+                      <option value="Distinción Máxima">Distinción Máxima</option>
+                      <option value="Distinción Unánime">Distinción Unánime</option>
+                      {distincionesUnicas
+                        .filter(d => d !== 'Distinción Máxima' && d !== 'Distinción Unánime')
+                        .map(d => <option key={d} value={d}>{d}</option>)
+                      }
+                      <option value="__custom__">Personalizada...</option>
+                    </select>
+                    {Boolean(nuevoAlumno.distincion) && !['Distinción Máxima', 'Distinción Unánime', ...distincionesUnicas.filter(d => d !== 'Distinción Máxima' && d !== 'Distinción Unánime')].includes(nuevoAlumno.distincion) && (
                       <input
-                        list='establecimiento-list'
-                        className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                        placeholder='Ej: Colegio San Agustín'
-                        value={nuevoAlumno.establecimiento}
-                        onChange={e => setNuevoAlumno(a => ({ ...a, establecimiento: e.target.value }))}
+                        type="text"
+                        placeholder="Escriba la distinción..."
+                        value={typeof nuevoAlumno.distincion === 'string' ? nuevoAlumno.distincion : ''}
+                        onChange={e => setNuevoAlumno(prev => ({ ...prev, distincion: e.target.value }))}
+                        className="mt-2 w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
                       />
-                      <datalist id='establecimiento-list'>
-                        {opcionesUnicas.establecimiento?.map(opt => <option key={opt} value={opt} />)}
-                      </datalist>
-                    </div>
-                  )}
+                    )}
+                  </div>
+
+                  {/* Reconocimiento */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                      Reconocimiento
+                    </label>
+                    <input
+                      type="text"
+                      value={typeof nuevoAlumno.reconocimiento === 'string' ? nuevoAlumno.reconocimiento : (nuevoAlumno.reconocimiento ? 'Reconocimiento' : '')}
+                      onChange={e => setNuevoAlumno(prev => ({ ...prev, reconocimiento: e.target.value }))}
+                      placeholder="Ej: Reconocimiento Especial, Mejor Compañero, etc."
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-st-verde/20 focus:border-st-verde outline-none transition-all"
+                    />
+                  </div>
                 </div>
-                
-                {(columnasConDatos.telefono || columnasConDatos.correo) && (
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                    {columnasConDatos.telefono && (
-                      <div className='space-y-1.5'>
-                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Teléfono</label>
-                        <input
-                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Ej: +56912345678'
-                          value={nuevoAlumno.telefono}
-                          onChange={e => setNuevoAlumno(a => ({ ...a, telefono: e.target.value }))}
-                        />
-                      </div>
-                    )}
-                    {columnasConDatos.correo && (
-                      <div className='space-y-1.5'>
-                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Correo Electrónico</label>
-                        <input
-                          type='email'
-                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Ej: ejemplo@correo.com'
-                          value={nuevoAlumno.correo}
-                          onChange={e => setNuevoAlumno(a => ({ ...a, correo: e.target.value }))}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {(columnasConDatos.cargo || columnasConDatos.comuna) && (
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                    {columnasConDatos.cargo && (
-                      <div className='space-y-1.5'>
-                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Cargo</label>
-                        <input
-                          list='cargo-list'
-                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Ej: Docente'
-                          value={nuevoAlumno.cargo}
-                          onChange={e => setNuevoAlumno(a => ({ ...a, cargo: e.target.value }))}
-                        />
-                        <datalist id='cargo-list'>
-                          {opcionesUnicas.cargo?.map(opt => <option key={opt} value={opt} />)}
-                        </datalist>
-                      </div>
-                    )}
-                    {columnasConDatos.comuna && (
-                      <div className='space-y-1.5'>
-                        <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Comuna</label>
-                        <input
-                          list='comuna-list'
-                          className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                          placeholder='Ej: Santiago'
-                          value={nuevoAlumno.comuna}
-                          onChange={e => setNuevoAlumno(a => ({ ...a, comuna: e.target.value }))}
-                        />
-                        <datalist id='comuna-list'>
-                          {opcionesUnicas.comuna?.map(opt => <option key={opt} value={opt} />)}
-                        </datalist>
-                      </div>
-                    )}
-                  </div>
-                )}
 
-                {esEventoTrabajadores ? (
-                  <>
-                    {(columnasConDatos.departamento || columnasConDatos.observacion) && (
-                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                        {columnasConDatos.departamento && (
-                          <div className='space-y-1.5'>
-                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Departamento</label>
-                            <input
-                              list='departamento-list'
-                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                              placeholder='Ej: RRHH'
-                              value={nuevoAlumno.departamento}
-                              onChange={e => setNuevoAlumno(a => ({ ...a, departamento: e.target.value }))}
-                            />
-                            <datalist id='departamento-list'>
-                              {opcionesUnicas.departamento?.map(opt => <option key={opt} value={opt} />)}
-                            </datalist>
-                          </div>
-                        )}
-                        {columnasConDatos.observacion && (
-                          <div className='space-y-1.5'>
-                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Observación</label>
-                            <input
-                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                              placeholder='Opcional'
-                              value={nuevoAlumno.observacion}
-                              onChange={e => setNuevoAlumno(a => ({ ...a, observacion: e.target.value }))}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {(columnasConDatos.carrera || columnasConDatos.institucion) && (
-                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                        {columnasConDatos.carrera && (
-                          <div className='space-y-1.5'>
-                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Carrera</label>
-                            <input
-                              list='carrera-list'
-                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                              placeholder='Ej: Informática'
-                              value={nuevoAlumno.carrera}
-                              onChange={e => setNuevoAlumno(a => ({ ...a, carrera: e.target.value }))}
-                            />
-                            <datalist id='carrera-list'>
-                              {opcionesUnicas.carrera?.map(opt => <option key={opt} value={opt} />)}
-                            </datalist>
-                          </div>
-                        )}
-                        {columnasConDatos.institucion && (
-                          <div className='space-y-1.5'>
-                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Institución</label>
-                            <input
-                              list='institucion-list'
-                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                              placeholder='Ej: Santo Tomás'
-                              value={nuevoAlumno.institucion}
-                              onChange={e => setNuevoAlumno(a => ({ ...a, institucion: e.target.value }))}
-                            />
-                            <datalist id='institucion-list'>
-                              {opcionesUnicas.institucion?.map(opt => <option key={opt} value={opt} />)}
-                            </datalist>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {(columnasConDatos.asiento || columnasConDatos.grupo || columnasConDatos.numeroLista) && (
-                      <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4'>
-                        {columnasConDatos.numeroLista && (
-                          <div className='space-y-1.5'>
-                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>N° Lista</label>
-                            <input
-                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                              placeholder='Opcional'
-                              value={nuevoAlumno.numeroLista}
-                              onChange={e => setNuevoAlumno(a => ({ ...a, numeroLista: e.target.value }))}
-                            />
-                          </div>
-                        )}
-                        {columnasConDatos.asiento && (
-                          <div className='space-y-1.5'>
-                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Asiento</label>
-                            <input
-                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                              placeholder='Opcional'
-                              value={nuevoAlumno.asiento}
-                              onChange={e => setNuevoAlumno(a => ({ ...a, asiento: e.target.value }))}
-                            />
-                          </div>
-                        )}
-                        {columnasConDatos.grupo && (
-                          <div className='space-y-1.5'>
-                            <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>Grupo</label>
-                            <input
-                              list='grupo-list'
-                              className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-st-verde focus:bg-white focus:border-transparent transition outline-none'
-                              placeholder='Opcional'
-                              value={nuevoAlumno.grupo}
-                              onChange={e => setNuevoAlumno(a => ({ ...a, grupo: e.target.value }))}
-                            />
-                            <datalist id='grupo-list'>
-                              {opcionesUnicas.grupo?.map(opt => <option key={opt} value={opt} />)}
-                            </datalist>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {(columnasConDatos.distincion || columnasConDatos.reconocimiento) && (
-                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4'>
-                        {columnasConDatos.distincion && (
-                          <div className='space-y-1.5'>
-                            <label className='text-xs font-semibold text-amber-600 uppercase tracking-wide'>Distinción</label>
-                            <input
-                              className='w-full border border-amber-200 bg-amber-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:bg-white focus:border-transparent transition outline-none'
-                              placeholder='Opcional'
-                              value={nuevoAlumno.distincion}
-                              onChange={e => setNuevoAlumno(a => ({ ...a, distincion: e.target.value }))}
-                            />
-                          </div>
-                        )}
-                        {columnasConDatos.reconocimiento && (
-                          <div className='space-y-1.5'>
-                            <label className='text-xs font-semibold text-purple-600 uppercase tracking-wide'>Reconocimiento</label>
-                            <input
-                              className='w-full border border-purple-200 bg-purple-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white focus:border-transparent transition outline-none'
-                              placeholder='Opcional'
-                              value={nuevoAlumno.reconocimiento}
-                              onChange={e => setNuevoAlumno(a => ({ ...a, reconocimiento: e.target.value }))}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-
-                <div className='pt-4'>
+                {/* Botones de Acción */}
+                <div className="pt-3 flex gap-3 justify-end border-t border-slate-100">
                   <button
-                    type='submit'
-                    className='w-full bg-st-verde text-white h-10 rounded-lg font-medium hover:bg-st-verdeClaro transition-all'
+                    type="button"
+                    onClick={() => setShowAdminModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
                   >
-                    Guardar Registro
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isGuardandoNuevo}
+                    className="px-5 py-2 text-sm bg-st-verde text-white font-semibold rounded-lg hover:bg-[#004b30] transition-all shadow-sm disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isGuardandoNuevo ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Guardando...
+                      </>
+                    ) : 'Guardar Registro'}
                   </button>
                 </div>
               </form>
-            ) : (
-              <form
-                ref={deleteFormRef}
-                className='flex flex-col gap-4'
-                onSubmit={handleEliminarAlumno}
-              >
-                <div className='p-4 bg-red-50 border border-red-100 rounded-lg flex gap-3'>
+            </div>
+          </div>,
+          document.body
+        )}
+
+        {/* Modal de eliminación si aplica */}
+        {showAdminModal && adminModalMode === 'delete' && createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg my-8 flex flex-col overflow-hidden border border-slate-200">
+              <div className="bg-red-600 px-6 py-4 flex justify-between items-center flex-shrink-0">
+                <h3 className="text-base font-bold text-white">Eliminar Registro</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAdminModal(false)}
+                  className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form ref={deleteFormRef} onSubmit={handleEliminarAlumno} className="p-6 space-y-4">
+                <div className="p-4 bg-red-50 border border-red-100 rounded-lg flex gap-3">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-red-600 shrink-0">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                   </svg>
-                  <p className='text-red-700 text-sm'>Esta acción es irreversible. Asegúrate de tener el RUT correcto.</p>
+                  <p className="text-red-700 text-sm">Esta acción es irreversible. Asegúrate de tener el RUT correcto.</p>
                 </div>
-
-                <div className='space-y-1.5'>
-                  <label className='text-xs font-semibold text-slate-500 uppercase tracking-wide'>RUT del alumno</label>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">RUT del alumno</label>
                   <input
-                    className='w-full border border-slate-200 bg-slate-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:bg-white focus:border-transparent transition outline-none'
-                    placeholder='Ej: 12345678k'
+                    className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 font-mono focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                    placeholder="Ej: 12345678k"
                     value={rutEliminar}
                     onChange={e => setRutEliminar(e.target.value)}
                     required
                   />
                 </div>
-                <button
-                  type='submit'
-                  className='w-full bg-red-600 text-white h-10 rounded-lg font-medium hover:bg-red-700 transition-all mt-2'
-                >
-                  Eliminar Definitivamente
-                </button>
+                {mensajeAdmin && (
+                  <div className={`p-3 rounded-lg text-sm text-center ${mensajeAdmin.includes('Error') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
+                    {mensajeAdmin}
+                  </div>
+                )}
+                <div className="pt-3 flex gap-3 justify-end border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 text-sm bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-all shadow-sm"
+                  >
+                    Eliminar Definitivamente
+                  </button>
+                </div>
               </form>
-            )}
-
-            {mensajeAdmin && (
-              <div className={`mt-4 px-4 py-2 rounded-lg text-sm text-center w-full ${mensajeAdmin.includes('Error') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
-                {mensajeAdmin}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
