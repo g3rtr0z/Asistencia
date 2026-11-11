@@ -425,11 +425,6 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
                     {evento.activo ? '● EVENTO ACTIVO' : '○ Inactivo'}
                   </span>
                   <div className='flex items-center gap-2'>
-                    {esSuperAdmin && (
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${evento.visibleCoordinador !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-                        {evento.visibleCoordinador !== false ? '👁️ Coordinador' : 'Solo Admin'}
-                      </span>
-                    )}
                     <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${evento.activo ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}>
                       Alumnos
                     </span>
@@ -710,7 +705,7 @@ function EventosPanel({ eventos, eventoActivo: _eventoActivo, onEventoChange, us
                     <button
                       type='button'
                       onClick={() => setShowImportModal(true)}
-                      className='w-full flex items-center justify-center gap-2 py-2 px-4 border border-dashed border-slate-300 rounded-lg text-xs font-semibold text-slate-600 hover:border-st-verde hover:text-st-verde hover:bg-emerald-50/20 transition-colors'
+                      className='w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-dashed border-slate-300 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-[#006341] hover:text-white hover:border-[#006341] hover:shadow-md hover:shadow-[#006341]/20 transition-all duration-300 ease-in-out cursor-pointer'
                     >
                       <svg className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10' />
